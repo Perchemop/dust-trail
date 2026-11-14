@@ -133,7 +133,7 @@ impl Gui {
                 ..
             } = event
             {
-                if !*pressed {
+                if !pressed {
                     continue;
                 }
                 if modifiers.ctrl && key == egui::Key::C {
