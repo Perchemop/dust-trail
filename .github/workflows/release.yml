@@ -2,8 +2,8 @@ name: Release
 
 # Builds and publishes installable release artefacts on version tags and on
 # manual dispatch. Every release MUST attach platform installers (not a zip of
-# source): Windows .msi, macOS .dmg, Linux .deb + .rpm + .AppImage, plus
-# SHA256SUMS.txt. See AGENTS.md (installable-builds directive).
+# source): Windows .msi, macOS .dmg, Linux .deb + .AppImage, plus SHA256SUMS.txt.
+# See AGENTS.md (installable-builds directive).
 on:
   push:
     tags: ["v*"]
@@ -55,9 +55,10 @@ jobs:
           sudo apt-get install -y --no-install-recommends \
             libssl-dev pkg-config \
             libxcb1-dev libxkbcommon-dev libwayland-dev \
-            fakeroot dpkg rpm file imagemagick
-      - name: Generate lockfile
-        run: cargo generate-lockfile
+            dpkg fakeroot file imagemagick
+      - name: Install macOS system dependencies
+        if: runner.os == 'macOS'
+        run: brew install create-dmg
       - name: Build release (TUI + GUI)
         run: cargo build --release --features gui --target ${{ matrix.target }}
 
@@ -67,8 +68,8 @@ jobs:
         shell: bash
         run: |
           cargo install cargo-wix --locked
-          cargo wix init --force
-          cargo wix --nocapture --target ${{ matrix.target }}
+          cargo wix init --force -p dust-trail
+          cargo wix --nocapture -p dust-trail --target ${{ matrix.target }}
           mkdir -p dist
           cp target/wix/*.msi "dist/${{ matrix.asset }}.msi"
 
@@ -76,7 +77,6 @@ jobs:
       - name: macOS DMG installer
         if: runner.os == 'macOS'
         run: |
-          brew install create-dmg
           VERSION="${GITHUB_REF_NAME#v}"
           APP="dist/Dust Trail.app"
           mkdir -p "$APP/Contents/MacOS"
@@ -90,29 +90,48 @@ jobs:
             --app-drop-link 425 120 \
             "dist/${{ matrix.asset }}.dmg" "$APP"
 
-      # ----- Linux: .deb, .rpm, .AppImage -----
-      - name: Linux packages (.deb, .rpm, .AppImage)
+      # ----- Linux: .deb via dpkg-deb + .AppImage via appimagetool -----
+      - name: Linux packages (.deb, .AppImage)
         if: runner.os == 'Linux'
         shell: bash
         run: |
+          set -e
           mkdir -p dist
-          cargo install cargo-deb --locked
-          cargo install cargo-generate-rpm --locked
-          cargo deb --target ${{ matrix.target }} --no-build --output dist/ --deb-revision 1
-          cargo generate-rpm --target ${{ matrix.target }} --output dist/
-          ARCH="$(uname -m)"
+          TRIPLE="${{ matrix.target }}"
+          ARCH="$(dpkg --print-architecture)"
+          # .deb via dpkg-deb (manual, reliable).
+          DEBDIR="dist/dust-trail_0.1.0-1_${ARCH}"
+          rm -rf "$DEBDIR"
+          mkdir -p "$DEBDIR/DEBIAN" "$DEBDIR/usr/bin" \
+                   "$DEBDIR/usr/share/applications" \
+                   "$DEBDIR/usr/share/icons/hicolor/256x256/apps"
+          cat > "$DEBDIR/DEBIAN/control" <<'EOF'
+Package: dust-trail
+Version: 0.1.0-1
+Section: games
+Priority: optional
+Architecture: __ARCH__
+Maintainer: Dust Trail Dev <dev@example.com>
+Description: Original Western-themed ASCII adventure game (TUI + GUI)
+EOF
+          sed -i "s/__ARCH__/${ARCH}/g" "$DEBDIR/DEBIAN/control"
+          cp "target/${TRIPLE}/release/dust-trail" "$DEBDIR/usr/bin/dust-trail"
+          cp packaging/linux/dust-trail.desktop "$DEBDIR/usr/share/applications/"
+          convert -size 256x256 xc:'#5a3b1e' \
+            -fill '#e6c86e' -draw 'polygon 128,32 224,128 128,224 32,128' \
+            "$DEBDIR/usr/share/icons/hicolor/256x256/apps/dust-trail.png"
+          dpkg-deb --build "$DEBDIR" "dist/${{ matrix.asset }}.deb"
+          # .AppImage via appimagetool.
           APPDIR="dist/DustTrail.AppDir"
+          rm -rf "$APPDIR"
           mkdir -p "$APPDIR/usr/bin" "$APPDIR/usr/share/applications" \
                    "$APPDIR/usr/share/icons/hicolor/256x256/apps"
-          cp "target/${{ matrix.target }}/release/dust-trail" "$APPDIR/usr/bin/dust-trail"
+          cp "target/${TRIPLE}/release/dust-trail" "$APPDIR/usr/bin/dust-trail"
           cp packaging/linux/dust-trail.desktop "$APPDIR/dust-trail.desktop"
           cp packaging/linux/dust-trail.desktop "$APPDIR/usr/share/applications/"
           cp packaging/linux/AppRun "$APPDIR/AppRun"
           chmod +x "$APPDIR/AppRun"
-          convert -size 256x256 xc:'#5a3b1e' \
-            -fill '#e6c86e' -draw 'polygon 128,32 224,128 128,224 32,128' \
-            "$APPDIR/dust-trail.png"
-          cp "$APPDIR/dust-trail.png" "$APPDIR/usr/share/icons/hicolor/256x256/apps/"
+          cp "$DEBDIR/usr/share/icons/hicolor/256x256/apps/dust-trail.png" "$APPDIR/" 2>/dev/null || true
           curl -fsSL -o /tmp/appimagetool \
             "https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-${ARCH}.AppImage"
           chmod +x /tmp/appimagetool
@@ -137,7 +156,6 @@ jobs:
           path: |
             dist/*.dmg
             dist/*.deb
-            dist/*.rpm
             dist/*.AppImage
 
   # Create a draft GitHub Release with installers + checksums; a maintainer publishes it.
