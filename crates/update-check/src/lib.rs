@@ -41,12 +41,14 @@ pub enum Action {
 
 /// Metadata for a GitHub release.
 #[derive(Debug, Clone, Deserialize)]
+#[allow(dead_code)]
 struct ReleaseAsset {
     name: String,
     browser_download_url: String,
 }
 
 #[derive(Debug, Clone, Deserialize)]
+#[allow(dead_code)]
 struct Release {
     tag_name: String,
     html_url: String,

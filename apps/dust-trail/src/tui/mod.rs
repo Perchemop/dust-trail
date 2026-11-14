@@ -12,7 +12,7 @@ use crossterm::{
     ExecutableCommand,
 };
 use directories::ProjectDirs;
-use std::io::{stdout, Stdout, Write};
+use std::io::{stdout, Stdout};
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 

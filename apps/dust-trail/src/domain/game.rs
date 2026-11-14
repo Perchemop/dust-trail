@@ -10,7 +10,7 @@ use crate::domain::iso::{screen_depth, world_to_screen};
 use crate::domain::player::Player;
 use crate::domain::save::SaveData;
 use crate::domain::tile::TileType;
-use crate::domain::world::{default_world, Item, ItemKind, Npc, Pos, World};
+use crate::domain::world::{default_world, ItemKind, Pos, World};
 
 /// A movement direction.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -314,7 +314,7 @@ impl Game {
     }
 
     /// Save the game to a JSON file at `path`.
-    pub fn save(&self, path: &std::path::Path) -> Result<(), String> {
+    pub fn save(&mut self, path: &std::path::Path) -> Result<(), String> {
         let save = SaveData::new(self);
         let json =
             serde_json::to_string_pretty(&save).map_err(|e| format!("serialise error: {e}"))?;
@@ -341,30 +341,35 @@ impl Game {
     /// Advance NPCs one turn. Deterministic (based on turn count) so the game
     /// is testable headlessly.
     fn update_npcs(&mut self) {
-        for npc in &mut self.world.npcs {
-            match npc.kind {
-                crate::domain::world::NpcKind::Sheriff => {
-                    // Sheriff stays at his post.
-                }
-                crate::domain::world::NpcKind::Outlaw => {
-                    // Outlaw wanders: move one step if the target is walkable
-                    // and not occupied by the player. Direction derived from
-                    // the turn so behaviour is deterministic and replayable.
-                    let dirs = [
-                        Direction::Up,
-                        Direction::Down,
-                        Direction::Left,
-                        Direction::Right,
-                    ];
-                    let idx = (self.turn % dirs.len() as u64) as usize;
-                    let (dx, dy) = dirs[idx].offset();
-                    let target = npc.pos.offset(dx, dy);
-                    if self.world.in_bounds(target)
-                        && self.world.is_walkable(target)
-                        && target != self.player.pos
-                    {
-                        npc.pos = target;
-                    }
+        // Compute the outlaw's intended move using only immutable borrows.
+        let outlaw_target = self.world.npcs.iter().find_map(|npc| {
+            if npc.kind != crate::domain::world::NpcKind::Outlaw {
+                return None;
+            }
+            let dirs = [
+                Direction::Up,
+                Direction::Down,
+                Direction::Left,
+                Direction::Right,
+            ];
+            let idx = (self.turn % dirs.len() as u64) as usize;
+            let (dx, dy) = dirs[idx].offset();
+            let target = npc.pos.offset(dx, dy);
+            if self.world.in_bounds(target)
+                && self.world.is_walkable(target)
+                && target != self.player.pos
+            {
+                Some(target)
+            } else {
+                None
+            }
+        });
+
+        // Sheriff stays at his post; apply the outlaw's move.
+        if let Some(target) = outlaw_target {
+            for npc in &mut self.world.npcs {
+                if npc.kind == crate::domain::world::NpcKind::Outlaw {
+                    npc.pos = target;
                 }
             }
         }
