@@ -128,7 +128,7 @@ impl Theme {
             Role::Warning => Rgb::new(200, 130, 30),
             Role::Success => Rgb::new(40, 160, 90),
             Role::BorderSubtle => Rgb::new(210, 210, 218),
-            Role::BorderStrong => Rgb::new(170, 170, 180),
+            Role::BorderStrong => Rgb::new(60, 60, 70),
             Role::FocusRing => Rgb::new(20, 110, 220),
             Role::OverlayScrim => Rgb::new(0, 0, 0),
             Role::SelectionBg => Rgb::new(20, 110, 220),
