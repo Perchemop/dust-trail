@@ -94,6 +94,90 @@ jobs:
       - name: Build release
         run: cargo build --release --target ${{ matrix.target }}
 
+      # ----- Installer packaging per platform -----
+      - name: Linux packages (.deb, .AppImage)
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          set -e
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            dpkg fakeroot file imagemagick
+          mkdir -p dist
+          TRIPLE="${{ matrix.target }}"
+          ARCH="$(dpkg --print-architecture)"
+          DEBDIR="dist/dust-trail_0.1.0-1_${ARCH}"
+          rm -rf "$DEBDIR"
+          mkdir -p "$DEBDIR/DEBIAN" "$DEBDIR/usr/bin" \
+                   "$DEBDIR/usr/share/applications" \
+                   "$DEBDIR/usr/share/icons/hicolor/256x256/apps"
+          printf 'Package: dust-trail\nVersion: 0.1.0-1\nSection: games\nPriority: optional\nArchitecture: %s\nMaintainer: Dust Trail Dev <dev@example.com>\nDescription: Original Western-themed ASCII adventure game (TUI + GUI)\n' "$ARCH" > "$DEBDIR/DEBIAN/control"
+          cp "target/${TRIPLE}/release/dust-trail" "$DEBDIR/usr/bin/dust-trail"
+          dpkg-deb --build "$DEBDIR" "dist/${{ matrix.asset }}.deb"
+          APPDIR="dist/DustTrail.AppDir"
+          rm -rf "$APPDIR"
+          mkdir -p "$APPDIR/usr/bin" "$APPDIR/usr/share/applications" \
+                   "$APPDIR/usr/share/icons/hicolor/256x256/apps"
+          cp "target/${TRIPLE}/release/dust-trail" "$APPDIR/usr/bin/dust-trail"
+          printf '[Desktop Entry]\nType=Application\nName=Dust Trail\nExec=dust-trail\nTerminal=true\nCategories=Game;\n' > "$APPDIR/dust-trail.desktop"
+          cp "$APPDIR/dust-trail.desktop" "$APPDIR/usr/share/applications/"
+          printf '#!/bin/sh\nexec "$(dirname "$(readlink -f "$0")")/usr/bin/dust-trail" "$@"\n' > "$APPDIR/AppRun"
+          chmod +x "$APPDIR/AppRun"
+          curl -fsSL -o /tmp/appimagetool \
+            "https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-${ARCH}.AppImage" \
+            || { echo "appimagetool not available for ${ARCH}, skipping AppImage"; rm -rf "$APPDIR"; exit 0; }
+          chmod +x /tmp/appimagetool
+          ARCH="$ARCH" /tmp/appimagetool --appimage-extract-and-run "$APPDIR" \
+            "dist/${{ matrix.asset }}.AppImage" || { echo "AppImage build failed, skipping"; rm -f "dist/${{ matrix.asset }}.AppImage"; exit 0; }
+
+      - name: Windows MSI installer
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          cargo install cargo-wix --locked
+          cargo wix init --force -p dust-trail
+          cargo wix --nocapture -p dust-trail --target ${{ matrix.target }}
+          mkdir -p dist
+          cp target/wix/*.msi "dist/${{ matrix.asset }}.msi"
+
+      - name: macOS DMG installer
+        if: runner.os == 'macOS'
+        run: |
+          brew install create-dmg
+          VERSION="${GITHUB_REF_NAME#v}"
+          APP="dist/Dust Trail.app"
+          mkdir -p "$APP/Contents/MacOS"
+          cp "target/${{ matrix.target }}/release/dust-trail" "$APP/Contents/MacOS/dust-trail"
+          printf '<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">\n<plist version="1.0">\n<dict>\n    <key>CFBundleExecutable</key>\n    <string>dust-trail</string>\n    <key>CFBundleIdentifier</key>\n    <string>com.dusttrail.app</string>\n    <key>CFBundleName</key>\n    <string>Dust Trail</string>\n    <key>CFBundleVersion</key>\n    <string>%s</string>\n    <key>CFBundleShortVersionString</key>\n    <string>%s</string>\n    <key>LSMinimumSystemVersion</key>\n    <string>11.0</string>\n</dict>\n</plist>\n' "$VERSION" "$VERSION" > "$APP/Contents/Info.plist"
+          create-dmg \
+            --volname "Dust Trail ${VERSION}" \
+            --window-pos 200 120 --window-size 600 300 --icon-size 100 \
+            --icon "Dust Trail.app" 175 120 \
+            --hide-extension "Dust Trail.app" \
+            --app-drop-link 425 120 \
+            "dist/${{ matrix.asset }}.dmg" "$APP"
+
+      - name: List built installers
+        shell: bash
+        run: ls -la dist/
+
+      - name: Upload installer artefacts
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ${{ matrix.asset }}
+          path: dist/*.msi
+          if-no-files-found: ignore
+      - name: Upload installer artefacts (non-Windows)
+        if: runner.os != 'Windows'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ${{ matrix.asset }}
+          path: |
+            dist/*.dmg
+            dist/*.deb
+            dist/*.AppImage
+          if-no-files-found: ignore
+
   # Supply-chain / packaging declaration check: dist-workspace.toml must stay
   # in sync with release.yml targets; a broken definition fails the PR.
   supply-chain:
