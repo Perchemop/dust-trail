@@ -27,6 +27,23 @@ Chat (plan) → Task (execute) → Pull Request (review) → Merge
   (owner directive 2026-10-26).
 - **PR template** — every PR uses `.github/PULL_REQUEST_TEMPLATE.md`.
 
+## Release Currency (owner directive)
+
+After all remaining work within reason is complete (or awaiting only user
+verification), confirm the latest GitHub Release is current with `main`. A
+release is **not** current if `main` contains commits not reachable from the
+release tag.
+
+- Before declaring a session complete, compare `main` against the latest tag:
+  `git merge-base --is-ancestor <latest-tag> origin/main && echo green` or
+  `git log --oneline <latest-tag>..origin/main | head`.
+- If `main` has unreleased commits, either cut a new release tag and publish
+  installable artefacts (per the installable-builds directive below) **or**
+  record the pending work explicitly in `PROGRESS.md` / `ROADMAP.md` so the
+  next session knows what still needs releasing.
+- Never leave `main` ahead of the latest release without either publishing a
+  release or documenting the gap.
+
 ## "Just Works" Verification Workflow (guide §4)
 
 **This app must always "just work" out of the box.**
