@@ -314,8 +314,7 @@ impl Game {
     /// Save the game to a JSON file at `path`.
     pub fn save(&self, path: &std::path::Path) -> Result<(), String> {
         let save = SaveData::new(self);
-        let json = serde_json::to_string_pretty(&save)
-            .map_err(|e| format!("serialise error: {e}"))?;
+        let json = serde_json::to_string_pretty(&save).map_err(|e| format!("serialise error: {e}"))?;
         std::fs::write(path, json).map_err(|e| format!("write error: {e}"))?;
         self.message = "Game saved.".to_string();
         Ok(())

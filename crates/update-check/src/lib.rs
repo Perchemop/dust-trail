@@ -161,7 +161,8 @@ impl Updater {
             .header("Accept", "application/vnd.github+json")
             .call()
             .map_err(|e| format!("network error: {e}"))?
-            .into_string()
+            .body_mut()
+            .read_to_string()
             .map_err(|e| format!("read error: {e}"))?;
 
         let releases: Vec<Release> =
