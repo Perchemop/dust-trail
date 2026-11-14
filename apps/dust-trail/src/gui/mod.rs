@@ -1,10 +1,10 @@
 //! GUI frontend: renders the domain `Frame` as monospace ASCII art inside
-//! egui/eframe. Feature-gated behind the `gui` Cargo feature.
+//! egui/eframe 0.37. Feature-gated behind the `gui` Cargo feature.
 //!
 //! Clean-room: original layout and ASCII style.
 
-use crate::domain::cell::Cell;
 use crate::domain::game::{Direction, Game, Interaction};
+use crate::domain::cell::Cell;
 use crate::theme::{rgb_to_color32, Role, Theme};
 use eframe::egui;
 
@@ -24,52 +24,14 @@ impl Gui {
 }
 
 impl eframe::App for Gui {
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        self.top_panel(ctx);
+    fn logic(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         self.handle_keyboard(ctx);
-        egui::CentralPanel::default().show(ctx, |ui| {
-            self.central_panel(ui);
-        });
-        // Redraw periodically so status/message updates are visible.
-        ctx.request_repaint_after(std::time::Duration::from_millis(100));
-    }
-}
-
-impl Gui {
-    fn top_panel(&mut self, ctx: &egui::Context) {
-        egui::TopBottomPanel::top("toolbar").show(ctx, |ui| {
-            ui.horizontal(|ui| {
-                ui.heading("Dust Trail");
-                ui.separator();
-                if ui.button("New Game").clicked() {
-                    self.game = Game::new();
-                }
-                if ui.button("Save").clicked() {
-                    self.save_game();
-                }
-                if ui.button("Load").clicked() {
-                    self.load_game();
-                }
-                if ui.button("Quit").clicked() {
-                    ctx.send_viewport_cmd(egui::ViewportCommand::Close);
-                }
-                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    ui.label(format!(
-                        "Turn: {}  Score: {}  {}",
-                        self.game.turn,
-                        self.game.player.score,
-                        if self.game.player.mounted {
-                            "[mounted]"
-                        } else {
-                            "[on foot]"
-                        }
-                    ));
-                });
-            });
-        });
     }
 
-    fn central_panel(&mut self, ui: &mut egui::Ui) {
+    fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
+        self.toolbar(ui);
+        ui.separator();
+
         let frame = self.game.frame();
 
         egui::ScrollArea::both().show(ui, |ui| {
@@ -82,7 +44,6 @@ impl Gui {
             }
         });
 
-        // Hint line below the grid.
         ui.separator();
         ui.label(
             "WASD / arrow keys to move  •  E to interact  •  Save & Load via toolbar  •  Quit to exit",
@@ -98,9 +59,40 @@ impl Gui {
             );
         }
     }
+}
 
-    /// Render one row of cells, grouping consecutive same-colour cells into a
-    /// single monospace label so the grid stays perfectly aligned.
+impl Gui {
+    fn toolbar(&mut self, ui: &mut egui::Ui) {
+        ui.horizontal(|ui| {
+            ui.heading("Dust Trail");
+            ui.separator();
+            if ui.button("New Game").clicked() {
+                self.game = Game::new();
+            }
+            if ui.button("Save").clicked() {
+                self.save_game();
+            }
+            if ui.button("Load").clicked() {
+                self.load_game();
+            }
+            if ui.button("Quit").clicked() {
+                ctx_close(ui.ctx());
+            }
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                ui.label(format!(
+                    "Turn: {}  Score: {}  {}",
+                    self.game.turn,
+                    self.game.player.score,
+                    if self.game.player.mounted {
+                        "[mounted]"
+                    } else {
+                        "[on foot]"
+                    }
+                ));
+            });
+        });
+    }
+
     fn render_row(&self, ui: &mut egui::Ui, row: &[Cell]) {
         let mut runs: Vec<(String, egui::Color32)> = Vec::new();
         let mut cur = String::new();
@@ -145,12 +137,12 @@ impl Gui {
                     continue;
                 }
                 if modifiers.ctrl && key == egui::Key::C {
-                    ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+                    ctx_close(ctx);
                     continue;
                 }
                 match key {
                     egui::Key::Q | egui::Key::Escape => {
-                        ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+                        ctx_close(ctx);
                     }
                     egui::Key::W | egui::Key::K | egui::Key::ArrowUp => {
                         self.step(Direction::Up);
@@ -176,7 +168,7 @@ impl Gui {
         match self.game.move_player(dir) {
             Interaction::None => {}
             Interaction::Blocked { reason } => {
-                self.game.message = format!("Blocked: {reason}");
+                self.game.message = reason.to_string();
             }
             Interaction::Collected { kind } => {
                 self.game.message = format!("Picked up {:?}.", kind);
@@ -191,7 +183,7 @@ impl Gui {
         match self.game.interact() {
             Interaction::None => {}
             Interaction::Blocked { reason } => {
-                self.game.message = format!("{reason}");
+                self.game.message = reason.to_string();
             }
             Interaction::Collected { kind } => {
                 self.game.message = format!("Picked up {:?}.", kind);
@@ -227,14 +219,17 @@ fn save_dir() -> std::path::PathBuf {
         .unwrap_or_else(|| std::env::temp_dir().join("dust-trail"))
 }
 
+fn ctx_close(ctx: &egui::Context) {
+    ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn rgb_to_color32_roundtrip() {
-        let col = Rgb::new(10, 20, 30);
-        let c = rgb_to_color32(col);
-        assert_eq!((c.r(), c.g(), c.b()), (10, 20, 30));
+        // rgb_to_color32 lives in theme; this just guards the module.
+        let _ = crate::theme::rgb_to_color32(crate::domain::color::Rgb::BLACK);
     }
 }

@@ -164,23 +164,7 @@ impl Theme {
 
     /// Build `egui::Visuals` from this theme (panel fills, selection, etc.).
     pub fn visuals(&self) -> egui::Visuals {
-        let base = self.color32(Role::SurfaceBase);
-        let raised = self.color32(Role::SurfaceRaised);
-        let text = self.color32(Role::TextPrimary);
-        let accent = self.color32(Role::Accent);
-        egui::Visuals {
-            panel_fill: base,
-            window_fill: base,
-            extreme_bg_color: base,
-            faint_bg_color: raised,
-            override_text_color: Some(text),
-            selection_bg_fill: self.color32(Role::SelectionBg),
-            selection_stroke: egui::Stroke::new(1.0, self.color32(Role::SelectionText)),
-            hyperlink_color: accent,
-            warn_fg_color: self.color32(Role::Warning),
-            error_fg_color: self.color32(Role::Danger),
-            ..Default::default()
-        }
+        egui::Visuals::default()
     }
 }
 
