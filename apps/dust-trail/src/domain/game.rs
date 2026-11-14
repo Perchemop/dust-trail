@@ -88,22 +88,14 @@ impl Game {
         tile_entries.sort_by_key(|e| e.0);
         for (_, wx, wy, tile) in tile_entries {
             let (sx, sy) = world_to_screen(wx, wy);
-            drawn.push((
-                sx,
-                sy,
-                Cell::new(tile.glyph(), tile.fg(), tile.bg()),
-            ));
+            drawn.push((sx, sy, Cell::new(tile.glyph(), tile.fg(), tile.bg())));
         }
 
         // Items (not collected), drawn over tiles.
         for item in &self.world.items {
             if !item.collected && self.world.in_bounds(item.pos) {
                 let (sx, sy) = world_to_screen(item.pos.x, item.pos.y);
-                drawn.push((
-                    sx,
-                    sy,
-                    Cell::new(item.kind.glyph(), item.kind.fg(), Rgb::BLACK),
-                ));
+                drawn.push((sx, sy, Cell::new(item.kind.glyph(), item.kind.fg(), Rgb::BLACK)));
             }
         }
 
@@ -111,22 +103,14 @@ impl Game {
         for npc in &self.world.npcs {
             if self.world.in_bounds(npc.pos) {
                 let (sx, sy) = world_to_screen(npc.pos.x, npc.pos.y);
-                drawn.push((
-                    sx,
-                    sy,
-                    Cell::new(npc.kind.glyph(), npc.kind.fg(), Rgb::BLACK),
-                ));
+                drawn.push((sx, sy, Cell::new(npc.kind.glyph(), npc.kind.fg(), Rgb::BLACK)));
             }
         }
 
         // Player on top of everything.
         if self.world.in_bounds(self.player.pos) {
             let (sx, sy) = world_to_screen(self.player.pos.x, self.player.pos.y);
-            drawn.push((
-                sx,
-                sy,
-                Cell::new(self.player.glyph(), self.player.fg(), Rgb::BLACK),
-            ));
+            drawn.push((sx, sy, Cell::new(self.player.glyph(), self.player.fg(), Rgb::BLACK)));
         }
 
         // Bounding box of everything drawn.
@@ -153,11 +137,7 @@ impl Game {
         for (sx, sy, cell) in drawn {
             let gx = sx + ox;
             let gy = sy + oy;
-            if gx >= 0
-                && gy >= 0
-                && (gx as usize) < fw
-                && (gy as usize) < fh.saturating_sub(3)
-            {
+            if gx >= 0 && gy >= 0 && (gx as usize) < fw && (gy as usize) < fh.saturating_sub(3) {
                 frame.set(gx as usize, gy as usize, cell);
             }
         }
@@ -167,11 +147,15 @@ impl Game {
             " Dust Trail  |  Turn: {}  Score: {}  {}  |  Pos: {},{} ",
             self.turn,
             self.player.score,
-            if self.player.mounted { "[mounted]" } else { "[on foot]" },
+            if self.player.mounted {
+                "[mounted]"
+            } else {
+                "[on foot]"
+            },
             self.player.pos.x,
             self.player.pos.y,
         );
-        let sy = h + pad + 1;
+        let sy = fh - 2;
         for (i, ch) in status.chars().enumerate() {
             if i < fw {
                 frame.set(i, sy, Cell::new(ch, Rgb::WHITE, Rgb::BLACK));
@@ -179,13 +163,14 @@ impl Game {
         }
 
         // Message line.
-        let my = h + pad + 2;
+        let my = fh - 1;
         let msg = if self.game_over {
             if self.won {
                 "The outlaw is in custody. Town is safe. Well done, Dust."
             } else {
                 "The outlaw escaped. Dust Trail continues..."
-            }.to_string()
+            }
+            .to_string()
         } else {
             self.message.clone()
         };
@@ -216,7 +201,10 @@ impl Game {
         }
         if !self.world.is_walkable(target) {
             if let Some(npc) = self.world.npc_at(target) {
-                self.message = format!("{} stands in the way. Press E to interact.", npc.kind.glyph());
+                self.message = format!(
+                    "{} stands in the way. Press E to interact.",
+                    npc.kind.glyph()
+                );
                 return Interaction::Blocked {
                     reason: "npc blocks".to_string(),
                 };
@@ -294,7 +282,9 @@ impl Game {
                         npc: npc.kind.glyph().to_string(),
                         line: line.to_string(),
                     };
-                    if matches!(npc.kind, crate::domain::world::NpcKind::Outlaw) && self.player.mounted {
+                    if matches!(npc.kind, crate::domain::world::NpcKind::Outlaw)
+                        && self.player.mounted
+                    {
                         self.game_over = true;
                         self.won = true;
                         self.message = "Outlaw captured! Town is safe.".to_string();
@@ -314,7 +304,8 @@ impl Game {
     /// Save the game to a JSON file at `path`.
     pub fn save(&self, path: &std::path::Path) -> Result<(), String> {
         let save = SaveData::new(self);
-        let json = serde_json::to_string_pretty(&save).map_err(|e| format!("serialise error: {e}"))?;
+        let json =
+            serde_json::to_string_pretty(&save).map_err(|e| format!("serialise error: {e}"))?;
         std::fs::write(path, json).map_err(|e| format!("write error: {e}"))?;
         self.message = "Game saved.".to_string();
         Ok(())
@@ -323,7 +314,8 @@ impl Game {
     /// Load the game from a JSON file at `path`.
     pub fn load(path: &std::path::Path) -> Result<Self, String> {
         let json = std::fs::read_to_string(path).map_err(|e| format!("read error: {e}"))?;
-        let save: SaveData = serde_json::from_str(&json).map_err(|e| format!("parse error: {e}"))?;
+        let save: SaveData =
+            serde_json::from_str(&json).map_err(|e| format!("parse error: {e}"))?;
         Ok(Self {
             world: save.world,
             player: save.player,

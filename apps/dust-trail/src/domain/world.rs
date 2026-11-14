@@ -134,7 +134,10 @@ impl World {
     }
 
     pub fn item_at(&self, pos: Pos) -> Option<Item> {
-        self.items.iter().find(|i| !i.collected && i.pos == pos).copied()
+        self.items
+            .iter()
+            .find(|i| !i.collected && i.pos == pos)
+            .copied()
     }
 }
 
@@ -172,8 +175,16 @@ pub fn default_world() -> World {
 
     // Trees in the wilderness.
     for (tx, ty) in [
-        (2, 15), (4, 16), (6, 15), (34, 15), (36, 16), (38, 15),
-        (2, 18), (36, 18), (10, 19), (30, 19),
+        (2, 15),
+        (4, 16),
+        (6, 15),
+        (34, 15),
+        (36, 16),
+        (38, 15),
+        (2, 18),
+        (36, 18),
+        (10, 19),
+        (30, 19),
     ] {
         world.set_tile(Pos::new(tx, ty), TileType::Tree);
     }

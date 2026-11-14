@@ -53,11 +53,15 @@ pub struct Theme {
 
 impl Theme {
     pub fn dark() -> Self {
-        Self { variant: Variant::Dark }
+        Self {
+            variant: Variant::Dark,
+        }
     }
 
     pub fn light() -> Self {
-        Self { variant: Variant::Light }
+        Self {
+            variant: Variant::Light,
+        }
     }
 
     pub fn high_contrast() -> Self {

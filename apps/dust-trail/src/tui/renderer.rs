@@ -21,7 +21,7 @@ pub fn crossterm_color(col: Rgb) -> crossterm::style::Color {
 }
 
 /// Render a full frame to stdout. Returns the number of cells drawn.
-pub fn render_frame(stdout: &mut Stdout, frame: &Frame) -> crossterm::Result<usize> {
+pub fn render_frame(stdout: &mut Stdout, frame: &Frame) -> std::io::Result<usize> {
     stdout.execute(MoveTo(0, 0))?;
     let mut count: usize = 0;
     let mut current_fg: Option<Rgb> = None;

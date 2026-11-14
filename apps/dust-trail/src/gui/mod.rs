@@ -3,8 +3,8 @@
 //!
 //! Clean-room: original layout and ASCII style.
 
-use crate::domain::game::{Direction, Game, Interaction};
 use crate::domain::cell::Cell;
+use crate::domain::game::{Direction, Game, Interaction};
 use crate::theme::{rgb_to_color32, Role, Theme};
 use eframe::egui;
 
@@ -135,7 +135,10 @@ impl Gui {
         let events = ctx.input(|i| i.events.clone());
         for event in events {
             if let egui::Event::Key {
-                key, pressed, modifiers, ..
+                key,
+                pressed,
+                modifiers,
+                ..
             } = event
             {
                 if !*pressed {

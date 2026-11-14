@@ -1,6 +1,8 @@
 //! TUI application: runs the game in the terminal with crossterm.
 //! Turn-based: render → poll input → act → advance turn.
 
+mod renderer;
+
 use crate::domain::game::{Direction, Game, Interaction};
 use crate::tui::renderer::render_frame;
 use crossterm::{
@@ -27,7 +29,7 @@ pub struct Tui {
 }
 
 impl Tui {
-    pub fn new() -> crossterm::Result<Self> {
+    pub fn new() -> std::io::Result<Self> {
         let save_dir = ProjectDirs::from("", "", "dust-trail")
             .map(|p| p.config_dir().to_path_buf())
             .unwrap_or_else(|| std::env::temp_dir().join("dust-trail"));
@@ -45,7 +47,7 @@ impl Tui {
         })
     }
 
-    pub fn run(mut self) -> crossterm::Result<()> {
+    pub fn run(mut self) -> std::io::Result<()> {
         let result = self.loop_until_quit();
         // Always restore the terminal, even on error.
         let _ = self.stdout.execute(Show);
@@ -54,7 +56,7 @@ impl Tui {
         result
     }
 
-    fn loop_until_quit(&mut self) -> crossterm::Result<()> {
+    fn loop_until_quit(&mut self) -> std::io::Result<()> {
         loop {
             let frame = self.game.frame();
             render_frame(&mut self.stdout, &frame)?;
@@ -72,7 +74,7 @@ impl Tui {
         }
     }
 
-    fn handle_key(&mut self, key: KeyEvent) -> crossterm::Result<ControlFlow> {
+    fn handle_key(&mut self, key: KeyEvent) -> std::io::Result<ControlFlow> {
         if key.modifiers.contains(KeyModifiers::CONTROL) && key.code == KeyCode::Char('c') {
             return Ok(ControlFlow::Quit);
         }
