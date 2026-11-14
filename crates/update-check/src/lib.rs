@@ -142,9 +142,10 @@ impl Updater {
 
         // Quiet startup check, once per run.
         let now = now_secs();
-        let due = self.last_check.map_or(true, |last| {
-            now.saturating_sub(last) >= self.config.quiet_interval_secs
-        });
+        let due = match self.last_check {
+            Some(last) => now.saturating_sub(last) >= self.config.quiet_interval_secs,
+            None => true,
+        };
         if due {
             self.status = Status::Checking;
             self.checking = true;
