@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=Dust Trail
+GenericName=Adventure Game
+Comment=Original Western-themed ASCII adventure game (TUI + GUI)
+Exec=dust-trail
+Icon=dust-trail
+Terminal=true
+Categories=Game;AdventureGame;
+Keywords=game;ascii;western;adventure;tui;

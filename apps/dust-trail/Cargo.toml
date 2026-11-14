@@ -4,10 +4,14 @@ version = "0.1.0"
 edition = "2021"
 rust-version = "1.82"
 description = "Dust Trail — original Western-themed ASCII adventure game, playable as TUI and GUI."
-license = "MIT"
+license = "MIT OR Apache-2.0"
+authors = ["Dust Trail Dev <dev@example.com>"]
 readme = "../../README.md"
 default-run = "dust-trail"
 repository = "https://github.com/Perchemop/dust-trail"
+homepage = "https://github.com/Perchemop/dust-trail"
+keywords = ["game", "ascii", "tui", "western", "adventure"]
+categories = ["games"]
 
 [dependencies]
 # Shared suite crates (guide §7): crash reporting and update checks.
@@ -34,7 +38,23 @@ default = ["tui"]
 tui = []
 gui = ["dep:eframe", "dep:egui"]
 
-[profile.release]
-lto = "thin"
-codegen-units = 1
-strip = true
+# --- Linux packaging metadata (cargo-deb / cargo-generate-rpm) ---
+[package.metadata.deb]
+maintainer = "Dust Trail Dev <dev@example.com>"
+copyright = "2026 Dust Trail Dev"
+license-file = ["../../LICENSE", "0"]
+extended-description = """Dust Trail is a free, original Western-themed adventure game
+rendered entirely in ASCII. Playable in a terminal (TUI) or as a desktop
+window (GUI). Fully offline; no commercial trademarks or assets."""
+section = "games"
+priority = "optional"
+depends = "$auto"
+assets = [
+    ["target/release/dust-trail", "usr/bin/", "755"],
+    ["../../README.md", "usr/share/doc/dust-trail/README.md", "644"],
+]
+
+[package.metadata.generate-rpm]
+assets = [
+    { source = "target/release/dust-trail", dest = "/usr/bin/dust-trail", mode = "755" },
+]
