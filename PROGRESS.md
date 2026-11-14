@@ -25,3 +25,17 @@
 - Fix any CI findings.
 - Tag v0.1.0 and publish first release.
 - Expand ROADMAP; human-gated research for v0.2.0.
+
+## Session 2026-11-14 — v0.1.0 Released
+
+- Tagged v0.1.0 at commit 373f0b7 (main HEAD)
+- CI green on main push: check, Build (windows-x86_64), Build (macos-arm64),
+  Build (linux-arm64), supply-chain
+- Installer artifacts built by CI on 3 platforms:
+  - dust-trail-linux-arm64.deb
+  - dust-trail-macos-arm64.dmg
+  - dust-trail-windows-x86_64.msi
+- Release v0.1.0 published on GitHub:
+  https://github.com/Perchemop/dust-trail/releases/tag/v0.1.0
+  Assets: .deb, .dmg, .msi, SHA256SUMS.txt
+- Release notes from CHANGELOG.md v0.1.0 section
