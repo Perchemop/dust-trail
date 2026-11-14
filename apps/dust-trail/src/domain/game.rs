@@ -95,7 +95,11 @@ impl Game {
         for item in &self.world.items {
             if !item.collected && self.world.in_bounds(item.pos) {
                 let (sx, sy) = world_to_screen(item.pos.x, item.pos.y);
-                drawn.push((sx, sy, Cell::new(item.kind.glyph(), item.kind.fg(), Rgb::BLACK)));
+                drawn.push((
+                    sx,
+                    sy,
+                    Cell::new(item.kind.glyph(), item.kind.fg(), Rgb::BLACK),
+                ));
             }
         }
 
@@ -103,14 +107,22 @@ impl Game {
         for npc in &self.world.npcs {
             if self.world.in_bounds(npc.pos) {
                 let (sx, sy) = world_to_screen(npc.pos.x, npc.pos.y);
-                drawn.push((sx, sy, Cell::new(npc.kind.glyph(), npc.kind.fg(), Rgb::BLACK)));
+                drawn.push((
+                    sx,
+                    sy,
+                    Cell::new(npc.kind.glyph(), npc.kind.fg(), Rgb::BLACK),
+                ));
             }
         }
 
         // Player on top of everything.
         if self.world.in_bounds(self.player.pos) {
             let (sx, sy) = world_to_screen(self.player.pos.x, self.player.pos.y);
-            drawn.push((sx, sy, Cell::new(self.player.glyph(), self.player.fg(), Rgb::BLACK)));
+            drawn.push((
+                sx,
+                sy,
+                Cell::new(self.player.glyph(), self.player.fg(), Rgb::BLACK),
+            ));
         }
 
         // Bounding box of everything drawn.
