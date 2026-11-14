@@ -69,7 +69,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             options,
             Box::new(|cc| Ok(Box::new(Gui::new(cc)))),
         )
-        .map_err(|e: eframe::Error| format!("eframe failed: {e}").into())?;
+        .map_err(|e: eframe::Error| -> Box<dyn Error> { format!("eframe failed: {e}").into() })?;
         return Ok(());
     }
 
