@@ -10,7 +10,7 @@ use dust_trail::gui::Gui;
 use dust_trail::tui::Tui;
 
 fn run_tui() -> Result<(), Box<dyn Error>> {
-    let mut tui = Tui::new().map_err(|e| format!("tui init failed: {e}"))?;
+    let tui = Tui::new().map_err(|e| format!("tui init failed: {e}"))?;
     tui.run().map_err(|e| format!("tui run failed: {e}").into())
 }
 
