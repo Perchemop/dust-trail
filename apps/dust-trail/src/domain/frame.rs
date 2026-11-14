@@ -33,6 +33,9 @@ impl Frame {
 
     /// Iterate over rows as (y, &[Cell]).
     pub fn rows(&self) -> impl Iterator<Item = (usize, &[Cell])> {
-        self.cells.iter().enumerate().map(|(y, row)| (y, row.as_slice()))
+        self.cells
+            .iter()
+            .enumerate()
+            .map(|(y, row)| (y, row.as_slice()))
     }
 }

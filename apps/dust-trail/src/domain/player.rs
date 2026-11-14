@@ -20,11 +20,11 @@ impl Player {
         }
     }
 
-    pub fn glyph(self) -> char {
+    pub fn glyph(&self) -> char {
         '@'
     }
 
-    pub fn fg(self) -> crate::domain::color::Rgb {
+    pub fn fg(&self) -> crate::domain::color::Rgb {
         crate::domain::color::Rgb::WHITE
     }
 }

@@ -2,7 +2,8 @@
 
 ## In scope (v0.1.0)
 * Pure-Rust domain layer: world grid, player, NPCs, items, turn-based movement.
-* ASCII rendering of a frontier town + wilderness.
+* ASCII rendering of a frontier town + wilderness in an **isometric
+  (diamond) projection**, not top-down.
 * TUI frontend (crossterm): terminal rendering, keyboard control.
 * GUI frontend (egui/eframe 0.37, feature-gated): desktop window, monospace ASCII grid.
 * Save / load (single slot).

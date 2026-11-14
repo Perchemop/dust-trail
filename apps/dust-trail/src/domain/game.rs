@@ -6,10 +6,11 @@
 use crate::domain::cell::Cell;
 use crate::domain::color::Rgb;
 use crate::domain::frame::Frame;
+use crate::domain::iso::{screen_depth, world_to_screen};
 use crate::domain::player::Player;
 use crate::domain::save::SaveData;
 use crate::domain::tile::TileType;
-use crate::domain::world::{default_world, Item, ItemKind, Npc, Pos, World};
+use crate::domain::world::{default_world, ItemKind, Pos, World};
 
 /// A movement direction.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -67,11 +68,71 @@ impl Game {
 
     /// Render the current state as a Frame for either frontend.
     pub fn frame(&self) -> Frame {
-        let w = self.world.width as usize;
-        let h = self.world.height as usize;
-        let pad = 1;
-        let fw = w + pad * 2;
-        let fh = h + pad * 2 + 3; // +3 for status + message + border
+        // --- Isometric layout ---
+        // World (x, y) -> screen (sx, sy): sx = (x-y)*2, sy = x+y.
+        // Nearer tiles (larger screen depth) are drawn last so they overlap
+        // farther ones (painter's algorithm).
+        let pad = 2;
+        let mut drawn: Vec<(i32, i32, Cell)> = Vec::new();
+
+        // World tiles, back-to-front by screen depth.
+        let mut tile_entries: Vec<(i32, i32, i32, TileType)> = Vec::new();
+        for y in 0..self.world.height {
+            for x in 0..self.world.width {
+                let wx = x;
+                let wy = y;
+                let tile = self.world.tiles[wy as usize][wx as usize];
+                tile_entries.push((screen_depth(wx, wy), wx, wy, tile));
+            }
+        }
+        tile_entries.sort_by_key(|e| e.0);
+        for (_, wx, wy, tile) in tile_entries {
+            let (sx, sy) = world_to_screen(wx, wy);
+            drawn.push((sx, sy, Cell::new(tile.glyph(), tile.fg(), tile.bg())));
+        }
+
+        // Items (not collected), drawn over tiles.
+        for item in &self.world.items {
+            if !item.collected && self.world.in_bounds(item.pos) {
+                let (sx, sy) = world_to_screen(item.pos.x, item.pos.y);
+                drawn.push((
+                    sx,
+                    sy,
+                    Cell::new(item.kind.glyph(), item.kind.fg(), Rgb::BLACK),
+                ));
+            }
+        }
+
+        // NPCs, drawn over tiles and items.
+        for npc in &self.world.npcs {
+            if self.world.in_bounds(npc.pos) {
+                let (sx, sy) = world_to_screen(npc.pos.x, npc.pos.y);
+                drawn.push((
+                    sx,
+                    sy,
+                    Cell::new(npc.kind.glyph(), npc.kind.fg(), Rgb::BLACK),
+                ));
+            }
+        }
+
+        // Player on top of everything.
+        if self.world.in_bounds(self.player.pos) {
+            let (sx, sy) = world_to_screen(self.player.pos.x, self.player.pos.y);
+            drawn.push((
+                sx,
+                sy,
+                Cell::new(self.player.glyph(), self.player.fg(), Rgb::BLACK),
+            ));
+        }
+
+        // Bounding box of everything drawn.
+        let min_x = drawn.iter().map(|(sx, _, _)| *sx).min().unwrap_or(0);
+        let min_y = drawn.iter().map(|(_, sy, _)| *sy).min().unwrap_or(0);
+        let max_x = drawn.iter().map(|(sx, _, _)| *sx).max().unwrap_or(0);
+        let max_y = drawn.iter().map(|(_, sy, _)| *sy).max().unwrap_or(0);
+
+        let fw = (max_x - min_x + 1) as usize + pad * 2;
+        let fh = (max_y - min_y + 1) as usize + pad * 2 + 3; // +3 for status+message
         let mut frame = Frame::new(fw, fh);
 
         // Background.
@@ -81,44 +142,16 @@ impl Game {
             }
         }
 
-        // Draw world tiles.
-        for y in 0..h {
-            for x in 0..w {
-                let pos = Pos::new(x as i32, y as i32);
-                let tile = self.world.tiles[y][x];
-                let cell = Cell::new(tile.glyph(), tile.fg(), tile.bg());
-                frame.set(x + pad, y + pad, cell);
+        // Place cells, offset so the bounding-box origin lands at (pad, pad).
+        // Keep the bottom 3 rows free for the status and message lines.
+        let ox = pad as i32 - min_x;
+        let oy = pad as i32 - min_y;
+        for (sx, sy, cell) in drawn {
+            let gx = sx + ox;
+            let gy = sy + oy;
+            if gx >= 0 && gy >= 0 && (gx as usize) < fw && (gy as usize) < fh.saturating_sub(3) {
+                frame.set(gx as usize, gy as usize, cell);
             }
-        }
-
-        // Draw items (not collected).
-        for item in &self.world.items {
-            if !item.collected && self.world.in_bounds(item.pos) {
-                let c = Cell::new(
-                    item.kind.glyph(),
-                    item.kind.fg(),
-                    Rgb::BLACK,
-                );
-                frame.set(item.pos.x as usize + pad, item.pos.y as usize + pad, c);
-            }
-        }
-
-        // Draw NPCs.
-        for npc in &self.world.npcs {
-            if self.world.in_bounds(npc.pos) {
-                let c = Cell::new(npc.kind.glyph(), npc.kind.fg(), Rgb::BLACK);
-                frame.set(npc.pos.x as usize + pad, npc.pos.y as usize + pad, c);
-            }
-        }
-
-        // Draw player on top.
-        if self.world.in_bounds(self.player.pos) {
-            let c = Cell::new(self.player.glyph(), self.player.fg(), Rgb::BLACK);
-            frame.set(
-                self.player.pos.x as usize + pad,
-                self.player.pos.y as usize + pad,
-                c,
-            );
         }
 
         // Status line.
@@ -126,11 +159,15 @@ impl Game {
             " Dust Trail  |  Turn: {}  Score: {}  {}  |  Pos: {},{} ",
             self.turn,
             self.player.score,
-            if self.player.mounted { "[mounted]" } else { "[on foot]" },
+            if self.player.mounted {
+                "[mounted]"
+            } else {
+                "[on foot]"
+            },
             self.player.pos.x,
             self.player.pos.y,
         );
-        let sy = h + pad + 1;
+        let sy = fh - 2;
         for (i, ch) in status.chars().enumerate() {
             if i < fw {
                 frame.set(i, sy, Cell::new(ch, Rgb::WHITE, Rgb::BLACK));
@@ -138,13 +175,14 @@ impl Game {
         }
 
         // Message line.
-        let my = h + pad + 2;
+        let my = fh - 1;
         let msg = if self.game_over {
             if self.won {
                 "The outlaw is in custody. Town is safe. Well done, Dust."
             } else {
                 "The outlaw escaped. Dust Trail continues..."
-            }.to_string()
+            }
+            .to_string()
         } else {
             self.message.clone()
         };
@@ -175,7 +213,10 @@ impl Game {
         }
         if !self.world.is_walkable(target) {
             if let Some(npc) = self.world.npc_at(target) {
-                self.message = format!("{} stands in the way. Press E to interact.", npc.kind.glyph());
+                self.message = format!(
+                    "{} stands in the way. Press E to interact.",
+                    npc.kind.glyph()
+                );
                 return Interaction::Blocked {
                     reason: "npc blocks".to_string(),
                 };
@@ -211,7 +252,12 @@ impl Game {
                 self.message = "You mounted a horse. The trail moves faster now.".to_string();
             }
         }
-        if let Some(item) = self.world.items.iter_mut().find(|i| i.pos == self.player.pos && i.kind == kind && !i.collected) {
+        if let Some(item) = self
+            .world
+            .items
+            .iter_mut()
+            .find(|i| i.pos == self.player.pos && i.kind == kind && !i.collected)
+        {
             item.collected = true;
         }
     }
@@ -248,7 +294,9 @@ impl Game {
                         npc: npc.kind.glyph().to_string(),
                         line: line.to_string(),
                     };
-                    if matches!(npc.kind, crate::domain::world::NpcKind::Outlaw) && self.player.mounted {
+                    if matches!(npc.kind, crate::domain::world::NpcKind::Outlaw)
+                        && self.player.mounted
+                    {
                         self.game_over = true;
                         self.won = true;
                         self.message = "Outlaw captured! Town is safe.".to_string();
@@ -266,10 +314,10 @@ impl Game {
     }
 
     /// Save the game to a JSON file at `path`.
-    pub fn save(&self, path: &std::path::Path) -> Result<(), String> {
+    pub fn save(&mut self, path: &std::path::Path) -> Result<(), String> {
         let save = SaveData::new(self);
-        let json = serde_json::to_string_pretty(&save)
-            .map_err(|e| format!("serialise error: {e}"))?;
+        let json =
+            serde_json::to_string_pretty(&save).map_err(|e| format!("serialise error: {e}"))?;
         std::fs::write(path, json).map_err(|e| format!("write error: {e}"))?;
         self.message = "Game saved.".to_string();
         Ok(())
@@ -278,7 +326,8 @@ impl Game {
     /// Load the game from a JSON file at `path`.
     pub fn load(path: &std::path::Path) -> Result<Self, String> {
         let json = std::fs::read_to_string(path).map_err(|e| format!("read error: {e}"))?;
-        let save: SaveData = serde_json::from_str(&json).map_err(|e| format!("parse error: {e}"))?;
+        let save: SaveData =
+            serde_json::from_str(&json).map_err(|e| format!("parse error: {e}"))?;
         Ok(Self {
             world: save.world,
             player: save.player,
@@ -292,30 +341,35 @@ impl Game {
     /// Advance NPCs one turn. Deterministic (based on turn count) so the game
     /// is testable headlessly.
     fn update_npcs(&mut self) {
-        for npc in &mut self.world.npcs {
-            match npc.kind {
-                crate::domain::world::NpcKind::Sheriff => {
-                    // Sheriff stays at his post.
-                }
-                crate::domain::world::NpcKind::Outlaw => {
-                    // Outlaw wanders: move one step if the target is walkable
-                    // and not occupied by the player. Direction derived from
-                    // the turn so behaviour is deterministic and replayable.
-                    let dirs = [
-                        Direction::Up,
-                        Direction::Down,
-                        Direction::Left,
-                        Direction::Right,
-                    ];
-                    let idx = (self.turn % dirs.len() as u64) as usize;
-                    let (dx, dy) = dirs[idx].offset();
-                    let target = npc.pos.offset(dx, dy);
-                    if self.world.in_bounds(target)
-                        && self.world.is_walkable(target)
-                        && target != self.player.pos
-                    {
-                        npc.pos = target;
-                    }
+        // Compute the outlaw's intended move using only immutable borrows.
+        let outlaw_target = self.world.npcs.iter().find_map(|npc| {
+            if npc.kind != crate::domain::world::NpcKind::Outlaw {
+                return None;
+            }
+            let dirs = [
+                Direction::Up,
+                Direction::Down,
+                Direction::Left,
+                Direction::Right,
+            ];
+            let idx = (self.turn % dirs.len() as u64) as usize;
+            let (dx, dy) = dirs[idx].offset();
+            let target = npc.pos.offset(dx, dy);
+            if self.world.in_bounds(target)
+                && self.world.is_walkable(target)
+                && target != self.player.pos
+            {
+                Some(target)
+            } else {
+                None
+            }
+        });
+
+        // Sheriff stays at his post; apply the outlaw's move.
+        if let Some(target) = outlaw_target {
+            for npc in &mut self.world.npcs {
+                if npc.kind == crate::domain::world::NpcKind::Outlaw {
+                    npc.pos = target;
                 }
             }
         }
@@ -352,7 +406,6 @@ mod tests {
 
     #[test]
     fn player_cannot_move_into_wall() {
-        let mut g = Game::new();
         // (1,2) is inside border walls at (0, y); moving left from (2,2) to
         // (1,2)... check border: x=0 is wall. Let's move left from x=2 to x=1
         // which is ground. Move left again to x=0 which is wall.

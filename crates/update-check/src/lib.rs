@@ -20,7 +20,11 @@ pub enum Status {
     /// The running version is up to date.
     UpToDate { current: String, latest: String },
     /// A newer release is available.
-    UpdateAvailable { current: String, latest: String, url: String },
+    UpdateAvailable {
+        current: String,
+        latest: String,
+        url: String,
+    },
     /// The check failed. Fail soft — never block app start.
     Failed { error: String },
 }
@@ -37,12 +41,14 @@ pub enum Action {
 
 /// Metadata for a GitHub release.
 #[derive(Debug, Clone, Deserialize)]
+#[allow(dead_code)]
 struct ReleaseAsset {
     name: String,
     browser_download_url: String,
 }
 
 #[derive(Debug, Clone, Deserialize)]
+#[allow(dead_code)]
 struct Release {
     tag_name: String,
     html_url: String,
@@ -136,9 +142,10 @@ impl Updater {
 
         // Quiet startup check, once per run.
         let now = now_secs();
-        let due = self.last_check.map_or(true, |last| {
-            now.saturating_sub(last) >= self.config.quiet_interval_secs
-        });
+        let due = match self.last_check {
+            Some(last) => now.saturating_sub(last) >= self.config.quiet_interval_secs,
+            None => true,
+        };
         if due {
             self.status = Status::Checking;
             self.checking = true;
@@ -153,16 +160,16 @@ impl Updater {
             self.config.owner, self.config.repo
         );
         let body = ureq::get(&url)
-            .set("User-Agent", "dust-trail-update-check")
-            .set("Accept", "application/vnd.github+json")
-            .timeout(std::time::Duration::from_secs(10))
+            .header("User-Agent", "dust-trail-update-check")
+            .header("Accept", "application/vnd.github+json")
             .call()
             .map_err(|e| format!("network error: {e}"))?
-            .into_string()
+            .body_mut()
+            .read_to_string()
             .map_err(|e| format!("read error: {e}"))?;
 
-        let releases: Vec<Release> = serde_json::from_str(&body)
-            .map_err(|e| format!("parse error: {e}"))?;
+        let releases: Vec<Release> =
+            serde_json::from_str(&body).map_err(|e| format!("parse error: {e}"))?;
 
         let current = semver::Version::parse(&self.config.current_version)
             .map_err(|e| format!("version parse error: {e}"))?;

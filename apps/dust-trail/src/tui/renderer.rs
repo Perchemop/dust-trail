@@ -4,12 +4,9 @@
 
 use crate::domain::color::Rgb;
 use crate::domain::frame::Frame;
-use crossterm::style::{SetBackground, SetForeground};
-use crossterm::{
-    cursor::{MoveTo, Print},
-    ExecutableCommand,
-};
-use std::io::{stdout, Stdout, Write};
+use crossterm::style::{Print, SetBackgroundColor, SetForegroundColor};
+use crossterm::{cursor::MoveTo, ExecutableCommand};
+use std::io::{Stdout, Write};
 
 /// Convert a domain RGB to a crossterm colour.
 pub fn crossterm_color(col: Rgb) -> crossterm::style::Color {
@@ -21,7 +18,7 @@ pub fn crossterm_color(col: Rgb) -> crossterm::style::Color {
 }
 
 /// Render a full frame to stdout. Returns the number of cells drawn.
-pub fn render_frame(stdout: &mut Stdout, frame: &Frame) -> crossterm::Result<usize> {
+pub fn render_frame(stdout: &mut Stdout, frame: &Frame) -> std::io::Result<usize> {
     stdout.execute(MoveTo(0, 0))?;
     let mut count: usize = 0;
     let mut current_fg: Option<Rgb> = None;
@@ -31,11 +28,11 @@ pub fn render_frame(stdout: &mut Stdout, frame: &Frame) -> crossterm::Result<usi
         for cell in row {
             if Some(cell.fg) != current_fg {
                 current_fg = Some(cell.fg);
-                stdout.execute(SetForeground(crossterm_color(cell.fg)))?;
+                stdout.execute(SetForegroundColor(crossterm_color(cell.fg)))?;
             }
             if Some(cell.bg) != current_bg {
                 current_bg = Some(cell.bg);
-                stdout.execute(SetBackground(crossterm_color(cell.bg)))?;
+                stdout.execute(SetBackgroundColor(crossterm_color(cell.bg)))?;
             }
             stdout.execute(Print(cell.ch.to_string()))?;
             count += 1;

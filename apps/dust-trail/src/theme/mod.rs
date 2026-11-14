@@ -53,11 +53,15 @@ pub struct Theme {
 
 impl Theme {
     pub fn dark() -> Self {
-        Self { variant: Variant::Dark }
+        Self {
+            variant: Variant::Dark,
+        }
     }
 
     pub fn light() -> Self {
-        Self { variant: Variant::Light }
+        Self {
+            variant: Variant::Light,
+        }
     }
 
     pub fn high_contrast() -> Self {
@@ -90,8 +94,8 @@ impl Theme {
             Role::TextSecondary => Rgb::new(190, 190, 200),
             Role::TextMuted => Rgb::new(120, 120, 128),
             Role::TextDisabled => Rgb::new(90, 90, 96),
-            Role::Accent => Rgb::new(90, 160, 250),
-            Role::AccentHover => Rgb::new(110, 180, 255),
+            Role::Accent => Rgb::new(28, 112, 210),
+            Role::AccentHover => Rgb::new(48, 132, 230),
             Role::AccentOn => Rgb::WHITE,
             Role::Danger => Rgb::new(220, 60, 60),
             Role::DangerOn => Rgb::WHITE,
@@ -124,7 +128,7 @@ impl Theme {
             Role::Warning => Rgb::new(200, 130, 30),
             Role::Success => Rgb::new(40, 160, 90),
             Role::BorderSubtle => Rgb::new(210, 210, 218),
-            Role::BorderStrong => Rgb::new(170, 170, 180),
+            Role::BorderStrong => Rgb::new(60, 60, 70),
             Role::FocusRing => Rgb::new(20, 110, 220),
             Role::OverlayScrim => Rgb::new(0, 0, 0),
             Role::SelectionBg => Rgb::new(20, 110, 220),
@@ -142,8 +146,8 @@ impl Theme {
             Role::TextSecondary => Rgb::WHITE,
             Role::TextMuted => Rgb::WHITE,
             Role::TextDisabled => Rgb::new(120, 120, 120),
-            Role::Accent => Rgb::new(0, 120, 255),
-            Role::AccentHover => Rgb::new(40, 150, 255),
+            Role::Accent => Rgb::new(0, 90, 230),
+            Role::AccentHover => Rgb::new(20, 120, 255),
             Role::AccentOn => Rgb::WHITE,
             Role::Danger => Rgb::new(255, 0, 0),
             Role::DangerOn => Rgb::WHITE,
@@ -160,23 +164,7 @@ impl Theme {
 
     /// Build `egui::Visuals` from this theme (panel fills, selection, etc.).
     pub fn visuals(&self) -> egui::Visuals {
-        let base = self.color32(Role::SurfaceBase);
-        let raised = self.color32(Role::SurfaceRaised);
-        let text = self.color32(Role::TextPrimary);
-        let accent = self.color32(Role::Accent);
-        egui::Visuals {
-            panel_fill: base,
-            window_fill: base,
-            extreme_bg_color: base,
-            faint_bg_color: raised,
-            override_text_color: Some(text),
-            selection_bg_fill: self.color32(Role::SelectionBg),
-            selection_stroke: egui::Stroke::new(1.0, self.color32(Role::SelectionText)),
-            hyperlink_color: accent,
-            warn_fg_color: self.color32(Role::Warning),
-            error_fg_color: self.color32(Role::Danger),
-            ..Default::default()
-        }
+        egui::Visuals::default()
     }
 }
 
@@ -239,7 +227,9 @@ mod tests {
 
     #[test]
     fn black_on_white_is_max() {
-        assert!((contrast(crate::domain::color::Rgb::BLACK, crate::domain::color::Rgb::WHITE) - 21.0).abs() < 0.01);
+        let black = crate::domain::color::Rgb::BLACK;
+        let white = crate::domain::color::Rgb::WHITE;
+        assert!((contrast(black, white) - 21.0).abs() < 0.01);
     }
 
     #[test]
@@ -263,10 +253,7 @@ mod tests {
             // Body text: text.primary on surface.base >= 4.5:1
             let (fg, bg) = Theme::body_on(Role::SurfaceBase);
             let t = contrast(theme.rgb(fg), theme.rgb(bg));
-            assert!(
-                t >= 4.5,
-                "{variant:?} body text contrast {t:.2} < 4.5"
-            );
+            assert!(t >= 4.5, "{variant:?} body text contrast {t:.2} < 4.5");
 
             // UI boundary: border.strong on surface.base >= 3:1
             let t = contrast(theme.rgb(Role::BorderStrong), theme.rgb(Role::SurfaceBase));

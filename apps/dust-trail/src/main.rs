@@ -10,7 +10,7 @@ use dust_trail::gui::Gui;
 use dust_trail::tui::Tui;
 
 fn run_tui() -> Result<(), Box<dyn Error>> {
-    let mut tui = Tui::new().map_err(|e| format!("tui init failed: {e}"))?;
+    let tui = Tui::new().map_err(|e| format!("tui init failed: {e}"))?;
     tui.run().map_err(|e| format!("tui run failed: {e}").into())
 }
 
@@ -23,8 +23,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     // without the user's consent.
     let env = crash_report::Environment::capture(env!("CARGO_PKG_VERSION"));
     let report_path = crash_report::default_report_path();
-    crash_report::install_panic_hook(env, |report| {
-        let _ = std::fs::write(&report_path, report.to_json());
+    let hook_path = report_path.clone();
+    crash_report::install_panic_hook(env, move |report| {
+        let _ = std::fs::write(&hook_path, report.to_json());
     });
 
     // Pick up a report parked by a previous crash so it can be reviewed (stub
@@ -33,9 +34,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         if let Some(report) = crash_report::CrashReport::from_json(&json) {
             eprintln!(
                 "[crash report parked from previous run]: {} v{} — {}",
-                report.environment.os,
-                report.environment.app_version,
-                report.message
+                report.environment.os, report.environment.app_version, report.message
             );
             let _ = std::fs::remove_file(&report_path);
         }
@@ -53,9 +52,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         url,
     } = updater.status()
     {
-        eprintln!(
-            "[update available] Dust Trail {current} → {latest} — {url}"
-        );
+        eprintln!("[update available] Dust Trail {current} → {latest} — {url}");
     }
 
     #[cfg(feature = "gui")]
@@ -72,13 +69,15 @@ fn main() -> Result<(), Box<dyn Error>> {
             options,
             Box::new(|cc| Ok(Box::new(Gui::new(cc)))),
         )
-        .map_err(|e| format!("eframe failed: {e}").into())?;
+        .map_err(|e: eframe::Error| -> Box<dyn Error> { format!("eframe failed: {e}").into() })?;
         return Ok(());
     }
 
     #[cfg(not(feature = "gui"))]
     if want_gui {
-        eprintln!("The `gui` feature is not enabled. Build with: cargo run --features gui -- --gui");
+        eprintln!(
+            "The `gui` feature is not enabled. Build with: cargo run --features gui -- --gui"
+        );
         std::process::exit(2);
     }
 

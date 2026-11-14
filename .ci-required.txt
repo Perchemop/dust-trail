@@ -3,15 +3,15 @@
 # Only these decide ci.sh's verdict; other checks are still reported.
 #
 # These must match the job names in .github/workflows/ci.yml exactly
-# (case-sensitive). A stale entry makes every PR report FAILURE.
+# (case-sensitive, including the matrix `name` value). A stale entry makes
+# every PR report FAILURE.
 check
-Build (windows-latest)
-Build (macos-latest)
-Build (ubuntu-24.04-arm)
+Build (windows-x86_64)
+Build (macos-arm64)
+Build (linux-arm64)
 supply-chain
-packaging-plan
 # Deliberately NOT required (planned for v0.2.0):
 # - Secret scan / Personal data scan: run as an inline step inside `check`
 # - Cargo deny (licences, advisories): planned
 # - SBOM (SPDX + CycloneDX): planned
-# - Dependency review: planned
+# - Dependency review / packaging-plan: planned

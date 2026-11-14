@@ -13,6 +13,7 @@ gui (egui/eframe, feature `gui`)   tui (crossterm)
          |  player.rs, tile.rs     |
          |  cell.rs, frame.rs      |
          |  color.rs (domain RGB)  |
+         |  iso.rs (world->screen isometric projection) |
          |  save.rs (JSON save)    |
          +-------------------------+
               crash-report (panic hook)

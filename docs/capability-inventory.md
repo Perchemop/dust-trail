@@ -5,7 +5,7 @@ implemented / out of scope. Implementation evidence lives in docs/parity.md.
 
 | ID | Capability | Observable behaviour | Acceptance criteria | Status |
 |----|------------|---------------------|---------------------|--------|
-| CAP-01 | ASCII world rendering | Grid of tile glyphs (ground, wall, water, tree, building, door, loot, horse) with player avatar | Frame renders correct glyphs/colours per tile | implemented |
+| CAP-01 | ASCII world rendering | Grid of tile glyphs (ground, wall, water, tree, building, door, loot, horse) with player avatar, laid out in an **isometric diamond projection** | Frame renders correct glyphs/colours per tile at isometric screen positions | implemented |
 | CAP-02 | Turn-based movement | Player moves one tile per input; NPCs act after each turn | `player_can_move_on_ground` test | implemented |
 | CAP-03 | Blocked movement | Cannot enter walls or NPC-occupied tiles | `player_cannot_move_into_wall` test | implemented |
 | CAP-04 | Item collection | Walking onto loot/horse collects it, updates score/mount | `collecting_loot_raises_score` test | implemented |
