@@ -13,6 +13,10 @@ on:
         description: "Tokens consumed by this release (for docs/tokens.json)"
         required: false
         default: "0"
+      tag_name:
+        description: "Tag to release (for manual dispatch; tag push uses GITHUB_REF_NAME)"
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -177,8 +181,9 @@ EOF
       - name: Create draft release
         env:
           GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.event.inputs.tag_name || github.ref_name }}
         run: |
-          TAG="${GITHUB_REF_NAME}"
+          TAG="${RELEASE_TAG}"
           NOTES=$(awk "/## \[${TAG}\]/,/## \[/" CHANGELOG.md | head -60)
           mapfile -t ASSETS < <(find dist -maxdepth 1 -type f)
           gh release create "$TAG" --repo "$GITHUB_REPOSITORY" \
