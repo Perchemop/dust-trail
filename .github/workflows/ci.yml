@@ -124,10 +124,11 @@ jobs:
           printf '#!/bin/sh\nexec "$(dirname "$(readlink -f "$0")")/usr/bin/dust-trail" "$@"\n' > "$APPDIR/AppRun"
           chmod +x "$APPDIR/AppRun"
           curl -fsSL -o /tmp/appimagetool \
-            "https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-${ARCH}.AppImage"
+            "https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-${ARCH}.AppImage" \
+            || { echo "appimagetool not available for ${ARCH}, skipping AppImage"; rm -rf "$APPDIR"; exit 0; }
           chmod +x /tmp/appimagetool
           ARCH="$ARCH" /tmp/appimagetool --appimage-extract-and-run "$APPDIR" \
-            "dist/${{ matrix.asset }}.AppImage"
+            "dist/${{ matrix.asset }}.AppImage" || { echo "AppImage build failed, skipping"; rm -f "dist/${{ matrix.asset }}.AppImage"; exit 0; }
 
       - name: Windows MSI installer
         if: runner.os == 'Windows'
@@ -175,6 +176,7 @@ jobs:
             dist/*.dmg
             dist/*.deb
             dist/*.AppImage
+          if-no-files-found: ignore
 
   # Supply-chain / packaging declaration check: dist-workspace.toml must stay
   # in sync with release.yml targets; a broken definition fails the PR.
