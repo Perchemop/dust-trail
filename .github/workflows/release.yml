@@ -56,8 +56,10 @@ jobs:
             libssl-dev pkg-config \
             libxcb1-dev libxkbcommon-dev libwayland-dev \
             fakeroot dpkg rpm file imagemagick
+      - name: Generate lockfile
+        run: cargo generate-lockfile
       - name: Build release (TUI + GUI)
-        run: cargo build --release --locked --features gui --target ${{ matrix.target }}
+        run: cargo build --release --features gui --target ${{ matrix.target }}
 
       # ----- Windows: .msi installer via cargo-wix -----
       - name: Windows MSI installer
