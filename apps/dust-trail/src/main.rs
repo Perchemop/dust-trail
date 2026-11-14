@@ -33,9 +33,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         if let Some(report) = crash_report::CrashReport::from_json(&json) {
             eprintln!(
                 "[crash report parked from previous run]: {} v{} — {}",
-                report.environment.os,
-                report.environment.app_version,
-                report.message
+                report.environment.os, report.environment.app_version, report.message
             );
             let _ = std::fs::remove_file(&report_path);
         }
@@ -53,9 +51,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         url,
     } = updater.status()
     {
-        eprintln!(
-            "[update available] Dust Trail {current} → {latest} — {url}"
-        );
+        eprintln!("[update available] Dust Trail {current} → {latest} — {url}");
     }
 
     #[cfg(feature = "gui")]
@@ -78,7 +74,9 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     #[cfg(not(feature = "gui"))]
     if want_gui {
-        eprintln!("The `gui` feature is not enabled. Build with: cargo run --features gui -- --gui");
+        eprintln!(
+            "The `gui` feature is not enabled. Build with: cargo run --features gui -- --gui"
+        );
         std::process::exit(2);
     }
 

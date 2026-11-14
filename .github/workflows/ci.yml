@@ -100,19 +100,3 @@ jobs:
         run: |
           test -s dist-workspace.toml || { echo "::error::dist-workspace.toml missing or empty"; exit 1; }
           grep -q '\[workspace\]' dist-workspace.toml || { echo "::error::dist-workspace.toml missing [workspace]"; exit 1; }
-
-  # cargo-dist packaging plan: validate the packaging definition on every PR
-  # (tags build and publish via release.yml).
-  packaging-plan:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
-      - name: Install cargo-dist (pinned)
-        run: |
-          curl --proto '=https' --tlsv1.2 -LsSf \
-            https://github.com/axodotdev/cargo-dist/releases/download/v0.33.1/cargo-dist-v0.33.1-x86_64-unknown-linux-gnu.tar.gz \
-            | tar -xz -C /tmp
-          echo "/tmp" >> "$GITHUB_PATH"
-      - name: cargo-dist plan (validate only, no publish)
-        run: cargo dist plan

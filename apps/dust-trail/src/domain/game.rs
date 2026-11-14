@@ -211,7 +211,12 @@ impl Game {
                 self.message = "You mounted a horse. The trail moves faster now.".to_string();
             }
         }
-        if let Some(item) = self.world.items.iter_mut().find(|i| i.pos == self.player.pos && i.kind == kind && !i.collected) {
+        if let Some(item) = self
+            .world
+            .items
+            .iter_mut()
+            .find(|i| i.pos == self.player.pos && i.kind == kind && !i.collected)
+        {
             item.collected = true;
         }
     }

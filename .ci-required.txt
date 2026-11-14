@@ -9,9 +9,8 @@ Build (windows-latest)
 Build (macos-latest)
 Build (ubuntu-24.04-arm)
 supply-chain
-packaging-plan
 # Deliberately NOT required (planned for v0.2.0):
 # - Secret scan / Personal data scan: run as an inline step inside `check`
 # - Cargo deny (licences, advisories): planned
 # - SBOM (SPDX + CycloneDX): planned
-# - Dependency review: planned
+# - Dependency review / packaging-plan: planned

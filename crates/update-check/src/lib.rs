@@ -20,7 +20,11 @@ pub enum Status {
     /// The running version is up to date.
     UpToDate { current: String, latest: String },
     /// A newer release is available.
-    UpdateAvailable { current: String, latest: String, url: String },
+    UpdateAvailable {
+        current: String,
+        latest: String,
+        url: String,
+    },
     /// The check failed. Fail soft — never block app start.
     Failed { error: String },
 }
@@ -161,8 +165,8 @@ impl Updater {
             .into_string()
             .map_err(|e| format!("read error: {e}"))?;
 
-        let releases: Vec<Release> = serde_json::from_str(&body)
-            .map_err(|e| format!("parse error: {e}"))?;
+        let releases: Vec<Release> =
+            serde_json::from_str(&body).map_err(|e| format!("parse error: {e}"))?;
 
         let current = semver::Version::parse(&self.config.current_version)
             .map_err(|e| format!("version parse error: {e}"))?;

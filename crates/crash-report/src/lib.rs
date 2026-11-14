@@ -23,7 +23,9 @@ impl Environment {
             app_version: app_version.to_string(),
             os: std::env::consts::OS.to_string(),
             arch: std::env::consts::ARCH.to_string(),
-            rustc_version: option_env!("RUSTC_VERSION").unwrap_or("unknown").to_string(),
+            rustc_version: option_env!("RUSTC_VERSION")
+                .unwrap_or("unknown")
+                .to_string(),
         }
     }
 }

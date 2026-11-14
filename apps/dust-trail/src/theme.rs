@@ -239,7 +239,9 @@ mod tests {
 
     #[test]
     fn black_on_white_is_max() {
-        assert!((contrast(crate::domain::color::Rgb::BLACK, crate::domain::color::Rgb::WHITE) - 21.0).abs() < 0.01);
+        let black = crate::domain::color::Rgb::BLACK;
+        let white = crate::domain::color::Rgb::WHITE;
+        assert!((contrast(black, white) - 21.0).abs() < 0.01);
     }
 
     #[test]
@@ -263,10 +265,7 @@ mod tests {
             // Body text: text.primary on surface.base >= 4.5:1
             let (fg, bg) = Theme::body_on(Role::SurfaceBase);
             let t = contrast(theme.rgb(fg), theme.rgb(bg));
-            assert!(
-                t >= 4.5,
-                "{variant:?} body text contrast {t:.2} < 4.5"
-            );
+            assert!(t >= 4.5, "{variant:?} body text contrast {t:.2} < 4.5");
 
             // UI boundary: border.strong on surface.base >= 3:1
             let t = contrast(theme.rgb(Role::BorderStrong), theme.rgb(Role::SurfaceBase));
