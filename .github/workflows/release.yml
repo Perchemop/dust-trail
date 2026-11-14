@@ -1,0 +1,111 @@
+name: Release
+
+# Builds and publishes release artefacts on version tags and on manual dispatch.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      release_tokens:
+        description: "Tokens consumed by this release (for docs/tokens.json)"
+        required: false
+        default: "0"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  build:
+    name: Build (${{ matrix.name }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux-x86_64
+            os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            asset: dust-trail-linux-x86_64
+            archive: zip
+          - name: linux-arm64
+            os: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-gnu
+            asset: dust-trail-linux-arm64
+            archive: zip
+          - name: macos-arm64
+            os: macos-latest
+            target: aarch64-apple-darwin
+            asset: dust-trail-macos-arm64
+            archive: zip
+          - name: windows-x86_64
+            os: windows-latest
+            target: x86_64-pc-windows-msvc
+            asset: dust-trail-windows-x86_64
+            archive: zip
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+        with:
+          target: ${{ matrix.target }}
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
+      - name: Install Linux system dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libssl-dev pkg-config
+      - name: Build release
+        run: cargo build --release --locked --target ${{ matrix.target }}
+      - name: Package artefact
+        id: package
+        run: |
+          case "${{ runner.os }}" in
+            Windows)
+              EXT=exe; ARCHIVE=zip ;;
+            *)
+              EXT=; ARCHIVE=zip ;;
+          esac
+          BIN="target/${{ matrix.target }}/release/dust-trail${EXT:+.$EXT}"
+          mkdir -p dist
+          if [ "$ARCHIVE" = "zip" ]; then
+            (cd "target/${{ matrix.target }}/release" && zip -r "/tmp/${{ matrix.asset }}.zip" "dust-trail${EXT:+.$EXT}")
+            cp "/tmp/${{ matrix.asset }}.zip" dist/
+            echo "asset=dist/${{ matrix.asset }}.zip" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Upload artefact
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ${{ matrix.asset }}
+          path: dist/
+
+  # Create a draft GitHub Release with checksums; a maintainer publishes it.
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Download all artefacts
+        uses: actions/download-artifact@6656a9999d3c29d5eab6a038c14c2fa98a963cf6 # v4.1.2
+        with:
+          path: dist/
+          merge-multiple: true
+      - name: Generate SHA256SUMS.txt
+        run: |
+          cd dist
+          sha256sum * > SHA256SUMS.txt
+      - name: Upload checksums
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: SHA256SUMS
+          path: dist/SHA256SUMS.txt
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          NOTES=$(cat CHANGELOG.md | sed -n "/## \[$TAG\]/,/## \[/p" | head -60)
+          gh release create "$TAG" --repo "$GITHUB_REPOSITORY" \
+            --title "Dust Trail $TAG" \
+            --notes "$NOTES" \
+            --draft \
+            dist/* SHA256SUMS.txt || true

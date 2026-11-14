@@ -1,0 +1,17 @@
+name: Accessibility Report
+description: Report an accessibility issue in Dust Trail
+body:
+  - type: textarea
+    id: barrier
+    attributes:
+      label: Barrier
+      description: What could not be completed (keyboard, screen reader, contrast, focus)?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps
+      description: How to reach the barrier.
+    validations:
+      required: true

@@ -1,0 +1,15 @@
+[package]
+name = "update-check"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.82"
+license = "MIT"
+description = "Shared update checking for Dust Trail suite apps: GitHub Releases API, version comparison, fail-soft offline."
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+# MIT OR Apache-2.0. Small synchronous HTTP client: the app has its own event
+# loop, so no async runtime is needed for a one-shot release check.
+ureq = { version = "3", features = ["json"] }
+semver = "1"

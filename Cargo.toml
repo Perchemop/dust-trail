@@ -1,0 +1,16 @@
+# Dust Trail workspace (guide §7.3): the desktop/TUI app plus shared suite
+# crates that any future app in the suite consumes instead of re-implementing
+# crash reporting and update checking.
+[workspace]
+resolver = "2"
+members = [
+    "apps/dust-trail",
+    "crates/crash-report",
+    "crates/update-check",
+]
+
+# One shared profile keeps release artefacts identical across the suite.
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = true

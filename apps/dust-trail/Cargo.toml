@@ -1,0 +1,41 @@
+[package]
+name = "dust-trail"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.82"
+description = "Dust Trail — original Western-themed ASCII adventure game, playable as TUI and GUI."
+license = "MIT"
+readme = "../../README.md"
+default-run = "dust-trail"
+repository = "https://github.com/Perchemop/dust-trail"
+
+[dependencies]
+# Shared suite crates (guide §7): crash reporting and update checks.
+crash-report = { path = "../../crates/crash-report", version = "0.1.0" }
+update-check = { path = "../../crates/update-check", version = "0.1.0" }
+
+crossterm = "0.27"
+directories = "6"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+tracing = "0.1"
+
+# Optional GUI frontend (egui/eframe 0.37, matching the suite).
+[dependencies.eframe]
+version = "0.37"
+optional = true
+
+[dependencies.egui]
+version = "0.37"
+optional = true
+
+[features]
+default = ["tui"]
+tui = []
+gui = ["dep:eframe", "dep:egui"]
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = true

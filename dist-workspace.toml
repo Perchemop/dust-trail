@@ -1,0 +1,10 @@
+name = "dust-trail"
+
+[workspace]
+resolver = "2"
+members = ["apps/dust-trail", "crates/crash-report", "crates/update-check"]
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = true

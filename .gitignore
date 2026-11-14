@@ -1,0 +1,16 @@
+/target/
+/*.AppImage
+/*.AppImage.*
+/*.deb
+/*.rpm
+/*.snap
+/*.tar.gz
+*.log
+node_modules/
+dist/
+dist-static/
+.idea/
+.vscode/
+**/target/
+/dust-trail-*.tar.gz
+/dust-trail-*.zip
