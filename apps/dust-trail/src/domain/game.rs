@@ -79,8 +79,8 @@ impl Game {
         let mut tile_entries: Vec<(i32, i32, i32, TileType)> = Vec::new();
         for y in 0..self.world.height {
             for x in 0..self.world.width {
-                let wx = x as i32;
-                let wy = y as i32;
+                let wx = x;
+                let wy = y;
                 let tile = self.world.tiles[wy as usize][wx as usize];
                 tile_entries.push((screen_depth(wx, wy), wx, wy, tile));
             }
@@ -406,7 +406,6 @@ mod tests {
 
     #[test]
     fn player_cannot_move_into_wall() {
-        let mut g = Game::new();
         // (1,2) is inside border walls at (0, y); moving left from (2,2) to
         // (1,2)... check border: x=0 is wall. Let's move left from x=2 to x=1
         // which is ground. Move left again to x=0 which is wall.

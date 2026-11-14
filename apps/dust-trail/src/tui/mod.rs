@@ -8,7 +8,7 @@ use crate::tui::renderer::render_frame;
 use crossterm::{
     cursor::{Hide, Show},
     event::{self, Event, KeyCode, KeyEvent, KeyModifiers},
-    terminal::{self, EnterAlternateScreen, LeaveAlternateScreen},
+    terminal::{EnterAlternateScreen, LeaveAlternateScreen},
     ExecutableCommand,
 };
 use directories::ProjectDirs;
@@ -93,7 +93,7 @@ impl Tui {
                 self.step(Direction::Left);
                 Ok(ControlFlow::Continue)
             }
-            KeyCode::Char('d') | KeyCode::Char('l') | KeyCode::Right => {
+            KeyCode::Char('d') | KeyCode::Right => {
                 self.step(Direction::Right);
                 Ok(ControlFlow::Continue)
             }
@@ -136,7 +136,7 @@ impl Tui {
         match self.game.interact() {
             Interaction::None => {}
             Interaction::Blocked { reason } => {
-                self.game.message = format!("{reason}");
+                self.game.message = reason.to_string();
             }
             Interaction::Collected { kind } => {
                 self.game.message = format!("Picked up {:?}.", kind);

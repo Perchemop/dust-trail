@@ -6,7 +6,7 @@ use crate::domain::color::Rgb;
 use crate::domain::frame::Frame;
 use crossterm::style::{Print, SetBackgroundColor, SetForegroundColor};
 use crossterm::{cursor::MoveTo, ExecutableCommand};
-use std::io::{stdout, Stdout, Write};
+use std::io::{Stdout, Write};
 
 /// Convert a domain RGB to a crossterm colour.
 pub fn crossterm_color(col: Rgb) -> crossterm::style::Color {
