@@ -31,6 +31,16 @@ Chat (plan) → Task (execute) → Pull Request (review) → Merge
 
 **This app must always "just work" out of the box.**
 
+### Installable Builds for Every Release
+
+Every release must provide installable build artefacts for every platform the app
+supports. For native Rust applications this means producing platform-specific
+installers (`.msi`/`.exe` on Windows, `.dmg`/`.pkg` on macOS, `.deb`/`.rpm`/
+`.AppImage` on Linux) that users can download and install without needing a Rust
+toolchain installed. A release that consists only of source code or only
+provides source-built binaries is incomplete — the build artefact must be
+consumable directly by end users.
+
 ### Step 1: Pre-flight check (local, no cargo needed)
 
 Before running `ci.sh`, fix the most common CI failures locally. These are
