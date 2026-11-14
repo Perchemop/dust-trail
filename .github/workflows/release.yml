@@ -1,10 +1,9 @@
 name: Release
 
-# Builds and publishes release artefacts on version tags and on manual dispatch.
-# Every release must provide installable build artefacts for every platform:
-# - Windows: .msi installer
-# - macOS: .dmg (AppImage not supported on macOS)
-# - Linux: .AppImage (portable) + .deb/.rpm (native packages)
+# Builds and publishes installable release artefacts on version tags and on
+# manual dispatch. Every release MUST attach platform installers (not a zip of
+# source): Windows .msi, macOS .dmg, Linux .deb + .rpm + .AppImage, plus
+# SHA256SUMS.txt. See AGENTS.md (installable-builds directive).
 on:
   push:
     tags: ["v*"]
@@ -27,30 +26,22 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # Windows: produces .msi installer via cargo-wix
           - name: windows-x86_64
             os: windows-latest
             target: x86_64-pc-windows-msvc
             asset: dust-trail-windows-x86_64
-            installer: wix
-          # macOS: produces .dmg via create-dmg
           - name: macos-arm64
             os: macos-latest
             target: aarch64-apple-darwin
             asset: dust-trail-macos-arm64
-            installer: dmg
-          # Linux x86_64: produces .AppImage, .deb, .rpm
           - name: linux-x86_64
             os: ubuntu-latest
             target: x86_64-unknown-linux-gnu
             asset: dust-trail-linux-x86_64
-            installer: appimage
-          # Linux ARM64: produces .AppImage
           - name: linux-arm64
             os: ubuntu-24.04-arm
             target: aarch64-unknown-linux-gnu
             asset: dust-trail-linux-arm64
-            installer: appimage
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
@@ -63,104 +54,91 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
             libssl-dev pkg-config \
-            libwebkit2gtk-4.1-dev libayatana-appindicator3-dev \
-            librsvg2-dev patchelf fuse libfuse2 \
-            rpm dpkg fakeroot
-      - name: Install macOS system dependencies
+            libxcb1-dev libxkbcommon-dev libwayland-dev \
+            fakeroot dpkg rpm file imagemagick
+      - name: Build release (TUI + GUI)
+        run: cargo build --release --locked --features gui --target ${{ matrix.target }}
+
+      # ----- Windows: .msi installer via cargo-wix -----
+      - name: Windows MSI installer
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          cargo install cargo-wix --locked
+          cargo wix init --force
+          cargo wix --nocapture --target ${{ matrix.target }}
+          mkdir -p dist
+          cp target/wix/*.msi "dist/${{ matrix.asset }}.msi"
+
+      # ----- macOS: .dmg installer via create-dmg -----
+      - name: macOS DMG installer
         if: runner.os == 'macOS'
         run: |
           brew install create-dmg
-      - name: Install Windows system dependencies
-        if: runner.os == 'Windows'
-        run: |
-          choco install wixtoolset --version 3.11.2 --no-progress
-      - name: Build release
-        run: cargo build --release --locked --target ${{ matrix.target }}
-      - name: Package Windows MSI installer
-        if: runner.os == 'Windows' && matrix.installer == 'wix'
-        run: |
-          cargo install cargo-wix --locked
-          cargo wix --release --target ${{ matrix.target }}
-          mkdir -p dist
-          # cargo-wix outputs to target/wix/*.msi
-          cp target/wix/*.msi dist/${{ matrix.asset }}.msi
-          echo "asset=dist/${{ matrix.asset }}.msi" >> "$GITHUB_OUTPUT"
-      - name: Package macOS DMG installer
-        if: runner.os == 'macOS' && matrix.installer == 'dmg'
-        run: |
-          mkdir -p dist
-          # Create app bundle
-          mkdir -p "dist/${{ matrix.asset }}.app/Contents/MacOS"
-          cp "target/${{ matrix.target }}/release/dust-trail" "dist/${{ matrix.asset }}.app/Contents/MacOS/dust-trail"
-          cat > "dist/${{ matrix.asset }}.app/Contents/Info.plist" << 'EOF'
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-              <key>CFBundleExecutable</key>
-              <string>dust-trail</string>
-              <key>CFBundleIdentifier</key>
-              <string>com.dusttrail.app</string>
-              <key>CFBundleName</key>
-              <string>Dust Trail</string>
-              <key>CFBundleVersion</key>
-              <string>${GITHUB_REF_NAME#v}</string>
-              <key>CFBundleShortVersionString</key>
-              <string>${GITHUB_REF_NAME#v}</string>
-              <key>LSMinimumSystemVersion</key>
-              <string>10.15</string>
-          </dict>
-          </plist>
-          EOF
-          # Create DMG
+          VERSION="${GITHUB_REF_NAME#v}"
+          APP="dist/Dust Trail.app"
+          mkdir -p "$APP/Contents/MacOS"
+          cp "target/${{ matrix.target }}/release/dust-trail" "$APP/Contents/MacOS/dust-trail"
+          sed "s/__VERSION__/${VERSION}/g" packaging/macos/Info.plist > "$APP/Contents/Info.plist"
           create-dmg \
-            --volname "Dust Trail ${GITHUB_REF_NAME#v}" \
-            --window-pos 200 120 \
-            --window-size 600 300 \
-            --icon-size 100 \
-            --icon "dist/${{ matrix.asset }}.app" 175 120 \
-            --hide-extension "dist/${{ matrix.asset }}.app" \
+            --volname "Dust Trail ${VERSION}" \
+            --window-pos 200 120 --window-size 600 300 --icon-size 100 \
+            --icon "Dust Trail.app" 175 120 \
+            --hide-extension "Dust Trail.app" \
             --app-drop-link 425 120 \
-            "dist/${{ matrix.asset }}.dmg" \
-            "dist/${{ matrix.asset }}.app"
-          echo "asset=dist/${{ matrix.asset }}.dmg" >> "$GITHUB_OUTPUT"
-      - name: Package Linux AppImage
-        if: runner.os == 'Linux' && matrix.installer == 'appimage'
+            "dist/${{ matrix.asset }}.dmg" "$APP"
+
+      # ----- Linux: .deb, .rpm, .AppImage -----
+      - name: Linux packages (.deb, .rpm, .AppImage)
+        if: runner.os == 'Linux'
+        shell: bash
         run: |
+          mkdir -p dist
           cargo install cargo-deb --locked
           cargo install cargo-generate-rpm --locked
-          cargo install linuxdeploy --locked
-          cargo install linuxdeploy-plugin-appimage --locked
-          # Build AppImage using linuxdeploy
-          mkdir -p dist
-          APPDIR="dist/${{ matrix.asset }}.AppDir"
-          mkdir -p "$APPDIR/usr/bin"
-          cp "target/${{ matrix.target }}/release/dust-trail" "$APPDIR/usr/bin/dust-trail"
-          # Create minimal .desktop file
-          cat > "$APPDIR/dust-trail.desktop" << 'EOF'
-          [Desktop Entry]
-          Type=Application
-          Name=Dust Trail
-          Exec=dust-trail
-          Icon=dust-trail
-          Categories=Game;
-          Terminal=true
-          EOF
-          # Create AppImage
-          export VERSION="${GITHUB_REF_NAME#v}"
-          linuxdeploy --appdir "$APPDIR" --output appimage
-          mv Dust_Trail-*.AppImage "dist/${{ matrix.asset }}.AppImage"
-          echo "asset=dist/${{ matrix.asset }}.AppImage" >> "$GITHUB_OUTPUT"
-          # Also create .deb and .rpm
-          cargo deb --target ${{ matrix.target }} --no-build --deb-version "$VERSION" --output dist/
+          cargo deb --target ${{ matrix.target }} --no-build --output dist/ --deb-revision 1
           cargo generate-rpm --target ${{ matrix.target }} --output dist/
-      - name: Upload artefacts
+          ARCH="$(uname -m)"
+          APPDIR="dist/DustTrail.AppDir"
+          mkdir -p "$APPDIR/usr/bin" "$APPDIR/usr/share/applications" \
+                   "$APPDIR/usr/share/icons/hicolor/256x256/apps"
+          cp "target/${{ matrix.target }}/release/dust-trail" "$APPDIR/usr/bin/dust-trail"
+          cp packaging/linux/dust-trail.desktop "$APPDIR/dust-trail.desktop"
+          cp packaging/linux/dust-trail.desktop "$APPDIR/usr/share/applications/"
+          cp packaging/linux/AppRun "$APPDIR/AppRun"
+          chmod +x "$APPDIR/AppRun"
+          convert -size 256x256 xc:'#5a3b1e' \
+            -fill '#e6c86e' -draw 'polygon 128,32 224,128 128,224 32,128' \
+            "$APPDIR/dust-trail.png"
+          cp "$APPDIR/dust-trail.png" "$APPDIR/usr/share/icons/hicolor/256x256/apps/"
+          curl -fsSL -o /tmp/appimagetool \
+            "https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-${ARCH}.AppImage"
+          chmod +x /tmp/appimagetool
+          ARCH="$ARCH" /tmp/appimagetool --appimage-extract-and-run "$APPDIR" \
+            "dist/${{ matrix.asset }}.AppImage"
+
+      - name: List built installers
+        shell: bash
+        run: ls -la dist/
+
+      - name: Upload installer artefacts
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: ${{ matrix.asset }}
-          path: dist/
+          path: dist/*.msi
+          if-no-files-found: ignore
+      - name: Upload installer artefacts (non-Windows)
+        if: runner.os != 'Windows'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: ${{ matrix.asset }}
+          path: |
+            dist/*.dmg
+            dist/*.deb
+            dist/*.rpm
+            dist/*.AppImage
 
-  # Create a draft GitHub Release with checksums; a maintainer publishes it.
+  # Create a draft GitHub Release with installers + checksums; a maintainer publishes it.
   release:
     needs: build
     runs-on: ubuntu-latest
@@ -174,20 +152,17 @@ jobs:
       - name: Generate SHA256SUMS.txt
         run: |
           cd dist
-          sha256sum * > SHA256SUMS.txt
-      - name: Upload checksums
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: SHA256SUMS
-          path: dist/SHA256SUMS.txt
+          find . -maxdepth 1 -type f -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS.txt
+          cat SHA256SUMS.txt
       - name: Create draft release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           TAG="${GITHUB_REF_NAME}"
-          NOTES=$(cat CHANGELOG.md | sed -n "/## \[$TAG\]/,/## \[/p" | head -60)
+          NOTES=$(awk "/## \[${TAG}\]/,/## \[/" CHANGELOG.md | head -60)
+          mapfile -t ASSETS < <(find dist -maxdepth 1 -type f)
           gh release create "$TAG" --repo "$GITHUB_REPOSITORY" \
             --title "Dust Trail $TAG" \
-            --notes "$NOTES" \
+            --notes "${NOTES:-See CHANGELOG.md}" \
             --draft \
-            dist/* SHA256SUMS.txt || true
+            "${ASSETS[@]}"
