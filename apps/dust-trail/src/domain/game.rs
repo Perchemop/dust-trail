@@ -6,6 +6,7 @@
 use crate::domain::cell::Cell;
 use crate::domain::color::Rgb;
 use crate::domain::frame::Frame;
+use crate::domain::iso::{screen_depth, world_to_screen};
 use crate::domain::player::Player;
 use crate::domain::save::SaveData;
 use crate::domain::tile::TileType;
@@ -67,11 +68,75 @@ impl Game {
 
     /// Render the current state as a Frame for either frontend.
     pub fn frame(&self) -> Frame {
-        let w = self.world.width as usize;
-        let h = self.world.height as usize;
-        let pad = 1;
-        let fw = w + pad * 2;
-        let fh = h + pad * 2 + 3; // +3 for status + message + border
+        // --- Isometric layout ---
+        // World (x, y) -> screen (sx, sy): sx = (x-y)*2, sy = x+y.
+        // Nearer tiles (larger screen depth) are drawn last so they overlap
+        // farther ones (painter's algorithm).
+        let pad = 2;
+        let mut drawn: Vec<(i32, i32, Cell)> = Vec::new();
+
+        // World tiles, back-to-front by screen depth.
+        let mut tile_entries: Vec<(i32, i32, i32, TileType)> = Vec::new();
+        for y in 0..self.world.height {
+            for x in 0..self.world.width {
+                let wx = x as i32;
+                let wy = y as i32;
+                let tile = self.world.tiles[wy as usize][wx as usize];
+                tile_entries.push((screen_depth(wx, wy), wx, wy, tile));
+            }
+        }
+        tile_entries.sort_by_key(|e| e.0);
+        for (_, wx, wy, tile) in tile_entries {
+            let (sx, sy) = world_to_screen(wx, wy);
+            drawn.push((
+                sx,
+                sy,
+                Cell::new(tile.glyph(), tile.fg(), tile.bg()),
+            ));
+        }
+
+        // Items (not collected), drawn over tiles.
+        for item in &self.world.items {
+            if !item.collected && self.world.in_bounds(item.pos) {
+                let (sx, sy) = world_to_screen(item.pos.x, item.pos.y);
+                drawn.push((
+                    sx,
+                    sy,
+                    Cell::new(item.kind.glyph(), item.kind.fg(), Rgb::BLACK),
+                ));
+            }
+        }
+
+        // NPCs, drawn over tiles and items.
+        for npc in &self.world.npcs {
+            if self.world.in_bounds(npc.pos) {
+                let (sx, sy) = world_to_screen(npc.pos.x, npc.pos.y);
+                drawn.push((
+                    sx,
+                    sy,
+                    Cell::new(npc.kind.glyph(), npc.kind.fg(), Rgb::BLACK),
+                ));
+            }
+        }
+
+        // Player on top of everything.
+        if self.world.in_bounds(self.player.pos) {
+            let (sx, sy) = world_to_screen(self.player.pos.x, self.player.pos.y);
+            drawn.push((
+                sx,
+                sy,
+                Cell::new(self.player.glyph(), self.player.fg(), Rgb::BLACK),
+            ));
+        }
+
+        // Bounding box of everything drawn.
+        let min_x = drawn.iter().map(|(sx, _, _)| *sx).min().unwrap_or(0);
+        let min_y = drawn.iter().map(|(_, sy, _)| *sy).min().unwrap_or(0);
+        let max_x = drawn.iter().map(|(sx, _, _)| *sx).max().unwrap_or(0);
+        let max_y = drawn.iter().map(|(_, sy, _)| *sy).max().unwrap_or(0);
+
+        let fw = (max_x - min_x + 1) as usize + pad * 2;
+        let fh = (max_y - min_y + 1) as usize + pad * 2 + 3; // +3 for status+message
         let mut frame = Frame::new(fw, fh);
 
         // Background.
@@ -81,44 +146,20 @@ impl Game {
             }
         }
 
-        // Draw world tiles.
-        for y in 0..h {
-            for x in 0..w {
-                let pos = Pos::new(x as i32, y as i32);
-                let tile = self.world.tiles[y][x];
-                let cell = Cell::new(tile.glyph(), tile.fg(), tile.bg());
-                frame.set(x + pad, y + pad, cell);
+        // Place cells, offset so the bounding-box origin lands at (pad, pad).
+        // Keep the bottom 3 rows free for the status and message lines.
+        let ox = pad as i32 - min_x;
+        let oy = pad as i32 - min_y;
+        for (sx, sy, cell) in drawn {
+            let gx = sx + ox;
+            let gy = sy + oy;
+            if gx >= 0
+                && gy >= 0
+                && (gx as usize) < fw
+                && (gy as usize) < fh.saturating_sub(3)
+            {
+                frame.set(gx as usize, gy as usize, cell);
             }
-        }
-
-        // Draw items (not collected).
-        for item in &self.world.items {
-            if !item.collected && self.world.in_bounds(item.pos) {
-                let c = Cell::new(
-                    item.kind.glyph(),
-                    item.kind.fg(),
-                    Rgb::BLACK,
-                );
-                frame.set(item.pos.x as usize + pad, item.pos.y as usize + pad, c);
-            }
-        }
-
-        // Draw NPCs.
-        for npc in &self.world.npcs {
-            if self.world.in_bounds(npc.pos) {
-                let c = Cell::new(npc.kind.glyph(), npc.kind.fg(), Rgb::BLACK);
-                frame.set(npc.pos.x as usize + pad, npc.pos.y as usize + pad, c);
-            }
-        }
-
-        // Draw player on top.
-        if self.world.in_bounds(self.player.pos) {
-            let c = Cell::new(self.player.glyph(), self.player.fg(), Rgb::BLACK);
-            frame.set(
-                self.player.pos.x as usize + pad,
-                self.player.pos.y as usize + pad,
-                c,
-            );
         }
 
         // Status line.

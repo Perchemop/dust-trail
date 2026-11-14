@@ -157,9 +157,8 @@ impl Updater {
             self.config.owner, self.config.repo
         );
         let body = ureq::get(&url)
-            .set("User-Agent", "dust-trail-update-check")
-            .set("Accept", "application/vnd.github+json")
-            .timeout(std::time::Duration::from_secs(10))
+            .header("User-Agent", "dust-trail-update-check")
+            .header("Accept", "application/vnd.github+json")
             .call()
             .map_err(|e| format!("network error: {e}"))?
             .into_string()
