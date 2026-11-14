@@ -111,7 +111,7 @@ jobs:
           mkdir -p "$DEBDIR/DEBIAN" "$DEBDIR/usr/bin" \
                    "$DEBDIR/usr/share/applications" \
                    "$DEBDIR/usr/share/icons/hicolor/256x256/apps"
-          printf 'Package: dust-trail\nVersion: 0.1.0-1\nSection: games\nPriority: optional\nArchitecture: %s\nMaintainer: Dust Trail Dev <dev@example.com>\nDescription: Original Western-themed ASCII adventure game (TUI + GUI)\n' "$ARCH" > "$DEBDIR/DEBIAN/control"
+          printf 'Package: dust-trail\nVersion: 0.2.0-1\nSection: games\nPriority: optional\nArchitecture: %s\nMaintainer: Dust Trail Dev <dev@example.com>\nDescription: Original Western-themed ASCII adventure game (TUI + GUI)\n' "$ARCH" > "$DEBDIR/DEBIAN/control"
           cp "target/${TRIPLE}/release/dust-trail" "$DEBDIR/usr/bin/dust-trail"
           dpkg-deb --build "$DEBDIR" "dist/${{ matrix.asset }}.deb"
           APPDIR="dist/DustTrail.AppDir"

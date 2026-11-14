@@ -1,9 +1,9 @@
 [package]
 name = "dust-trail"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 rust-version = "1.82"
-description = "Dust Trail — original Western-themed ASCII adventure game, playable as TUI and GUI."
+description = "Dust Trail — original Western-themed 3D isometric ASCII adventure game (GUI)."
 license = "MIT OR Apache-2.0"
 authors = ["Dust Trail Dev <dev@example.com>"]
 readme = "../../README.md"
@@ -44,8 +44,7 @@ maintainer = "Dust Trail Dev <dev@example.com>"
 copyright = "2026 Dust Trail Dev"
 license-file = ["../../LICENSE", "0"]
 extended-description = """Dust Trail is a free, original Western-themed adventure game
-rendered entirely in ASCII. Playable in a terminal (TUI) or as a desktop
-window (GUI). Fully offline; no commercial trademarks or assets."""
+rendered entirely in ASCII. Playable as a desktop window (GUI). Fully offline; no commercial trademarks or assets."""
 section = "games"
 priority = "optional"
 depends = "$auto"
