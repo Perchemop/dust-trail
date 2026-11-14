@@ -23,8 +23,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     // without the user's consent.
     let env = crash_report::Environment::capture(env!("CARGO_PKG_VERSION"));
     let report_path = crash_report::default_report_path();
-    crash_report::install_panic_hook(env, |report| {
-        let _ = std::fs::write(&report_path, report.to_json());
+    let hook_path = report_path.clone();
+    crash_report::install_panic_hook(env, move |report| {
+        let _ = std::fs::write(&hook_path, report.to_json());
     });
 
     // Pick up a report parked by a previous crash so it can be reviewed (stub
