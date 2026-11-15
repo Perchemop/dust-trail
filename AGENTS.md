@@ -99,16 +99,42 @@ Every suite app embeds the shared `update-check` crate and drives **one Updater 
 - Fail soft offline; conditional GETs; handle GitHub rate limit gracefully.
 - **Startup prompt modal:** app icon + accent colour, new version, release notes, exactly three actions:
   - **Update & Restart** — verify, install, then restart through app’s normal close path.
-  - **Download** — open release page (safe https link only; fallback to app’s releases page).
-  - **Later** — dismiss; installation already in progress continues.
-- **Self-update applicability:** Detect install type (macOS `.app`, Windows MSI/zip/standalone, Linux AppImage/deb/rpm/pacman/Flatpak, or standalone). Development builds never self-update. Package-manager-owned copies defer to package manager. Only a packaged copy in supported format self-updates; otherwise download link.
-- **Never replace a running app.** Restart-helper process waits for app to exit, then starts new version.
-- **Staged, then renamed; verify, then activate.** Download → verify (SHA-256 + signature) → stage under hidden name → rename → activate.
-- **Unsaved-work gating:** update restart waits while app holds unsaved work.
-- **Anti-loop marker:** version just installed not re-offered for 24 h.
-- **Failure recovery:** error written to log file shown once at next start.
+  - **Download & Install** — discover the platform-specific installer from the release assets, download to temp, verify SHA-256 against `SHA256SUMS.txt` and the minisign signature, then offer to open the installer. Never auto-installs; the user always confirms. Gated on a verified signature (never offered on Failed or Missing signature state).
+  - **Download** — open the release page; only safe https web links are opened (an unsafe or malformed link falls back to the app’s releases page, which must always be a safe link).
+  - **Later** — dismiss; installation already in progress continues and reports through the updater.
+- **Persistent install requirement.** Every installed release must create a permanent app-drawer / start-menu entry so the app remains visible after installation: a `.desktop` file on Linux, the `.app` bundle in `/Applications` on macOS, and a Start Menu entry on Windows. A raw extracted binary that runs only from `Downloads` does not qualify as installed.
+- **Stale version remediation (before first launch / on update).** Upon detecting a newer release and before activating the staged update, the app must scan the app-drawer / start-menu directory for any previously installed versions of the same app and remove them completely. This ensures that:
+  - Only the current latest version appears in the app drawer / start menu.
+  - Old versions do not consume disk space or confuse the user.
+  - The update process is seamless: the user sees one entry, which is always the current version.
+  - This remediation step runs automatically — the user is never asked to manually remove old versions, nor directed to explore system folders or use package manager commands.
+  - If an old version cannot be removed (e.g. file-in-use, permission issue), the app logs the issue and continues with the new installation; the user is not interrupted or required to take any action.
+- **Self-update applicability (install-type detection).** Detect how the running copy was installed: macOS `.app`, Windows MSI / portable zip / standalone, Linux AppImage / deb / rpm / pacman / Flatpak / standalone. **Development builds never self-update.** A `cargo run`/build-tree copy (Cargo cache markers) gets the download link instead. **Package-manager-owned copies defer to their package manager** (Homebrew, MacPorts, Nix, scoop, winget, Chocolatey, Store, AUR) — in-place replacement would leave their records stale. Only a packaged copy in a supported format self-updates; anything else — and any unsupported platform — gets the **download link**, never a broken half-install.
+- **Never replace a running app.** A restart-helper process waits for the app to exit, finishes anything the OS prevents while running (e.g. Windows locks a running exe), and starts the new version.
+- **Staged, then renamed; verify, then activate.** Download → verify (SHA-256 + signature) → stage under hidden name → rename → activate. A failed step removes the staged copy and leaves the running version untouched.
+- **Unsaved-work gating:** an update restart waits while the app holds unsaved work (“Save or close your open work first; the update restarts the app”).
+- **Anti-loop marker.** A version just installed is recorded with a timestamp and not re-offered for 24 h, so a tag/binary version mismatch cannot loop update → restart → “update available”.
+- **Failure recovery:** a failed self-update writes its error to a log file shown once at the next start; the update stays on offer.
 
-**Opt-out:** Env var / build flag disables update checks entirely for distro packaging.
+**Opt-out and localization**
+- An env var / build flag **disables update checks entirely** for distro packaging (Nix, Flatpak, deb/rpm repositories) — the system package manager owns updates there.
+- All updater messages (prompt, status, failure notes) follow the app’s **interface language**, translated at draw time; network error text passes through as received.
+
+**In-app update GUI (the user’s only update path).** Every suite app must provide an **integrated, one-click update mechanism entirely within the application GUI**. The user must never be directed to a website, GitHub Releases page, command line, or package manager to initiate an update. The update flow is:
+
+1. **Background check:** On startup (once per run), the app quietly checks GitHub Releases API for a newer version. If the app is up to date, no UI is shown.
+2. **Subtle notification:** When a newer release is found, a small, non-intrusive banner/toast appears at the top or bottom of the main window — not a modal that blocks the app. It states: “New version available: X.Y.Z. Select to update.”
+3. **One-click update dialog:** Selecting the banner opens a standardized inline dialog (within the app’s normal window, not a separate modal) with: Current version and new version; Release highlights (Added/Changed/Fixed, derived from release notes); Two buttons: **Update & Restart** and **Later**.
+4. **Update & Restart:** The app performs the full update pipeline internally: Downloads the platform-specific installer to a temp location; Verifies SHA-256 against `SHA256SUMS.txt` and the minisign signature; Runs the stale-version remediation (removes old app-drawer entries); Stages the new version under a hidden name; Renames it into place → Restarts the app automatically (or waits for user launch). All of this happens without the user leaving the app, opening a browser, or running any commands.
+5. **Later:** Dismisses the notification; an installation already in progress continues and reports through the updater.
+
+**Never direct the user to GitHub or a browser for routine updates.** The only exception is if the update flow fails at step 4 after signature verification — in that case, a “Download manually from release page” link may be offered, but this is a failure path, not the normal flow.
+
+**Platform-specific installer detection.** The app detects how it was originally installed (macOS `.app`, Windows `.msi`/portable zip/standalone, Linux AppImage / deb / rpm / pacman / Flatpak / standalone) and only offers self-update for packaged copies in supported formats. Development builds (`cargo run`) and package-manager-owned copies defer to their respective managers.
+
+**Anti-loop marker.** A version just installed is recorded with a timestamp and not re-offered for 24 h, so a tag/binary version mismatch cannot loop update → restart → “update available”.
+
+**Failure recovery.** A failed self-update writes its error to a log file shown once at the next start; the update stays on offer.
 
 ### Release pipeline (draft → publish)
 - Release builds on a `release` branch derived from `main`. Version lives in root `Cargo.toml` workspace package.
