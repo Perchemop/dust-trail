@@ -64,6 +64,7 @@ impl eframe::App for Gui {
         self.render_load_dialog(ui);
     }
 
+    fn toolbar(&mut self, ui: &mut egui::Ui) {
         ui.horizontal(|ui| {
             ui.heading("Dust Trail");
             ui.separator();
@@ -299,12 +300,11 @@ impl eframe::App for Gui {
                                     self.save_load.close_all();
                                 }
                             });
+                        });
                     });
-            }
+            });
     }
-}
 
-impl Gui {
     fn render_load_dialog(&mut self, ui: &mut egui::Ui) {
         if !self.save_load.is_load_dialog_open {
             return;
