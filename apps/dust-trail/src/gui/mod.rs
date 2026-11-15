@@ -8,17 +8,6 @@ use crate::domain::game::{Direction, Game, Interaction};
 use crate::theme::{rgb_to_color32, Role, Theme};
 use eframe::egui;
 
-/// State for save/load dialogs.
-#[derive(Default)]
-pub struct SaveLoadState {
-    is_save_dialog_open: bool,
-    is_load_dialog_open: bool,
-    save_name_input: String,
-    selected_slot: Option<String>,
-    error: Option<String>,
-    last_saved_slot: Option<String>,
-}
-
 /// The GUI frontend.
 pub struct Gui {
     game: Game,
@@ -33,6 +22,7 @@ impl Gui {
             theme: Theme::dark(),
             save_load: SaveLoadState::default(),
         }
+    }
 }
 
 impl eframe::App for Gui {
@@ -51,25 +41,27 @@ impl eframe::App for Gui {
                 ui.horizontal(|ui| {
                     self.render_row(ui, row);
                 });
-                // A zero-height label forces a line break between rows.
                 ui.label("");
             }
         });
 
         ui.separator();
         ui.label(
-            "WASD / arrow keys to move  •  E to interact  •  Save & Load via toolbar  •  Quit to exit",
+            "WASD / arrow keys to move  \u{2022}  E to interact  \u{2022} Save & Load via toolbar  \u{2022} Quit to exit",
         );
         if self.game.game_over {
             ui.colored_label(
                 self.theme.color32(Role::Danger),
                 if self.game.won {
-                    "Outlaw captured — town is safe! Press New Game to play again."
+                    "Outlaw captured \u{2014} town is safe! Press New Game to play again."
                 } else {
                     "The outlaw escaped. Press New Game to play again."
                 },
             );
         }
+
+        self.render_save_dialog(ui);
+        self.render_load_dialog(ui);
     }
 }
 
@@ -241,7 +233,6 @@ impl Gui {
         }
     }
 
-    /// Render the save dialog modal.
     fn render_save_dialog(&mut self, ui: &mut egui::Ui) {
         if !self.save_load.is_save_dialog_open {
             return;
@@ -280,7 +271,10 @@ impl Gui {
                         }
 
                         if let Some(err) = &self.save_load.error {
-                            ui.colored_label(egui::Color32::from_rgb(220, 80, 80), err);
+                            ui.colored_label(
+                                egui::Color32::from_rgb(220, 80, 80),
+                                err,
+                            );
                         }
 
                         ui.add_space(8.0);
@@ -302,7 +296,7 @@ impl Gui {
                                             self.save_load.error = Some(format!("Save failed: {e}"));
                                         }
                                     }
-                                }
+                                });
                             });
                             uis[1].vertical(|ui| {
                                 if ui.button("Cancel").clicked() {
@@ -382,8 +376,44 @@ impl Gui {
                         });
                     });
             });
-    self.render_save_dialog(ui);
-    self.render_load_dialog(ui);
+    }
+
+    }
+    }
+/// State for save/load dialogs.
+#[derive(Default)]
+pub struct SaveLoadState {
+    is_save_dialog_open: bool,
+    is_load_dialog_open: bool,
+    save_name_input: String,
+    selected_slot: Option<String>,
+    error: Option<String>,
+    last_saved_slot: Option<String>,
+}
+
+impl SaveLoadState {
+    pub fn open_save(&mut self) {
+        self.is_save_dialog_open = true;
+        self.is_load_dialog_open = false;
+        self.error = None;
+        if self.save_load.save_name_input.trim().is_empty() {
+            self.save_name_input = "save_1".to_string();
+        }
+        self.selected_slot = None;
+    }
+
+    pub fn open_load(&mut self) {
+        self.is_load_dialog_open = true;
+        self.is_save_dialog_open = false;
+        self.error = None;
+        self.selected_slot = None;
+    }
+
+    pub fn close_all(&mut self) {
+        self.is_save_dialog_open = false;
+        self.is_load_dialog_open = false;
+        self.error = None;
+    }
 }
 
 /// Resolve the save directory (config dir for dust-trail).
@@ -403,7 +433,6 @@ mod tests {
 
     #[test]
     fn rgb_to_color32_roundtrip() {
-        // rgb_to_color32 lives in theme; this just guards the module.
         let _ = crate::theme::rgb_to_color32(crate::domain::color::Rgb::BLACK);
     }
 }
