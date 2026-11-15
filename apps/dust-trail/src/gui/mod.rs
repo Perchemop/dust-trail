@@ -8,10 +8,22 @@ use crate::domain::game::{Direction, Game, Interaction};
 use crate::theme::{rgb_to_color32, Role, Theme};
 use eframe::egui;
 
+/// State for save/load dialogs.
+#[derive(Default)]
+pub struct SaveLoadState {
+    is_save_dialog_open: bool,
+    is_load_dialog_open: bool,
+    save_name_input: String,
+    selected_slot: Option<String>,
+    error: Option<String>,
+    last_saved_slot: Option<String>,
+}
+
 /// The GUI frontend.
 pub struct Gui {
     game: Game,
     theme: Theme,
+    save_load: SaveLoadState,
 }
 
 impl Gui {
@@ -19,8 +31,8 @@ impl Gui {
         Self {
             game: Game::new(),
             theme: Theme::dark(),
+            save_load: SaveLoadState::default(),
         }
-    }
 }
 
 impl eframe::App for Gui {
@@ -70,10 +82,10 @@ impl Gui {
                 self.game = Game::new();
             }
             if ui.button("Save").clicked() {
-                self.save_game();
+                self.save_load.open_save();
             }
             if ui.button("Load").clicked() {
-                self.load_game();
+                self.save_load.open_load();
             }
             if ui.button("Quit").clicked() {
                 ctx_close(ui.ctx());
@@ -195,21 +207,183 @@ impl Gui {
     }
 
     fn save_game(&mut self) {
-        let path = save_dir().join("savegame.json");
-        if let Err(e) = self.game.save(&path) {
+        let path = save_dir().join("saves.json");
+        let slot = self.save_load.save_name_input.trim().to_string();
+        if slot.is_empty() {
+            self.game.message = "Save slot name cannot be empty.".to_string();
+            return;
+        }
+        if let Err(e) = self.game.save_named_to(&slot, &path) {
             self.game.message = format!("Save failed: {e}");
         } else {
-            self.game.message = "Game saved.".to_string();
+            self.save_load.last_saved_slot = Some(slot);
+            self.save_load.is_save_dialog_open = false;
+            self.save_load.save_name_input.clear();
+            self.game.message = format!("Game saved to slot \"{slot}\".");
         }
     }
 
     fn load_game(&mut self) {
-        let path = save_dir().join("savegame.json");
-        match Game::load(&path) {
-            Ok(loaded) => self.game = loaded,
-            Err(e) => self.game.message = format!("Load failed: {e}"),
+        let path = save_dir().join("saves.json");
+        if let Some(slot) = &self.save_load.selected_slot {
+            match Game::load_named_from(slot, &path) {
+                Ok(loaded) => {
+                    self.game = loaded;
+                    self.save_load.last_saved_slot = Some(slot.clone());
+                    self.save_load.is_load_dialog_open = false;
+                    self.save_load.selected_slot = None;
+                    self.game.message = "Game loaded.".to_string();
+                }
+                Err(e) => {
+                    self.save_load.error = Some(format!("Load failed: {e}"));
+                }
+            }
         }
     }
+
+    /// Render the save dialog modal.
+    fn render_save_dialog(&mut self, ui: &mut egui::Ui) {
+        if !self.save_load.is_save_dialog_open {
+            return;
+        }
+
+        egui::Window::new("Save Game")
+            .open(&mut self.save_load.is_save_dialog_open)
+            .default_width(320.0)
+            .show(ui.ctx(), |ui| {
+                ui.label("Save slot name:");
+                ui.text_edit_singleline(&mut self.save_load.save_name_input);
+                ui.add_space(8.0);
+                ui.label("Existing slots:");
+                egui::ScrollArea::vertical()
+                    .max_height(160.0)
+                    .show(ui, |ui| {
+                        match self.game.list_saves() {
+                            Ok(slots) => {
+                                if slots.is_empty() {
+                                    ui.weak("No saves yet.");
+                                }
+                                for slot in &slots {
+                                    let selected = self.save_load.selected_slot.as_deref() == Some(slot.as_str());
+                                    if ui.selectable_label(selected, slot).clicked() {
+                                        self.save_load.selected_slot = Some(slot.clone());
+                                        self.save_load.save_name_input = slot.clone();
+                                    }
+                                }
+                            }
+                            Err(e) => {
+                                ui.colored_label(
+                                    egui::Color32::from_rgb(220, 80, 80),
+                                    format!("Error listing saves: {e}"),
+                                );
+                            }
+                        }
+
+                        if let Some(err) = &self.save_load.error {
+                            ui.colored_label(egui::Color32::from_rgb(220, 80, 80), err);
+                        }
+
+                        ui.add_space(8.0);
+                        ui.columns(2, |uis| {
+                            uis[0].vertical(|ui| {
+                                if ui.add_enabled(
+                                    !self.save_load.save_name_input.trim().is_empty(),
+                                    egui::Button::new("Save"),
+                                ).clicked() {
+                                    let slot = self.save_load.save_name_input.trim().to_string();
+                                    match self.game.save_named_to(&slot, &save_dir().join("saves.json")) {
+                                        Ok(()) => {
+                                            self.save_load.last_saved_slot = Some(slot.clone());
+                                            self.save_load.is_save_dialog_open = false;
+                                            self.save_load.save_name_input.clear();
+                                            self.game.message = format!("Game saved to slot \"{slot}\".");
+                                        }
+                                        Err(e) => {
+                                            self.save_load.error = Some(format!("Save failed: {e}"));
+                                        }
+                                    }
+                                }
+                            });
+                            uis[1].vertical(|ui| {
+                                if ui.button("Cancel").clicked() {
+                                    self.save_load.close_all();
+                                }
+                            });
+                        });
+                    });
+            });
+
+    /// Render the load dialog modal.
+    fn render_load_dialog(&mut self, ui: &mut egui::Ui) {
+        if !self.save_load.is_load_dialog_open {
+            return;
+        }
+
+        egui::Window::new("Load Game")
+            .open(&mut self.save_load.is_load_dialog_open)
+            .default_width(320.0)
+            .show(ui.ctx(), |ui| {
+                ui.label("Select a save slot:");
+                egui::ScrollArea::vertical()
+                    .max_height(200.0)
+                    .show(ui, |ui| {
+                        match self.game.list_saves() {
+                            Ok(slots) => {
+                                if slots.is_empty() {
+                                    ui.weak("No saves yet.");
+                                }
+                                for slot in &slots {
+                                    let selected = self.save_load.selected_slot.as_deref() == Some(slot.as_str());
+                                    if ui.selectable_label(selected, slot).clicked() {
+                                        self.save_load.selected_slot = Some(slot.clone());
+                                    }
+                                }
+                            }
+                            Err(e) => {
+                                ui.colored_label(
+                                    egui::Color32::from_rgb(220, 80, 80),
+                                    format!("Error loading saves: {e}"),
+                                );
+                            }
+                        }
+
+                        if let Some(err) = &self.save_load.error {
+                            ui.colored_label(egui::Color32::from_rgb(220, 80, 80), err);
+                        }
+
+                        ui.add_space(8.0);
+                        ui.columns(2, |uis| {
+                            uis[0].vertical(|ui| {
+                                if ui.add_enabled(
+                                    self.save_load.selected_slot.is_some(),
+                                    egui::Button::new("Load"),
+                                ).clicked() {
+                                    if let Some(slot) = &self.save_load.selected_slot {
+                                        match Game::load_named_from(slot, &save_dir().join("saves.json")) {
+                                            Ok(loaded) => {
+                                                self.game = loaded;
+                                                self.save_load.last_saved_slot = Some(slot.clone());
+                                                self.save_load.is_load_dialog_open = false;
+                                                self.save_load.selected_slot = None;
+                                                self.game.message = "Game loaded.".to_string();
+                                            }
+                                            Err(e) => {
+                                                self.save_load.error = Some(format!("Load failed: {e}"));
+                                            }
+                                        }
+                                    }
+                                });
+                            });
+                            uis[1].vertical(|ui| {
+                                if ui.button("Cancel").clicked() {
+                                    self.save_load.close_all();
+                                }
+                            });
+                        });
+                    });
+            });
+    self.render_save_dialog(ui);
+    self.render_load_dialog(ui);
 }
 
 /// Resolve the save directory (config dir for dust-trail).
