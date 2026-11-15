@@ -135,8 +135,7 @@ impl Gui {
                 pressed,
                 modifiers,
                 ..
-            } = event
-            {
+            } = event {
                 if !pressed {
                     continue;
                 }
@@ -306,8 +305,8 @@ impl Gui {
                         });
                     });
             });
+    }
 
-    /// Render the load dialog modal.
     fn render_load_dialog(&mut self, ui: &mut egui::Ui) {
         if !self.save_load.is_load_dialog_open {
             return;
@@ -376,9 +375,8 @@ impl Gui {
                         });
                     });
             });
-}
-}
     }
+}
 
 /// State for save/load dialogs.
 #[derive(Default)]
