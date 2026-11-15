@@ -376,10 +376,10 @@ impl Gui {
                         });
                     });
             });
+}
+}
     }
 
-    }
-    }
 /// State for save/load dialogs.
 #[derive(Default)]
 pub struct SaveLoadState {
