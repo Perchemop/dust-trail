@@ -61,7 +61,10 @@ impl fmt::Display for SaveSlotError {
         match self {
             Self::EmptyName => write!(f, "save slot name must not be empty"),
             Self::NameTooLong { len, max } => {
-                write!(f, "save slot name has {len} characters; the maximum is {max}")
+                write!(
+                    f,
+                    "save slot name has {len} characters; the maximum is {max}"
+                )
             }
             Self::InvalidCharacter { ch } => {
                 write!(f, "save slot name has an unsupported character {ch:?}")
@@ -267,7 +270,9 @@ impl SaveStore {
         let found = slots.format_version;
         let limit = SAVE_SLOTS_FORMAT_VERSION;
         if found > limit {
-            return Err(format!("save format {found} is newer than supported ({limit})"));
+            return Err(format!(
+                "save format {found} is newer than supported ({limit})"
+            ));
         }
         Ok(slots)
     }
