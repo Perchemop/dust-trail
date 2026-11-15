@@ -5,13 +5,12 @@
 
 use crate::domain::cell::Cell;
 use crate::domain::game::{Direction, Game, Interaction};
-use crate::theme::{rgb_to_color32, Role, Theme};
+use crate::theme::rgb_to_color32;
 use eframe::egui;
 
 /// The GUI frontend.
 pub struct Gui {
     game: Game,
-    theme: Theme,
     save_load: SaveLoadState,
 }
 
@@ -19,7 +18,6 @@ impl Gui {
     pub fn new(_cc: &eframe::CreationContext) -> Self {
         Self {
             game: Game::new(),
-            theme: Theme::dark(),
             save_load: SaveLoadState::default(),
         }
     }
@@ -352,7 +350,7 @@ impl SaveLoadState {
         self.is_save_dialog_open = true;
         self.is_load_dialog_open = false;
         self.error = None;
-        if self.save_load.save_name_input.trim().is_empty() {
+        if self.save_name_input.trim().is_empty() {
             self.save_name_input = "save_1".to_string();
         }
         self.selected_slot = None;
