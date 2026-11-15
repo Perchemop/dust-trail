@@ -305,6 +305,7 @@ impl eframe::App for Gui {
             });
     }
 
+impl Gui {
     fn render_load_dialog(&mut self, ui: &mut egui::Ui) {
         if !self.save_load.is_load_dialog_open {
             return;
