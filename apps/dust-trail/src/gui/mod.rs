@@ -23,46 +23,6 @@ impl Gui {
             save_load: SaveLoadState::default(),
         }
     }
-}
-
-impl eframe::App for Gui {
-    fn logic(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-        self.handle_keyboard(ctx);
-    }
-
-    fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
-        self.toolbar(ui);
-        ui.separator();
-
-        let frame = self.game.frame();
-
-        egui::ScrollArea::both().show(ui, |ui| {
-            for (_y, row) in frame.rows() {
-                ui.horizontal(|ui| {
-                    self.render_row(ui, row);
-                });
-                ui.label("");
-            }
-        });
-
-        ui.separator();
-        ui.label(
-            "WASD / arrow keys to move  \u{2022}  E to interact  \u{2022} Save & Load via toolbar  \u{2022} Quit to exit",
-        );
-        if self.game.game_over {
-            ui.colored_label(
-                self.theme.color32(Role::Danger),
-                if self.game.won {
-                    "Outlaw captured \u{2014} town is safe! Press New Game to play again."
-                } else {
-                    "The outlaw escaped. Press New Game to play again."
-                },
-            );
-        }
-
-        self.render_save_dialog(ui);
-        self.render_load_dialog(ui);
-    }
 
     fn toolbar(&mut self, ui: &mut egui::Ui) {
         ui.horizontal(|ui| {
