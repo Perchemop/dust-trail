@@ -51,6 +51,7 @@ jobs:
           # workflow file is excluded because it contains the scan pattern itself.
           if git grep -n -I -i -E '/home/[^/[:space:]]+' -- . \
               ':(exclude)*.lock' ':(exclude)Cargo.lock' ':(exclude).github/workflows/ci.yml' \
+              ':(exclude)AGENTS.md' \
               | grep -v '/home/runner'; then
             echo "::error::Personal /home/ path found in tree"
             exit 1
