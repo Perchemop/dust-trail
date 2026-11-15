@@ -935,128 +935,14 @@ Every GUI/UX answer contains, in this order:
 
 ### II.30.14 Non-goals
 
-**1. Harsh gradients**
-**Why it's bad:** High-contrast, multi-stop gradients (especially purple-to-blue or neon) are the #1 visual fingerprint of AI-generated sites. They feel artificial and overused.  
-**Better:** Soft, single-direction gradients with low contrast, or solid colors with subtle texture/noise. Prefer flat or very restrained color transitions.
-
-**2. Lucide icons**
-**Why it's bad:** Lucide became the default icon set for shadcn/Tailwind projects. Using it unchanged makes your UI look identical to thousands of other AI sites.  
-**Better:** Choose a distinctive icon set (Phosphor, Tabler, Heroicons, Remix, or custom icons). Or mix styles intentionally.
-
-**3. Pure white background**
-**Why it's bad:** Stark `#FFFFFF` with no warmth feels clinical and template-like.  
-**Better:** Slightly off-white, warm cream, cool gray, or very dark backgrounds. Give the page some temperature.
-
-**4. Rainbow coloring**
-**Why it's bad:** Random multi-color accents with no hierarchy look chaotic and unprofessional.  
-**Better:** Strict 1–2 accent colors maximum. Everything else should be neutral.
-
-**5. Drop shadows**
-**Why it's bad:** Soft, diffuse, multi-layer shadows on every card are a classic AI default.  
-**Better:** Very subtle shadows, hard shadows, or no shadows at all (use borders or background contrast instead).
-
-**6. 3 feature cards in a row**
-**Why it's bad:** The most overused layout pattern in AI landing pages. Instantly recognizable.  
-**Better:** Asymmetric layouts, 2-column, 4-column, zig-zag, or editorial-style feature sections.
-
-**7. Emojis**
-**Why it's bad:** Emojis as icons or in headings feel playful but lazy and unprofessional in product UI.  
-**Better:** Real icons or custom illustrations. Use emojis sparingly (if at all) for tone, never as primary UI icons.
-
-**8. Liquid glass**
-**Why it's bad:** Heavy glassmorphism (blur + transparency + border) became the new purple gradient. It ages quickly.  
-**Better:** Solid surfaces with clear hierarchy, or very light glass used only on specific elements (e.g. floating nav).
-
-**9. Em dashes**
-**Why it's bad:** AI models overuse em dashes (—) in marketing copy. It's a subtle but strong writing tell.  
-**Better:** Use commas, periods, or rephrase. Prefer shorter, punchier sentences.
-
-**10. Inter / Geist / Space Grotesk**
-**Why it's bad:** These three fonts dominate AI-generated sites. Using them as the main typeface makes your site blend in.  
-**Better:** Pair a distinctive display font with a clean body font. Or use a single high-quality typeface with strong personality.
-
-**11. Colored left stripe**
-**Why it's bad:** Thin colored vertical bars on the left of cards/sections is a very common AI decorative habit.  
-**Better:** Use background color, borders, or spacing for hierarchy instead of decorative stripes.
-
-**12. Fake testimonials**
-**Why it's bad:** Invented names + generic praise + stock avatars destroy trust the moment someone notices.  
-**Better:** Real testimonials only, or none. Use logos of real companies, usage metrics, or case studies instead.
-
-**13. Bento grids**
-**Why it's bad:** Once distinctive, now heavily overused in AI designs.  
-**Better:** Use them only if they genuinely serve the content. Prefer more classic or asymmetric layouts when possible.
-
-**14. Terminal window**
-**Why it's bad:** Decorative terminal/code windows are a cliché for "developer tool" landing pages.  
-**Better:** Show the real product UI, actual screenshots, or a clean interactive demo instead.
-
-**15. "It's not X, it's Y"**
-**Why it's bad:** Extremely common AI copy pattern ("It's not just a tool, it's a...") that feels formulaic.  
-**Better:** Be direct. State what the product actually does without the rhetorical contrast.
-
-**16. Checkmark bullets**
-**Why it's bad:** Green checkmarks in circles are the default "feature list" treatment in AI output.  
-**Better:** Custom icons, numbers, simple dashes, or just strong typography hierarchy.
-
-**17. 3 pricing tiers**
-**Why it's bad:** The classic Free / Pro / Enterprise (or Starter / Growth / Scale) layout is the most templated pricing section.  
-**Better:** 2 tiers, usage-based, or a single clear plan with add-ons. Make the pricing structure match how you actually charge.
-
-**18. No real product demos**
-**Why it's bad:** Sites that only show abstract illustrations or generic mockups feel incomplete.  
-**Better:** Real screenshots, short product videos, interactive demos, or Loom-style walkthroughs.
-
-**19. Soft corner radius**
-**Why it's bad:** Uniform large border-radius on every element creates a soft, indistinct "AI aesthetic."  
-**Better:** Mix radii intentionally (sharp + soft), or go fully sharp for a more editorial feel.
-
-**20. Purple and black**
-**Why it's bad:** The dominant AI color combination for years. Extremely recognizable.  
-**Better:** Choose a unique primary color that fits the brand. Avoid defaulting to purple/violet/indigo.
-
-**21. No skeleton loaders**
-**Why it's bad:** Missing loading states make the app feel unfinished or janky.  
-**Better:** Always include proper skeleton screens or subtle loading indicators for async content.
-
-**22. Radial orbs**
-**Why it's bad:** Glowing circular blurs in the background are a classic decorative AI filler.  
-**Better:** Subtle noise, grain, geometric shapes, or just clean solid backgrounds.
-
-**23. Dot grids**
-**Why it's bad:** Dot grid patterns as backgrounds became a very common "modern" AI decoration.  
-**Better:** Minimal backgrounds. Use texture sparingly and purposefully.
-
-**24. Sparkle icons**
-**Why it's bad:** Sparkles / stars / ✨ used as decorative icons scream AI-generated.  
-**Better:** Meaningful icons only. Avoid decorative sparkles entirely.
-
-**25. Animated arrows**
-**Why it's bad:** Looping or bouncing arrows are a cheap way to add motion that quickly feels gimmicky.  
-**Better:** Purposeful micro-interactions. Motion should support usability, not just look "alive."
-
-**26. No TOS**
-**Why it's bad:** Missing legal pages signals the site was thrown together quickly.  
-**Better:** Always include Terms of Service (even a simple one).
-
-**27. No privacy policy**
-**Why it's bad:** Same as above — looks incomplete and can create real legal risk.  
-**Better:** Always ship a Privacy Policy.
-
-**28. Hover animations**
-**Why it's bad:** Adding hover effects to every element creates visual noise and feels unrefined.  
-**Better:** Selective, purposeful hover states only on interactive elements that benefit from them.
-
-**29. Neon colors**
-**Why it's bad:** High-saturation neon accents feel dated and "trying too hard."  
-**Better:** Muted or mid-saturation accents. Save high intensity for rare, intentional moments.
-
-**29. Basic pastel colors**
-**Why it's bad:** Soft pastel palettes (especially the common blue/pink/mint/yellow card sets) are heavily overused in AI designs.  
-**Better:** More intentional, slightly desaturated, or higher-contrast color systems with personality.
-
-**30. One-line directive**
-Treat the list above as hard constraints. When in doubt, choose the less common, more intentional option.
+**1. Astryx, React, StyleX or any CSS design system inside a native Rust GUI.**
+**2. Two competing egui design systems in one binary.**
+**3. Rebuilding the app shell around a framework without an explicit migration task and client approval.**
+**4. Copying the inspiration product's pixels, icons, fonts, string tables or presets (II.27.2).**
+**5. An emoji set standing in for an icon system; icons are original SVG under `assets/`, licensed and listed in `ATTRIBUTION.md`.**
+**6. A toolkit or design-crate version bump hidden inside a UX slice.**
+**7. "Design improved" claimed without contrast, keyboard or rendered evidence.**
+**8. Any heavy build, test or `cargo` command on the client machine (II.27.10).**
 
 ### II.30.15 Definition of done for a UX slice (adds to II.24.1)
 - [ ] Stack and resolved version recorded; no crate outside its supported egui version.
@@ -1191,6 +1077,163 @@ The following 30 items are common visual, typographic, and layout signals that i
 
 ### II.30.30 One-line directive
 Treat the list above as hard constraints. When in doubt, choose the less common, more intentional option.
+
+## XI. Design Guidelines (design-guidelines.md)
+
+This section transcribes `~/design-guidelines.md` — the canonical source for visual and interaction design rules used by agents working on guide.md-governed projects.
+
+Agents should apply the positive patterns in Section 2 first, then run the anti-pattern list as a rejection filter before shipping UI.
+
+### XI.1 Design Anti-Patterns — "Vibecoded" Signals & Intentional Alternatives
+
+The following 30 items are common visual, typographic, and layout signals that indicate AI-generated ("vibecoded") design. When present, they signal the designer relied on default templates rather than intentional design decisions. Use this as a hardening checklist — avoid all 30, or deliberately subvert them with purpose.
+
+**1. Harsh gradients**
+**Why it's bad:** High-contrast, multi-stop gradients (especially purple-to-blue or neon) are the #1 visual fingerprint of AI-generated sites. They feel artificial and overused.  
+**Better:** Soft, single-direction gradients with low contrast, or solid colors with subtle texture/noise. Prefer flat or very restrained color transitions.
+
+**2. Lucide icons**
+**Why it's bad:** Lucide became the default icon set for shadcn/Tailwind projects. Using it unchanged makes your UI look identical to thousands of other AI sites.  
+**Better:** Choose a distinctive icon set (Phosphor, Tabler, Heroicons, Remix, or custom icons). Or mix styles intentionally.
+
+**3. Pure white background**
+**Why it's bad:** Stark `#FFFFFF` with no warmth feels clinical and template-like.  
+**Better:** Slightly off-white, warm cream, cool gray, or very dark backgrounds. Give the page some temperature.
+
+**4. Rainbow coloring**
+**Why it's bad:** Random multi-color accents with no hierarchy look chaotic and unprofessional.  
+**Better:** Strict 1–2 accent colors maximum. Everything else should be neutral.
+
+**5. Drop shadows**
+**Why it's bad:** Soft, diffuse, multi-layer shadows on every card are a classic AI default.  
+**Better:** Very subtle shadows, hard shadows, or no shadows at all (use borders or background contrast instead).
+
+**6. 3 feature cards in a row**
+**Why it's bad:** The most overused layout pattern in AI landing pages. Instantly recognizable.  
+**Better:** Asymmetric layouts, 2-column, 4-column, zig-zag, or editorial-style feature sections.
+
+**7. Emojis**
+**Why it's bad:** Emojis as icons or in headings feel playful but lazy and unprofessional in product UI.  
+**Better:** Real icons or custom illustrations. Use emojis sparingly (if at all) for tone, never as primary UI icons.
+
+**8. Liquid glass**
+**Why it's bad:** Heavy glassmorphism (blur + transparency + border) became the new purple gradient. It ages quickly.  
+**Better:** Solid surfaces with clear hierarchy, or very light glass used only on specific elements (e.g. floating nav).
+
+**9. Em dashes**
+**Why it's bad:** AI models overuse em dashes (—) in marketing copy. It's a subtle but strong writing tell.  
+**Better:** Use commas, periods, or rephrase. Prefer shorter, punchier sentences.
+
+**10. Inter / Geist / Space Grotesk**
+**Why it's bad:** These three fonts dominate AI-generated sites. Using them as the main typeface makes your site blend in.  
+**Better:** Pair a distinctive display font with a clean body font. Or use a single high-quality typeface with strong personality.
+
+**11. Colored left stripe**
+**Why it's bad:** Thin colored vertical bars on the left of cards/sections is a very common AI decorative habit.  
+**Better:** Use background color, borders, or spacing for hierarchy instead of decorative stripes.
+
+**12. Fake testimonials**
+**Why it's bad:** Invented names + generic praise + stock avatars destroy trust the moment someone notices.  
+**Better:** Real testimonials only, or none. Use logos of real companies, usage metrics, or case studies instead.
+
+**13. Bento grids**
+**Why it's bad:** Once distinctive, now heavily overused in AI designs.  
+**Better:** Use them only if they genuinely serve the content. Prefer more classic or asymmetric layouts when possible.
+
+**14. Terminal window**
+**Why it's bad:** Decorative terminal/code windows are a cliché for "developer tool" landing pages.  
+**Better:** Show the real product UI, actual screenshots, or a clean interactive demo instead.
+
+**15. "It's not X, it's Y"**
+**Why it's bad:** Extremely common AI copy pattern ("It's not just a tool, it's a...") that feels formulaic.  
+**Better:** Be direct. State what the product actually does without the rhetorical contrast.
+
+**16. Checkmark bullets**
+**Why it's bad:** Green checkmarks in circles are the default "feature list" treatment in AI output.  
+**Better:** Custom icons, numbers, simple dashes, or just strong typography hierarchy.
+
+**17. 3 pricing tiers**
+**Why it's bad:** The classic Free / Pro / Enterprise (or Starter / Growth / Scale) layout is the most templated pricing section.  
+**Better:** 2 tiers, usage-based, or a single clear plan with add-ons. Make the pricing structure match how you actually charge.
+
+**18. No real product demos**
+**Why it's bad:** Sites that only show abstract illustrations or generic mockups feel incomplete.  
+**Better:** Real screenshots, short product videos, interactive demos, or Loom-style walkthroughs.
+
+**19. Soft corner radius**
+**Why it's bad:** Uniform large border-radius on every element creates a soft, indistinct "AI aesthetic."  
+**Better:** Mix radii intentionally (sharp + soft), or go fully sharp for a more editorial feel.
+
+**20. Purple and black**
+**Why it's bad:** The dominant AI color combination for years. Extremely recognizable.  
+**Better:** Choose a unique primary color that fits the brand. Avoid defaulting to purple/violet/indigo.
+
+**21. No skeleton loaders**
+**Why it's bad:** Missing loading states make the app feel unfinished or janky.  
+**Better:** Always include proper skeleton screens or subtle loading indicators for async content.
+
+**22. Radial orbs**
+**Why it's bad:** Glowing circular blurs in the background are a classic decorative AI filler.  
+**Better:** Subtle noise, grain, geometric shapes, or just clean solid backgrounds.
+
+**23. Dot grids**
+**Why it's bad:** Dot grid patterns as backgrounds became a very common "modern" AI decoration.  
+**Better:** Minimal backgrounds. Use texture sparingly and purposefully.
+
+**24. Sparkle icons**
+**Why it's bad:** Sparkles / stars / ✨ used as decorative icons scream AI-generated.  
+**Better:** Meaningful icons only. Avoid decorative sparkles entirely.
+
+**25. Animated arrows**
+**Why it's bad:** Looping or bouncing arrows are a cheap way to add motion that quickly feels gimmicky.  
+**Better:** Purposeful micro-interactions. Motion should support usability, not just look "alive."
+
+**26. No TOS**
+**Why it's bad:** Missing legal pages signals the site was thrown together quickly.  
+**Better:** Always include Terms of Service (even a simple one).
+
+**27. No privacy policy**
+**Why it's bad:** Same as above — looks incomplete and can create real legal risk.  
+**Better:** Always ship a Privacy Policy.
+
+**28. Hover animations**
+**Why it's bad:** Adding hover effects to every element creates visual noise and feels unrefined.  
+**Better:** Selective, purposeful hover states only on interactive elements that benefit from them.
+
+**29. Neon colors**
+**Why it's bad:** High-saturation neon accents feel dated and "trying too hard."  
+**Better:** Muted or mid-saturation accents. Save high intensity for rare, intentional moments.
+
+**30. Basic pastel colors**
+**Why it's bad:** Soft pastel palettes (especially the common blue/pink/mint/yellow card sets) are heavily overused in AI designs.  
+**Better:** More intentional, slightly desaturated, or higher-contrast color systems with personality.
+
+**Pro tip:** Treat the list above as hard constraints. When in doubt, choose the less common, more intentional option.
+
+### XI.2 High-Quality UI Patterns
+
+See `design-guidelines.md` **Section 2** for 20 practical patterns that raise perceived quality, responsiveness, and trust.
+
+**Applicability for the suite’s native Rust + egui stack:**
+
+| Pattern | Native (egui) fit | Web fit |
+|---------|-------------------|---------|
+| Skeleton loaders, Optimistic updates, Command menu, Shortcut hints, Undo toasts, Interruptible animations, Hit slop, Tabular numbers, Continuous corners, Idempotency keys | Excellent | Excellent |
+| Stale-while-revalidate, Safe area insets, Balanced headlines | Good | Excellent |
+| Pre-rendering, BlurHash placeholders, View transitions, Swipe-to-dismiss sheets, Predictive back, One-time code autofill, Amazon safe triangle | Limited / N/A | Excellent |
+
+**Agent guidance:**
+
+1. Prefer the patterns in Section 2 that fit the current stack (native egui first; web patterns apply only when the project has a web frontend).
+2. After implementing UI, run the anti-pattern checklist in Section XI.1 as a rejection filter.
+3. When in doubt, choose the less common, more intentional option.
+
+### XI.3 Design Guidelines Synchronization
+
+- `design-guidelines.md` is the canonical source for visual and interaction design rules.
+- This section is reviewed every section in complete detail per **guide.md §12.3**.
+- Updates to `design-guidelines.md` must be reflected in AGENTS.md within the same session cycle.
+- The anti-pattern checklist and high-quality patterns are enforced through the CI code-review gate.
 
 ## Questions and user input — always presented via the question tool
 If you need a decision, a clarification, or any input from the owner, **present
