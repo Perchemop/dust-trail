@@ -63,9 +63,7 @@ impl eframe::App for Gui {
         self.render_save_dialog(ui);
         self.render_load_dialog(ui);
     }
-}
 
-impl Gui {
     fn toolbar(&mut self, ui: &mut egui::Ui) {
         ui.horizontal(|ui| {
             ui.heading("Dust Trail");
