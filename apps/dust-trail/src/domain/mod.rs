@@ -10,6 +10,7 @@ pub mod game;
 pub mod iso;
 pub mod player;
 pub mod save;
+pub mod slots;
 pub mod tile;
 pub mod world;
 
@@ -20,5 +21,6 @@ pub use game::Game;
 pub use iso::world_to_screen;
 pub use player::Player;
 pub use save::SaveData;
+pub use slots::{SaveSlotError, SaveSlotMeta, SaveSlots, SaveStore};
 pub use tile::TileType;
 pub use world::World;

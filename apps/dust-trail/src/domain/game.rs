@@ -3,12 +3,15 @@
 //!
 //! Clean-room: original mechanics; nothing copied from a commercial product.
 
+use std::path::Path;
+
 use crate::domain::cell::Cell;
 use crate::domain::color::Rgb;
 use crate::domain::frame::Frame;
 use crate::domain::iso::{screen_depth, world_to_screen};
 use crate::domain::player::Player;
 use crate::domain::save::SaveData;
+use crate::domain::slots::SaveStore;
 use crate::domain::tile::TileType;
 use crate::domain::world::{default_world, ItemKind, Pos, World};
 
@@ -314,7 +317,10 @@ impl Game {
     }
 
     /// Save the game to a JSON file at `path`.
-    pub fn save(&mut self, path: &std::path::Path) -> Result<(), String> {
+    ///
+    /// This is the legacy single-file save. For named save slots use
+    /// [`Game::save_named`].
+    pub fn save(&mut self, path: &Path) -> Result<(), String> {
         let save = SaveData::new(self);
         let json =
             serde_json::to_string_pretty(&save).map_err(|e| format!("serialise error: {e}"))?;
@@ -324,18 +330,86 @@ impl Game {
     }
 
     /// Load the game from a JSON file at `path`.
-    pub fn load(path: &std::path::Path) -> Result<Self, String> {
+    ///
+    /// This is the legacy single-file save. For named save slots use
+    /// [`Game::load_named`].
+    pub fn load(path: &Path) -> Result<Self, String> {
         let json = std::fs::read_to_string(path).map_err(|e| format!("read error: {e}"))?;
         let save: SaveData =
             serde_json::from_str(&json).map_err(|e| format!("parse error: {e}"))?;
-        Ok(Self {
+        Ok(Self::from_save_data(save))
+    }
+
+    /// Build a playable game from a deserialised snapshot.
+    ///
+    /// End-of-game flags are not part of a save, so a loaded game always
+    /// resumes as playable.
+    pub fn from_save_data(save: SaveData) -> Self {
+        Self {
             world: save.world,
             player: save.player,
             turn: save.turn,
             message: "Game loaded.".to_string(),
             game_over: false,
             won: false,
-        })
+        }
+    }
+
+    /// Save the game into the named slot of the default slot document.
+    pub fn save_named(&mut self, slot: &str) -> Result<(), String> {
+        self.save_named_to(slot, &SaveStore::default_path())
+    }
+
+    /// Save the game into the named slot of the slot document at `path`.
+    ///
+    /// The slot name is trimmed and validated first; an existing slot of the
+    /// same name is overwritten.
+    pub fn save_named_to(&mut self, slot: &str, path: &Path) -> Result<(), String> {
+        let store = SaveStore::new(path);
+        let saved_as = store.save_data(slot, SaveData::with_slot(self, slot))?;
+        self.message = format!("Game saved to slot \"{saved_as}\".");
+        Ok(())
+    }
+
+    /// Load the game from the named slot of the default slot document.
+    pub fn load_named(slot: &str) -> Result<Self, String> {
+        Self::load_named_from(slot, &SaveStore::default_path())
+    }
+
+    /// Load the game from the named slot of the slot document at `path`.
+    pub fn load_named_from(slot: &str, path: &Path) -> Result<Self, String> {
+        let store = SaveStore::new(path);
+        Ok(Self::from_save_data(store.load_data(slot)?))
+    }
+
+    /// Names of the save slots in the default slot document, alphabetically.
+    pub fn list_saves() -> Result<Vec<String>, String> {
+        Self::list_saves_at(&SaveStore::default_path())
+    }
+
+    /// Names of the save slots in the slot document at `path`, alphabetically.
+    pub fn list_saves_at(path: &Path) -> Result<Vec<String>, String> {
+        SaveStore::new(path).list_saves()
+    }
+
+    /// Delete the named slot from the default slot document.
+    pub fn delete_save(slot: &str) -> Result<(), String> {
+        Self::delete_save_at(slot, &SaveStore::default_path())
+    }
+
+    /// Delete the named slot from the slot document at `path`.
+    pub fn delete_save_at(slot: &str, path: &Path) -> Result<(), String> {
+        SaveStore::new(path).delete_save(slot)
+    }
+
+    /// Whether the named slot exists in the default slot document.
+    pub fn save_exists(slot: &str) -> bool {
+        Self::save_exists_at(slot, &SaveStore::default_path())
+    }
+
+    /// Whether the named slot exists in the slot document at `path`.
+    pub fn save_exists_at(slot: &str, path: &Path) -> bool {
+        SaveStore::new(path).save_exists(slot)
     }
 
     /// Advance NPCs one turn. Deterministic (based on turn count) so the game
@@ -455,5 +529,165 @@ mod tests {
         }
         let res = g.interact();
         assert!(matches!(res, Interaction::Talked { .. }));
+    }
+
+    /// A unique, empty scratch directory for one headless slot test.
+    fn scratch(tag: &str) -> std::path::PathBuf {
+        let name = format!("dust-trail-game-{}-{tag}", std::process::id());
+        let dir = std::env::temp_dir().join(name);
+        let _ = std::fs::remove_dir_all(&dir);
+        let _ = std::fs::create_dir_all(&dir);
+        dir
+    }
+
+    #[test]
+    fn test_save_and_load_multiple_slots() {
+        let dir = scratch("multi");
+        let path = dir.join("saves.json");
+
+        let mut alpha = Game::new();
+        alpha.move_player(Direction::Right);
+        alpha.save_named_to("alpha", &path).expect("save alpha");
+
+        let mut beta = Game::new();
+        beta.move_player(Direction::Left);
+        beta.move_player(Direction::Down);
+        beta.save_named_to("beta", &path).expect("save beta");
+
+        let loaded_alpha = Game::load_named_from("alpha", &path).expect("load alpha");
+        let loaded_beta = Game::load_named_from("beta", &path).expect("load beta");
+
+        assert_eq!(loaded_alpha.player.pos, alpha.player.pos);
+        assert_eq!(loaded_alpha.turn, alpha.turn);
+        assert_eq!(loaded_beta.player.pos, beta.player.pos);
+        assert_eq!(loaded_beta.turn, beta.turn);
+        // Each slot must keep its own state.
+        assert_ne!(loaded_alpha.player.pos, loaded_beta.player.pos);
+
+        let names = Game::list_saves_at(&path).expect("list");
+        assert_eq!(names, ["alpha", "beta"]);
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn test_save_slot_overwrite() {
+        let dir = scratch("overwrite");
+        let path = dir.join("saves.json");
+
+        let mut game = Game::new();
+        game.save_named_to("camp", &path).expect("first save");
+        assert_eq!(game.turn, 0);
+
+        game.move_player(Direction::Right);
+        game.save_named_to("camp", &path).expect("overwrite");
+        assert_eq!(game.turn, 1);
+
+        let loaded = Game::load_named_from("camp", &path).expect("load");
+        assert_eq!(loaded.turn, 1, "overwrite must replace, not append");
+
+        let names = Game::list_saves_at(&path).expect("list");
+        assert_eq!(names.len(), 1, "must not create a second slot");
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn test_save_slot_not_found() {
+        let dir = scratch("notfound");
+        let path = dir.join("saves.json");
+
+        let err = Game::load_named_from("ghost", &path).expect_err("missing slot must fail");
+        assert!(err.contains("ghost"), "unexpected message: {err}");
+        assert!(Game::delete_save_at("ghost", &path).is_err());
+        assert!(!Game::save_exists_at("ghost", &path));
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn test_list_save_slots() {
+        let dir = scratch("list");
+        let path = dir.join("saves.json");
+
+        let names = Game::list_saves_at(&path).expect("list missing");
+        assert!(names.is_empty());
+
+        let mut game = Game::new();
+        for name in ["camp", "ridge", "dusty"] {
+            game.save_named_to(name, &path).expect("save slot");
+        }
+
+        let names = Game::list_saves_at(&path).expect("list");
+        let expected = ["camp", "dusty", "ridge"];
+        assert_eq!(names, expected, "slots must be listed alphabetically");
+
+        // A blank name is rejected rather than creating an unusable slot.
+        let blank = game.save_named_to("   ", &path);
+        let err = blank.expect_err("blank slot name");
+        assert!(err.contains("empty"), "unexpected message: {err}");
+
+        let names = Game::list_saves_at(&path).expect("list");
+        assert_eq!(names.len(), 3);
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn test_delete_save_slot() {
+        let dir = scratch("delete");
+        let path = dir.join("saves.json");
+
+        let mut game = Game::new();
+        game.save_named_to("keep", &path).expect("save keep");
+        game.save_named_to("drop", &path).expect("save drop");
+        assert!(Game::save_exists_at("drop", &path));
+
+        Game::delete_save_at("drop", &path).expect("delete drop");
+        assert!(!Game::save_exists_at("drop", &path));
+        assert!(Game::save_exists_at("keep", &path));
+
+        let names = Game::list_saves_at(&path).expect("list");
+        assert_eq!(names, ["keep"]);
+        assert!(Game::load_named_from("drop", &path).is_err());
+        assert!(Game::delete_save_at("drop", &path).is_err());
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn test_save_slot_name_is_canonicalised() {
+        let dir = scratch("canonical");
+        let path = dir.join("saves.json");
+
+        let mut game = Game::new();
+        game.save_named_to("  Camp Site  ", &path).expect("save");
+        assert!(game.message.contains("Camp Site"));
+        let names = Game::list_saves_at(&path).expect("list");
+        assert_eq!(names, ["Camp Site"]);
+        assert!(Game::load_named_from("Camp Site", &path).is_ok());
+
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn test_slot_document_survives_reload_of_saves() {
+        let dir = scratch("persist");
+        let path = dir.join("saves.json");
+
+        let mut game = Game::new();
+        game.move_player(Direction::Right);
+        game.move_player(Direction::Right);
+        game.save_named_to("run", &path).expect("save");
+
+        // Reload through the store rather than the in-memory game.
+        let store = SaveStore::new(&path);
+        let meta = store.list_metadata().expect("metadata");
+        assert_eq!(meta.len(), 1);
+        assert_eq!(meta[0].name, "run");
+        assert_eq!(meta[0].turn, game.turn);
+        assert_eq!(meta[0].player_name, game.player.name);
+
+        let _ = std::fs::remove_dir_all(&dir);
     }
 }
