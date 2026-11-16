@@ -12,6 +12,34 @@ this project adheres to [Semantic Versioning](https://semver.org/).
 ### Fixed
 ### Known limitations
 
+## [0.4.0] — 2026-11-16
+
+### Added
+- Wanted Level / Bounty system for outlaws
+- Bounty field on Npc struct (Outlaws only), starts at 0
+- Crimes increase bounty: killing sheriff (+50), stealing horse (+20), stealing loot (+10), assaulting player (+30)
+- Bounty decays 1 per 10 turns, never below 0
+- Wanted levels: None (0-10), Low (11-30), Medium (31-60), High (61+)
+- Sheriff AI scales with wanted level (pursuit range: 6/10/15/25 tiles)
+- Deputy NPC kind (blue glyph 'D'), spawns based on wanted level
+- Medium (1 deputy) and High (2 deputies) wanted levels spawn deputies
+- Sheriff AI pursuit range scales with wanted level (6/10/15/25 tiles)
+- Deputy AI: coordinated pursuit with flanking behavior
+- Bounty collection: player claims bounty when capturing outlaw while mounted
+- Bounty added to player score
+- New tests: bounty crimes, decay, wanted levels, deputy spawning, bounty collection, bounty only affects outlaws
+
+### Changed
+- Deputy NPC kind added (blue glyph 'D')
+- Sheriff AI pursuit range scales with wanted level (6/10/15/25)
+- Deputy AI coordinated pursuit with flanking behavior
+- Deputy spawning at Medium (1) and High (2) wanted levels
+
+### Fixed
+- Bounty only affects outlaws (sheriff/deputy bounties ignored)
+- Bounty decays 1 per 10 turns, never below 0
+- Bounty only affects outlaws (sheriff/deputy bounties ignored)
+
 ## [0.3.0] — 2026-11-16
 
 ### Added
