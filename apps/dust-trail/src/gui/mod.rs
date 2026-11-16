@@ -195,8 +195,9 @@ impl Gui {
             return;
         }
 
+        let mut is_open = self.save_load.is_save_dialog_open;
         egui::Window::new("Save Game")
-            .open(&mut self.save_load.is_save_dialog_open)
+            .open(&mut is_open)
             .default_width(320.0)
             .show(ui.ctx(), |ui| {
                 ui.label("Save slot name:");
@@ -236,6 +237,7 @@ impl Gui {
                         ui.columns(2, |uis| self.render_save_dialog_buttons(uis));
                     });
             });
+        self.save_load.is_save_dialog_open = is_open;
     }
 
     fn render_save_dialog_buttons(&mut self, uis: &mut [egui::Ui]) {
@@ -254,7 +256,7 @@ impl Gui {
                         self.save_load.last_saved_slot = Some(slot.clone());
                         self.save_load.is_save_dialog_open = false;
                         self.save_load.save_name_input.clear();
-                        self.game.message = format!("Game saved to slot "{slot}".");
+                        self.game.message = format!("Game saved to slot \"{}\".", slot_clone);
                     }
                     Err(e) => {
                         self.save_load.error = Some(format!("Save failed: {e}"));
@@ -304,8 +306,9 @@ impl Gui {
             return;
         }
 
+        let mut is_open = self.save_load.is_load_dialog_open;
         egui::Window::new("Load Game")
-            .open(&mut self.save_load.is_load_dialog_open)
+            .open(&mut is_open)
             .default_width(320.0)
             .show(ui.ctx(), |ui| {
                 ui.label("Select a save slot:");
@@ -341,6 +344,7 @@ impl Gui {
                         ui.columns(2, |uis| self.render_load_dialog_buttons(uis));
                     });
             });
+        self.save_load.is_load_dialog_open = is_open;
     }
 }
 
