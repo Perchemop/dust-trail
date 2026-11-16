@@ -401,13 +401,11 @@ impl eframe::App for Gui {
         let ctx = ui.ctx();
         self.handle_keyboard(ctx);
         self.toolbar(ui);
-        egui::CentralPanel::default().show(ctx, |ui| {
-            // Render the game grid
-            let frame = self.game.frame();
-            for (y, row) in frame.rows() {
-                self.render_row(ui, row);
-            }
-        });
+        // Render the game grid directly in the central panel area
+        let frame = self.game.frame();
+        for (y, row) in frame.rows() {
+            self.render_row(ui, row);
+        }
         self.render_save_dialog(ui);
         self.render_load_dialog(ui);
     }
