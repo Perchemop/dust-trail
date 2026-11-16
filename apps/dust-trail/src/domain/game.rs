@@ -14,9 +14,9 @@ use crate::domain::save::SaveData;
 use crate::domain::slots::SaveStore;
 use crate::domain::tile::TileType;
 use crate::domain::world::{default_world, ItemKind, NpcKind, Pos, World};
+use rand::prelude::IndexedRandom;
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
-use rand::prelude::IndexedRandom;
 
 /// A movement direction.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -447,7 +447,7 @@ impl Game {
         SaveStore::new(path).save_exists(slot)
     }
 
-    /// Advance NPCs one turn. 
+    /// Advance NPCs one turn.
     /// is testable headlessly.
     fn update_npcs(&mut self) {
         // Smarter Outlaw AI with Patrol/Chase/Flee states
@@ -488,9 +488,13 @@ impl Game {
 
         // Determine AI state
         let state = if let Some(d) = dist_to_sheriff {
-            if d <= FLEE_RANGE { AIState::Flee }
-            else if dist_to_player <= CHASE_RANGE { AIState::Chase }
-            else { AIState::Patrol }
+            if d <= FLEE_RANGE {
+                AIState::Flee
+            } else if dist_to_player <= CHASE_RANGE {
+                AIState::Chase
+            } else {
+                AIState::Patrol
+            }
         } else if dist_to_player <= CHASE_RANGE {
             AIState::Chase
         } else {
@@ -525,7 +529,12 @@ impl Game {
 
     /// Get all valid moves from a position (walkable, in bounds, not player).
     fn get_valid_moves(&self, pos: Pos) -> Vec<Pos> {
-        let dirs = [Direction::Up, Direction::Down, Direction::Left, Direction::Right];
+        let dirs = [
+            Direction::Up,
+            Direction::Down,
+            Direction::Left,
+            Direction::Right,
+        ];
         let mut moves = Vec::new();
         for dir in dirs {
             let (dx, dy) = dir.offset();
@@ -586,8 +595,7 @@ impl Game {
         // For now, just pick a random valid move
         moves.choose(&mut self.rng).copied().unwrap()
     }
-
-    }
+}
 
 impl Default for Game {
     fn default() -> Self {
@@ -836,7 +844,10 @@ mod tests {
         let mut g1 = Game::new_with_seed(42);
         let mut g2 = Game::new_with_seed(42);
 
-        let outlaw_start = g1.world.npcs.iter()
+        let outlaw_start = g1
+            .world
+            .npcs
+            .iter()
             .find(|n| n.kind == NpcKind::Outlaw)
             .map(|n| n.pos)
             .expect("outlaw exists");
@@ -847,17 +858,26 @@ mod tests {
             g2.move_player(Direction::Right);
         }
 
-        let outlaw_pos1 = g1.world.npcs.iter()
+        let outlaw_pos1 = g1
+            .world
+            .npcs
+            .iter()
             .find(|n| n.kind == NpcKind::Outlaw)
             .map(|n| n.pos)
             .expect("outlaw exists");
-        let outlaw_pos2 = g2.world.npcs.iter()
+        let outlaw_pos2 = g2
+            .world
+            .npcs
+            .iter()
             .find(|n| n.kind == NpcKind::Outlaw)
             .map(|n| n.pos)
             .expect("outlaw exists");
 
         // With same seed, both games should have identical outlaw positions
-        assert_eq!(outlaw_pos1, outlaw_pos2, "Outlaw position should be deterministic with fixed seed");
+        assert_eq!(
+            outlaw_pos1, outlaw_pos2,
+            "Outlaw position should be deterministic with fixed seed"
+        );
         // And the outlaw should have moved
         assert_ne!(outlaw_pos1, outlaw_start, "Outlaw should have moved");
     }
@@ -878,7 +898,10 @@ mod tests {
         }
 
         // Outlaw should have moved away from sheriff's starting area
-        let outlaw_pos = g.world.npcs.iter()
+        let outlaw_pos = g
+            .world
+            .npcs
+            .iter()
             .find(|n| n.kind == NpcKind::Outlaw)
             .map(|n| n.pos)
             .expect("outlaw exists");
@@ -896,7 +919,10 @@ mod tests {
         // Sheriff is at (7,5), far enough not to trigger flee
         g.player.pos = Pos::new(30, 14);
 
-        let outlaw_start = g.world.npcs.iter()
+        let outlaw_start = g
+            .world
+            .npcs
+            .iter()
             .find(|n| n.kind == NpcKind::Outlaw)
             .map(|n| n.pos)
             .expect("outlaw exists");
@@ -906,17 +932,26 @@ mod tests {
             g.move_player(Direction::Right);
         }
 
-        let outlaw_pos = g.world.npcs.iter()
+        let outlaw_pos = g
+            .world
+            .npcs
+            .iter()
             .find(|n| n.kind == NpcKind::Outlaw)
             .map(|n| n.pos)
             .expect("outlaw exists");
 
         // Outlaw should have moved toward player's general area
-        let dist_after = (outlaw_pos.x - g.player.pos.x).abs() + (outlaw_pos.y - g.player.pos.y).abs();
-        let dist_before = (Pos::new(33, 15).x - g.player.pos.x).abs() + (Pos::new(33, 15).y - g.player.pos.y).abs();
-        
+        let dist_after =
+            (outlaw_pos.x - g.player.pos.x).abs() + (outlaw_pos.y - g.player.pos.y).abs();
+        let dist_before = (Pos::new(33, 15).x - g.player.pos.x).abs()
+            + (Pos::new(33, 15).y - g.player.pos.y).abs();
+
         // Distance should generally decrease (or at least outlaw moved)
-        assert_ne!(outlaw_pos, Pos::new(33, 15), "Outlaw should move toward player");
+        assert_ne!(
+            outlaw_pos,
+            Pos::new(33, 15),
+            "Outlaw should move toward player"
+        );
     }
 
     #[test]
@@ -929,11 +964,17 @@ mod tests {
             g2.move_player(Direction::Right);
         }
 
-        let pos1 = g1.world.npcs.iter()
+        let pos1 = g1
+            .world
+            .npcs
+            .iter()
             .find(|n| n.kind == NpcKind::Outlaw)
             .map(|n| n.pos)
             .expect("outlaw exists");
-        let pos2 = g2.world.npcs.iter()
+        let pos2 = g2
+            .world
+            .npcs
+            .iter()
             .find(|n| n.kind == NpcKind::Outlaw)
             .map(|n| n.pos)
             .expect("outlaw exists");
