@@ -117,22 +117,24 @@ jobs:
             -fill '#e6c86e' -draw 'polygon 128,32 224,128 128,224 32,128' \
             "$DEBDIR/usr/share/icons/hicolor/256x256/apps/dust-trail.png"
           dpkg-deb --build "$DEBDIR" "dist/${{ matrix.asset }}.deb"
-          # .AppImage via appimagetool.
-          APPDIR="dist/DustTrail.AppDir"
-          rm -rf "$APPDIR"
-          mkdir -p "$APPDIR/usr/bin" "$APPDIR/usr/share/applications" \
-                   "$APPDIR/usr/share/icons/hicolor/256x256/apps"
-          cp "target/${TRIPLE}/release/dust-trail" "$APPDIR/usr/bin/dust-trail"
-          cp packaging/linux/dust-trail.desktop "$APPDIR/dust-trail.desktop"
-          cp packaging/linux/dust-trail.desktop "$APPDIR/usr/share/applications/"
-          cp packaging/linux/AppRun "$APPDIR/AppRun"
-          chmod +x "$APPDIR/AppRun"
-          cp "$DEBDIR/usr/share/icons/hicolor/256x256/apps/dust-trail.png" "$APPDIR/" 2>/dev/null || true
-          curl -fsSL -o /tmp/appimagetool \
-            "https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-${ARCH}.AppImage"
-          chmod +x /tmp/appimagetool
-          ARCH="$ARCH" /tmp/appimagetool --appimage-extract-and-run "$APPDIR" \
-            "dist/${{ matrix.asset }}.AppImage"
+          # .AppImage via appimagetool (only for x86_64; arm64 not supported by appimagetool)
+          if [ "$ARCH" = "amd64" ]; then
+            APPDIR="dist/DustTrail.AppDir"
+            rm -rf "$APPDIR"
+            mkdir -p "$APPDIR/usr/bin" "$APPDIR/usr/share/applications" \
+                     "$APPDIR/usr/share/icons/hicolor/256x256/apps"
+            cp "target/${TRIPLE}/release/dust-trail" "$APPDIR/usr/bin/dust-trail"
+            cp packaging/linux/dust-trail.desktop "$APPDIR/dust-trail.desktop"
+            cp packaging/linux/dust-trail.desktop "$APPDIR/usr/share/applications/"
+            cp packaging/linux/AppRun "$APPDIR/AppRun"
+            chmod +x "$APPDIR/AppRun"
+            cp "$DEBDIR/usr/share/icons/hicolor/256x256/apps/dust-trail.png" "$APPDIR/" 2>/dev/null || true
+            curl -fsSL -o /tmp/appimagetool \
+              "https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-${ARCH}.AppImage"
+            chmod +x /tmp/appimagetool
+            ARCH="$ARCH" /tmp/appimagetool --appimage-extract-and-run "$APPDIR" \
+              "dist/${{ matrix.asset }}.AppImage"
+          fi
 
       - name: List built installers
         shell: bash
