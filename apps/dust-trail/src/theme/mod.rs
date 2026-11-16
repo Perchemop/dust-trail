@@ -175,6 +175,17 @@ pub fn rgb_to_color32(col: crate::domain::color::Rgb) -> egui::Color32 {
     egui::Color32::from_rgb(col.r, col.g, col.b)
 }
 
+/// Get the danger/error color for the current theme variant.
+/// Used for error messages, validation failures, etc.
+pub fn danger_color32(variant: Variant) -> egui::Color32 {
+    let theme = match variant {
+        Variant::Light => Theme::light(),
+        Variant::Dark => Theme::dark(),
+        Variant::HighContrast => Theme::high_contrast(),
+    };
+    theme.color32(Role::Danger)
+}
+
 impl Default for Theme {
     fn default() -> Self {
         Self::dark()

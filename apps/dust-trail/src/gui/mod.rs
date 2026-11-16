@@ -5,7 +5,7 @@
 
 use crate::domain::cell::Cell;
 use crate::domain::game::{Direction, Game, Interaction};
-use crate::theme::rgb_to_color32;
+use crate::theme::{danger_color32, rgb_to_color32, Variant};
 use eframe::egui;
 
 /// The GUI frontend.
@@ -221,14 +221,14 @@ impl Gui {
                             }
                             Err(e) => {
                                 ui.colored_label(
-                                    egui::Color32::from_rgb(220, 80, 80),
+                                    danger_color32(Variant::Dark),
                                     format!("Error listing saves: {e}"),
                                 );
                             }
                         }
 
                         if let Some(err) = &self.save_load.error {
-                            ui.colored_label(egui::Color32::from_rgb(220, 80, 80), err);
+                            ui.colored_label(danger_color32(Variant::Dark), err);
                         }
 
                         ui.add_space(8.0);
@@ -326,14 +326,14 @@ impl Gui {
                             }
                             Err(e) => {
                                 ui.colored_label(
-                                    egui::Color32::from_rgb(220, 80, 80),
+                                    danger_color32(Variant::Dark),
                                     format!("Error loading saves: {e}"),
                                 );
                             }
                         }
 
                         if let Some(err) = &self.save_load.error {
-                            ui.colored_label(egui::Color32::from_rgb(220, 80, 80), err);
+                            ui.colored_label(danger_color32(Variant::Dark), err);
                         }
 
                         ui.add_space(8.0);
