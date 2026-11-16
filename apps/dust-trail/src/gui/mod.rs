@@ -396,6 +396,22 @@ fn ctx_close(ctx: &egui::Context) {
     ctx.send_viewport_cmd(egui::ViewportCommand::Close);
 }
 
+impl eframe::App for Gui {
+    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        self.handle_keyboard(ctx);
+        self.toolbar(ctx);
+        egui::CentralPanel::default().show(ctx, |ui| {
+            // Render the game grid
+            let frame = self.game.render();
+            for (y, row) in frame.rows.iter().enumerate() {
+                self.render_row(ui, row);
+            }
+        });
+        self.render_save_dialog(ui);
+        self.render_load_dialog(ui);
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
