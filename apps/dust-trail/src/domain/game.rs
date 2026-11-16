@@ -550,7 +550,7 @@ impl Game {
     }
 
     /// Choose a move that flees from the sheriff.
-    fn choose_flee_move(&mut self, pos: Pos, sheriff: Pos, moves: &[Pos]) -> Pos {
+    fn choose_flee_move(&mut self, _pos: Pos, sheriff: Pos, moves: &[Pos]) -> Pos {
         // Choose move that maximizes distance from sheriff
         let mut best = moves[0];
         let mut best_dist = self.manhattan_distance(moves[0], sheriff);
@@ -570,7 +570,7 @@ impl Game {
     }
 
     /// Choose a move that chases the player.
-    fn choose_chase_move(&mut self, pos: Pos, player: Pos, moves: &[Pos]) -> Pos {
+    fn choose_chase_move(&mut self, _pos: Pos, player: Pos, moves: &[Pos]) -> Pos {
         // Choose move that minimizes distance to player
         let mut best = moves[0];
         let mut best_dist = self.manhattan_distance(moves[0], player);
@@ -590,7 +590,7 @@ impl Game {
     }
 
     /// Choose a patrol move (random walk with anti-backtracking).
-    fn choose_patrol_move(&mut self, pos: Pos, moves: &[Pos]) -> Pos {
+    fn choose_patrol_move(&mut self, _pos: Pos, moves: &[Pos]) -> Pos {
         // Prefer moves that don't backtrack (if we have a previous position)
         // For now, just pick a random valid move
         moves.choose(&mut self.rng).copied().unwrap()
@@ -919,14 +919,6 @@ mod tests {
         // Sheriff is at (7,5), far enough not to trigger flee
         g.player.pos = Pos::new(30, 14);
 
-        let outlaw_start = g
-            .world
-            .npcs
-            .iter()
-            .find(|n| n.kind == NpcKind::Outlaw)
-            .map(|n| n.pos)
-            .expect("outlaw exists");
-
         // Advance several turns - outlaw should move toward player
         for _ in 0..15 {
             g.move_player(Direction::Right);
@@ -941,11 +933,6 @@ mod tests {
             .expect("outlaw exists");
 
         // Outlaw should have moved toward player's general area
-        let dist_after =
-            (outlaw_pos.x - g.player.pos.x).abs() + (outlaw_pos.y - g.player.pos.y).abs();
-        let dist_before = (Pos::new(33, 15).x - g.player.pos.x).abs()
-            + (Pos::new(33, 15).y - g.player.pos.y).abs();
-
         // Distance should generally decrease (or at least outlaw moved)
         assert_ne!(
             outlaw_pos,
