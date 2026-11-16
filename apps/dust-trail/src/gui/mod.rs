@@ -5,7 +5,7 @@
 
 use crate::domain::cell::Cell;
 use crate::domain::game::{Direction, Game, Interaction};
-use crate::theme::rgb_to_color32;
+use crate::theme::{danger_color32, rgb_to_color32, Variant};
 use eframe::egui;
 
 /// The GUI frontend.
@@ -91,7 +91,8 @@ impl Gui {
                 pressed,
                 modifiers,
                 ..
-            } = event {
+            } = event
+            {
                 if !pressed {
                     continue;
                 }
@@ -163,10 +164,11 @@ impl Gui {
         if let Err(e) = self.game.save_named_to(&slot, &path) {
             self.game.message = format!("Save failed: {e}");
         } else {
+            let slot_clone = slot.clone();
             self.save_load.last_saved_slot = Some(slot);
             self.save_load.is_save_dialog_open = false;
             self.save_load.save_name_input.clear();
-            self.game.message = format!("Game saved to slot \"{slot}\".");
+            self.game.message = format!("Game saved to slot \"{slot_clone}\".");
         }
     }
 
@@ -193,8 +195,9 @@ impl Gui {
             return;
         }
 
+        let mut is_open = self.save_load.is_save_dialog_open;
         egui::Window::new("Save Game")
-            .open(&mut self.save_load.is_save_dialog_open)
+            .open(&mut is_open)
             .default_width(320.0)
             .show(ui.ctx(), |ui| {
                 ui.label("Save slot name:");
@@ -204,13 +207,14 @@ impl Gui {
                 egui::ScrollArea::vertical()
                     .max_height(160.0)
                     .show(ui, |ui| {
-                        match self.game.list_saves() {
+                        match Game::list_saves() {
                             Ok(slots) => {
                                 if slots.is_empty() {
                                     ui.weak("No saves yet.");
                                 }
                                 for slot in &slots {
-                                    let selected = self.save_load.selected_slot.as_deref() == Some(slot.as_str());
+                                    let selected = self.save_load.selected_slot.as_deref()
+                                        == Some(slot.as_str());
                                     if ui.selectable_label(selected, slot).clicked() {
                                         self.save_load.selected_slot = Some(slot.clone());
                                         self.save_load.save_name_input = slot.clone();
@@ -219,48 +223,83 @@ impl Gui {
                             }
                             Err(e) => {
                                 ui.colored_label(
-                                    egui::Color32::from_rgb(220, 80, 80),
+                                    danger_color32(Variant::Dark),
                                     format!("Error listing saves: {e}"),
                                 );
                             }
                         }
 
                         if let Some(err) = &self.save_load.error {
-                            ui.colored_label(
-                                egui::Color32::from_rgb(220, 80, 80),
-                                err,
-                            );
+                            ui.colored_label(danger_color32(Variant::Dark), err);
                         }
 
                         ui.add_space(8.0);
-                        ui.columns(2, |uis| {
-                            uis[0].vertical(|ui| {
-                                if ui.add_enabled(
-                                    !self.save_load.save_name_input.trim().is_empty(),
-                                    egui::Button::new("Save"),
-                                ).clicked() {
-                                    let slot = self.save_load.save_name_input.trim().to_string();
-                                    match self.game.save_named_to(&slot, &save_dir().join("saves.json")) {
-                                        Ok(()) => {
-                                            self.save_load.last_saved_slot = Some(slot.clone());
-                                            self.save_load.is_save_dialog_open = false;
-                                            self.save_load.save_name_input.clear();
-                                            self.game.message = format!("Game saved to slot \"{slot}\".");
-                                        }
-                                        Err(e) => {
-                                            self.save_load.error = Some(format!("Save failed: {e}"));
-                                        }
-                                    }
-                                });
-                            });
-                            uis[1].vertical(|ui| {
-                                if ui.button("Cancel").clicked() {
-                                    self.save_load.close_all();
-                                }
-                            });
-                        });
+                        ui.columns(2, |uis| self.render_save_dialog_buttons(uis));
                     });
             });
+        self.save_load.is_save_dialog_open = is_open;
+    }
+
+    fn render_save_dialog_buttons(&mut self, uis: &mut [egui::Ui]) {
+        uis[0].vertical(|ui| {
+            let save_enabled = !self.save_load.save_name_input.trim().is_empty();
+            if ui
+                .add_enabled(save_enabled, egui::Button::new("Save"))
+                .clicked()
+            {
+                let slot = self.save_load.save_name_input.trim().to_string();
+                match self
+                    .game
+                    .save_named_to(&slot, &save_dir().join("saves.json"))
+                {
+                    Ok(()) => {
+                        let slot_clone = slot.clone();
+                        self.save_load.last_saved_slot = Some(slot);
+                        self.save_load.is_save_dialog_open = false;
+                        self.save_load.save_name_input.clear();
+                        self.game.message = format!("Game saved to slot \"{}\".", slot_clone);
+                    }
+                    Err(e) => {
+                        self.save_load.error = Some(format!("Save failed: {e}"));
+                    }
+                }
+            }
+        });
+        uis[1].vertical(|ui| {
+            if ui.button("Cancel").clicked() {
+                self.save_load.close_all();
+            }
+        });
+    }
+
+    fn render_load_dialog_buttons(&mut self, uis: &mut [egui::Ui]) {
+        uis[0].vertical(|ui| {
+            let load_enabled = self.save_load.selected_slot.is_some();
+            if ui
+                .add_enabled(load_enabled, egui::Button::new("Load"))
+                .clicked()
+            {
+                if let Some(slot) = &self.save_load.selected_slot {
+                    match Game::load_named_from(slot, &save_dir().join("saves.json")) {
+                        Ok(loaded) => {
+                            self.game = loaded;
+                            self.save_load.last_saved_slot = Some(slot.clone());
+                            self.save_load.is_load_dialog_open = false;
+                            self.save_load.selected_slot = None;
+                            self.game.message = "Game loaded.".to_string();
+                        }
+                        Err(e) => {
+                            self.save_load.error = Some(format!("Load failed: {e}"));
+                        }
+                    }
+                }
+            }
+        });
+        uis[1].vertical(|ui| {
+            if ui.button("Cancel").clicked() {
+                self.save_load.close_all();
+            }
+        });
     }
 
     fn render_load_dialog(&mut self, ui: &mut egui::Ui) {
@@ -268,21 +307,23 @@ impl Gui {
             return;
         }
 
+        let mut is_open = self.save_load.is_load_dialog_open;
         egui::Window::new("Load Game")
-            .open(&mut self.save_load.is_load_dialog_open)
+            .open(&mut is_open)
             .default_width(320.0)
             .show(ui.ctx(), |ui| {
                 ui.label("Select a save slot:");
                 egui::ScrollArea::vertical()
                     .max_height(200.0)
                     .show(ui, |ui| {
-                        match self.game.list_saves() {
+                        match Game::list_saves() {
                             Ok(slots) => {
                                 if slots.is_empty() {
                                     ui.weak("No saves yet.");
                                 }
                                 for slot in &slots {
-                                    let selected = self.save_load.selected_slot.as_deref() == Some(slot.as_str());
+                                    let selected = self.save_load.selected_slot.as_deref()
+                                        == Some(slot.as_str());
                                     if ui.selectable_label(selected, slot).clicked() {
                                         self.save_load.selected_slot = Some(slot.clone());
                                     }
@@ -290,47 +331,21 @@ impl Gui {
                             }
                             Err(e) => {
                                 ui.colored_label(
-                                    egui::Color32::from_rgb(220, 80, 80),
+                                    danger_color32(Variant::Dark),
                                     format!("Error loading saves: {e}"),
                                 );
                             }
                         }
 
                         if let Some(err) = &self.save_load.error {
-                            ui.colored_label(egui::Color32::from_rgb(220, 80, 80), err);
+                            ui.colored_label(danger_color32(Variant::Dark), err);
                         }
 
                         ui.add_space(8.0);
-                        ui.columns(2, |uis| {
-                            uis[0].vertical(|ui| {
-                                if ui.add_enabled(
-                                    self.save_load.selected_slot.is_some(),
-                                    egui::Button::new("Load"),
-                                ).clicked() {
-                                    if let Some(slot) = &self.save_load.selected_slot {
-                                        match Game::load_named_from(slot, &save_dir().join("saves.json")) {
-                                            Ok(loaded) => {
-                                                self.game = loaded;
-                                                self.save_load.last_saved_slot = Some(slot.clone());
-                                                self.save_load.is_load_dialog_open = false;
-                                                self.save_load.selected_slot = None;
-                                                self.game.message = "Game loaded.".to_string();
-                                            }
-                                            Err(e) => {
-                                                self.save_load.error = Some(format!("Load failed: {e}"));
-                                            }
-                                        }
-                                    }
-                                });
-                            });
-                            uis[1].vertical(|ui| {
-                                if ui.button("Cancel").clicked() {
-                                    self.save_load.close_all();
-                                }
-                            });
-                        });
+                        ui.columns(2, |uis| self.render_load_dialog_buttons(uis));
                     });
             });
+        self.save_load.is_load_dialog_open = is_open;
     }
 }
 
@@ -379,6 +394,21 @@ fn save_dir() -> std::path::PathBuf {
 
 fn ctx_close(ctx: &egui::Context) {
     ctx.send_viewport_cmd(egui::ViewportCommand::Close);
+}
+
+impl eframe::App for Gui {
+    fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
+        let ctx = ui.ctx();
+        self.handle_keyboard(ctx);
+        self.toolbar(ui);
+        // Render the game grid directly in the central panel area
+        let frame = self.game.frame();
+        for (y, row) in frame.rows() {
+            self.render_row(ui, row);
+        }
+        self.render_save_dialog(ui);
+        self.render_load_dialog(ui);
+    }
 }
 
 #[cfg(test)]
