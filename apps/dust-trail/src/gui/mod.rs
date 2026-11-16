@@ -253,7 +253,8 @@ impl Gui {
                     .save_named_to(&slot, &save_dir().join("saves.json"))
                 {
                     Ok(()) => {
-                        self.save_load.last_saved_slot = Some(slot.clone());
+                        let slot_clone = slot.clone();
+                        self.save_load.last_saved_slot = Some(slot);
                         self.save_load.is_save_dialog_open = false;
                         self.save_load.save_name_input.clear();
                         self.game.message = format!("Game saved to slot \"{}\".", slot_clone);
