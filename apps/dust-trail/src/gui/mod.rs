@@ -233,7 +233,7 @@ impl Gui {
                         }
 
                         ui.add_space(8.0);
-                        ui.columns(2, self.render_save_dialog_buttons());
+                        ui.columns(2, |uis| self.render_save_dialog_buttons(uis));
                     });
             });
     }
@@ -338,7 +338,7 @@ impl Gui {
                         }
 
                         ui.add_space(8.0);
-                        ui.columns(2, self.render_load_dialog_buttons());
+                        ui.columns(2, |uis| self.render_load_dialog_buttons(uis));
                     });
             });
     }
