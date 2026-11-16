@@ -1,7 +1,8 @@
 # Current Model Map
 
 Guide version: `~/guide.md` rev 2026-11-09 (read in full, all sections
-0–18, Part II II.18–II.30, Appendix A–O, and §20 Design Anti-Patterns).
+0–18, Part II II.18–II.30, Appendix A–O, §20 Design Anti-Patterns, and §XI
+Design Guidelines).
 
 Guide sections read in full:
 - Part I: §0–§18 (discovery, clean-room, tech stack, CI, operating model,
@@ -21,6 +22,13 @@ Guide sections read in full:
   demos, soft corner radius, purple and black, no skeleton loaders, radial
   orbs, dot grids, sparkle icons, animated arrows, no TOS, no privacy policy,
   hover animations, neon colors, basic pastel colors)
+- Guide §XI: Design Guidelines — High-Quality UI Patterns (20 patterns:
+  skeleton loaders, optimistic updates, command menu, shortcut hints, undo
+  toasts, stale-while-revalidate, pre-rendering, BlurHash placeholders, view
+  transitions, swipe-to-dismiss sheets, interruptible animations, predictive
+  back, hit slop, safe area insets, one-time code autofill, tabular numbers,
+  balanced headlines, continuous corners, idempotency keys, Amazon safe
+  triangle) with native egui applicability table and agent guidance.
 - Appendix A: Sections A–O (client mode, MCP, exhaustive implementation
   process, session prompt, quality bar for non-developer client, decision
   templates, task brief template, release notes template, failure playbook,
