@@ -26,28 +26,16 @@ impl Gui {
         ui.horizontal(|ui| {
             ui.heading("Dust Trail");
             ui.separator();
-            if ui
-                .add(egui::Button::new("New Game"))
-                .clicked()
-            {
+            if ui.add(egui::Button::new("New Game")).clicked() {
                 self.game = Game::new();
             }
-            if ui
-                .add(egui::Button::new("Save"))
-                .clicked()
-            {
+            if ui.add(egui::Button::new("Save")).clicked() {
                 self.save_load.open_save();
             }
-            if ui
-                .add(egui::Button::new("Load"))
-                .clicked()
-            {
+            if ui.add(egui::Button::new("Load")).clicked() {
                 self.save_load.open_load();
             }
-            if ui
-                .add(egui::Button::new("Quit"))
-                .clicked()
-            {
+            if ui.add(egui::Button::new("Quit")).clicked() {
                 ctx_close(ui.ctx());
             }
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
@@ -213,10 +201,9 @@ impl Gui {
             .default_width(320.0)
             .show(ui.ctx(), |ui| {
                 ui.label("Save slot name:");
-                ui.add(
-                    egui::TextEdit::singleline(&mut self.save_load.save_name_input)
-                        ,
-                );
+                ui.add(egui::TextEdit::singleline(
+                    &mut self.save_load.save_name_input,
+                ));
                 ui.add_space(8.0);
                 ui.label("Existing slots:");
                 egui::ScrollArea::vertical()
@@ -230,10 +217,8 @@ impl Gui {
                                 for slot in &slots {
                                     let selected = self.save_load.selected_slot.as_deref()
                                         == Some(slot.as_str());
-                                    let response = ui.add(
-                                        egui::Label::new(slot)
-                                            .selectable(selected)
-                                            );
+                                    let response =
+                                        ui.add(egui::Label::new(slot).selectable(selected));
                                     if response.clicked() {
                                         self.save_load.selected_slot = Some(slot.clone());
                                         self.save_load.save_name_input = slot.clone();
@@ -263,11 +248,7 @@ impl Gui {
         uis[0].vertical(|ui| {
             let save_enabled = !self.save_load.save_name_input.trim().is_empty();
             if ui
-                .add_enabled(
-                    save_enabled,
-                    egui::Button::new("Save")
-                        ,
-                )
+                .add_enabled(save_enabled, egui::Button::new("Save"))
                 .clicked()
             {
                 let slot = self.save_load.save_name_input.trim().to_string();
@@ -289,13 +270,7 @@ impl Gui {
             }
         });
         uis[1].vertical(|ui| {
-            if ui
-                .add(
-                    egui::Button::new("Cancel")
-                        ,
-                )
-                .clicked()
-            {
+            if ui.add(egui::Button::new("Cancel")).clicked() {
                 self.save_load.close_all();
             }
         });
@@ -305,10 +280,7 @@ impl Gui {
         uis[0].vertical(|ui| {
             let load_enabled = self.save_load.selected_slot.is_some();
             if ui
-                .add_enabled(
-                    load_enabled,
-                    egui::Button::new("Load"),
-                )
+                .add_enabled(load_enabled, egui::Button::new("Load"))
                 .clicked()
             {
                 if let Some(slot) = &self.save_load.selected_slot {
@@ -328,13 +300,7 @@ impl Gui {
             }
         });
         uis[1].vertical(|ui| {
-            if ui
-                .add(
-                    egui::Button::new("Cancel")
-                        ,
-                )
-                .clicked()
-            {
+            if ui.add(egui::Button::new("Cancel")).clicked() {
                 self.save_load.close_all();
             }
         });
@@ -362,10 +328,8 @@ impl Gui {
                                 for slot in &slots {
                                     let selected = self.save_load.selected_slot.as_deref()
                                         == Some(slot.as_str());
-                                    let response = ui.add(
-                                        egui::Label::new(slot)
-                                            .selectable(selected)
-                                            );
+                                    let response =
+                                        ui.add(egui::Label::new(slot).selectable(selected));
                                     if response.clicked() {
                                         self.save_load.selected_slot = Some(slot.clone());
                                     }
