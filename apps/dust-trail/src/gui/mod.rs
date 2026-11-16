@@ -164,10 +164,11 @@ impl Gui {
         if let Err(e) = self.game.save_named_to(&slot, &path) {
             self.game.message = format!("Save failed: {e}");
         } else {
+            let slot_clone = slot.clone();
             self.save_load.last_saved_slot = Some(slot);
             self.save_load.is_save_dialog_open = false;
             self.save_load.save_name_input.clear();
-            self.game.message = format!("Game saved to slot \"{slot}\".");
+            self.game.message = format!("Game saved to slot \"{slot_clone}\".");
         }
     }
 
@@ -205,7 +206,7 @@ impl Gui {
                 egui::ScrollArea::vertical()
                     .max_height(160.0)
                     .show(ui, |ui| {
-                        match self.game.list_saves() {
+                        match Game::list_saves() {
                             Ok(slots) => {
                                 if slots.is_empty() {
                                     ui.weak("No saves yet.");
@@ -232,7 +233,7 @@ impl Gui {
                         }
 
                         ui.add_space(8.0);
-                        ui.columns(2, self.render_save_dialog_buttons);
+                        ui.columns(2, self.render_save_dialog_buttons());
                     });
             });
     }
@@ -311,7 +312,7 @@ impl Gui {
                 egui::ScrollArea::vertical()
                     .max_height(200.0)
                     .show(ui, |ui| {
-                        match self.game.list_saves() {
+                        match Game::list_saves() {
                             Ok(slots) => {
                                 if slots.is_empty() {
                                     ui.weak("No saves yet.");
@@ -337,7 +338,7 @@ impl Gui {
                         }
 
                         ui.add_space(8.0);
-                        ui.columns(2, self.render_load_dialog_buttons);
+                        ui.columns(2, self.render_load_dialog_buttons());
                     });
             });
     }
