@@ -397,13 +397,14 @@ fn ctx_close(ctx: &egui::Context) {
 }
 
 impl eframe::App for Gui {
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+    fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
+        let ctx = ui.ctx();
         self.handle_keyboard(ctx);
-        self.toolbar(ctx);
+        self.toolbar(ui);
         egui::CentralPanel::default().show(ctx, |ui| {
             // Render the game grid
-            let frame = self.game.render();
-            for (y, row) in frame.rows.iter().enumerate() {
+            let frame = self.game.frame();
+            for (y, row) in frame.rows() {
                 self.render_row(ui, row);
             }
         });
