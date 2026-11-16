@@ -62,7 +62,6 @@ fn main() -> Result<(), Box<dyn Error>> {
                 .with_title("Dust Trail — ASCII Western Adventure")
                 .with_inner_size([940.0, 720.0])
                 .with_min_inner_size([700.0, 500.0]),
-            renderer: eframe::Renderer::Glow,
             ..Default::default()
         };
         eframe::run_native(

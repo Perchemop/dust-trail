@@ -8,9 +8,6 @@ use crate::domain::game::{Direction, Game, Interaction};
 use crate::theme::{danger_color32, rgb_to_color32, Variant};
 use eframe::egui;
 
-#[cfg(feature = "gui")]
-use accesskit::NodeBuilder;
-
 /// The GUI frontend.
 pub struct Gui {
     game: Game,
@@ -18,14 +15,7 @@ pub struct Gui {
 }
 
 impl Gui {
-    pub fn new(cc: &eframe::CreationContext) -> Self {
-        // Enable AccessKit for screen reader support (guide §II.21)
-        #[cfg(feature = "gui")]
-        {
-            cc.egui_ctx
-                .set_accesskit_adapter(Some(Box::new(accesskit_egui::AccessKitAdapter::new())));
-        }
-
+    pub fn new(_cc: &eframe::CreationContext) -> Self {
         Self {
             game: Game::new(),
             save_load: SaveLoadState::default(),
@@ -37,25 +27,25 @@ impl Gui {
             ui.heading("Dust Trail");
             ui.separator();
             if ui
-                .add(egui::Button::new("New Game").accessibility_label("Start a new game"))
+                .add(egui::Button::new("New Game"))
                 .clicked()
             {
                 self.game = Game::new();
             }
             if ui
-                .add(egui::Button::new("Save").accessibility_label("Save current game"))
+                .add(egui::Button::new("Save"))
                 .clicked()
             {
                 self.save_load.open_save();
             }
             if ui
-                .add(egui::Button::new("Load").accessibility_label("Load a saved game"))
+                .add(egui::Button::new("Load"))
                 .clicked()
             {
                 self.save_load.open_load();
             }
             if ui
-                .add(egui::Button::new("Quit").accessibility_label("Quit the game"))
+                .add(egui::Button::new("Quit"))
                 .clicked()
             {
                 ctx_close(ui.ctx());
@@ -225,7 +215,7 @@ impl Gui {
                 ui.label("Save slot name:");
                 ui.add(
                     egui::TextEdit::singleline(&mut self.save_load.save_name_input)
-                        .accessibility_label("Enter a name for the save slot"),
+                        ,
                 );
                 ui.add_space(8.0);
                 ui.label("Existing slots:");
@@ -240,16 +230,11 @@ impl Gui {
                                 for slot in &slots {
                                     let selected = self.save_load.selected_slot.as_deref()
                                         == Some(slot.as_str());
-                                    if ui
-                                        .add(
-                                            egui::SelectableLabel::new(selected, slot)
-                                                .accessibility_label(format!(
-                                                    "Save slot: {}",
-                                                    slot
-                                                )),
-                                        )
-                                        .clicked()
-                                    {
+                                    let response = ui.add(
+                                        egui::Label::new(slot)
+                                            .selectable(selected)
+                                            );
+                                    if response.clicked() {
                                         self.save_load.selected_slot = Some(slot.clone());
                                         self.save_load.save_name_input = slot.clone();
                                     }
@@ -281,7 +266,7 @@ impl Gui {
                 .add_enabled(
                     save_enabled,
                     egui::Button::new("Save")
-                        .accessibility_label("Save the game to the specified slot"),
+                        ,
                 )
                 .clicked()
             {
@@ -307,7 +292,7 @@ impl Gui {
             if ui
                 .add(
                     egui::Button::new("Cancel")
-                        .accessibility_label("Cancel saving and close dialog"),
+                        ,
                 )
                 .clicked()
             {
@@ -322,7 +307,7 @@ impl Gui {
             if ui
                 .add_enabled(
                     load_enabled,
-                    egui::Button::new("Load").accessibility_label("Load the selected saved game"),
+                    egui::Button::new("Load"),
                 )
                 .clicked()
             {
@@ -346,7 +331,7 @@ impl Gui {
             if ui
                 .add(
                     egui::Button::new("Cancel")
-                        .accessibility_label("Cancel loading and close dialog"),
+                        ,
                 )
                 .clicked()
             {
@@ -377,16 +362,11 @@ impl Gui {
                                 for slot in &slots {
                                     let selected = self.save_load.selected_slot.as_deref()
                                         == Some(slot.as_str());
-                                    if ui
-                                        .add(
-                                            egui::SelectableLabel::new(selected, slot)
-                                                .accessibility_label(format!(
-                                                    "Save slot: {}",
-                                                    slot
-                                                )),
-                                        )
-                                        .clicked()
-                                    {
+                                    let response = ui.add(
+                                        egui::Label::new(slot)
+                                            .selectable(selected)
+                                            );
+                                    if response.clicked() {
                                         self.save_load.selected_slot = Some(slot.clone());
                                     }
                                 }

@@ -34,9 +34,7 @@ optional = true
 version = "0.37"
 optional = true
 
-[dependencies.accesskit]
-version = "0.5"
-optional = true
+
 
 [features]
 default = ["tui"]
