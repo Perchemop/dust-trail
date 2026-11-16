@@ -25,6 +25,7 @@ impl Pos {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub enum NpcKind {
     Sheriff,
+    Deputy,
     Outlaw,
 }
 
@@ -32,6 +33,9 @@ pub enum NpcKind {
 pub struct Npc {
     pub kind: NpcKind,
     pub pos: Pos,
+    /// Bounty value for outlaws (0 for non-outlaws).
+    #[serde(default)]
+    pub bounty: u32,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
@@ -52,13 +56,53 @@ impl NpcKind {
     pub fn glyph(self) -> char {
         match self {
             NpcKind::Sheriff => 'S',
+            NpcKind::Deputy => 'D',
             NpcKind::Outlaw => 'O',
         }
     }
     pub fn fg(self) -> Rgb {
         match self {
             NpcKind::Sheriff => Rgb::YELLOW,
+            NpcKind::Deputy => Rgb::BLUE,
             NpcKind::Outlaw => Rgb::RED,
+        }
+    }
+}
+
+/// Wanted level derived from bounty.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum WantedLevel {
+    None,   // 0-10
+    Low,    // 11-30
+    Medium, // 31-60
+    High,   // 61+
+}
+
+impl Npc {
+    /// Get the wanted level based on bounty.
+    pub fn wanted_level(&self) -> WantedLevel {
+        if self.kind != NpcKind::Outlaw {
+            return WantedLevel::None;
+        }
+        match self.bounty {
+            0..=10 => WantedLevel::None,
+            11..=30 => WantedLevel::Low,
+            31..=60 => WantedLevel::Medium,
+            _ => WantedLevel::High,
+        }
+    }
+
+    /// Add to bounty (for crimes).
+    pub fn add_bounty(&mut self, amount: u32) {
+        if self.kind == NpcKind::Outlaw {
+            self.bounty = self.bounty.saturating_add(amount);
+        }
+    }
+
+    /// Decay bounty over time.
+    pub fn decay_bounty(&mut self) {
+        if self.kind == NpcKind::Outlaw && self.bounty > 0 {
+            self.bounty = self.bounty.saturating_sub(1);
         }
     }
 }
@@ -193,10 +237,12 @@ pub fn default_world() -> World {
     world.npcs.push(Npc {
         kind: NpcKind::Sheriff,
         pos: Pos::new(7, 5),
+        bounty: 0,
     });
     world.npcs.push(Npc {
         kind: NpcKind::Outlaw,
         pos: Pos::new(33, 15),
+        bounty: 0,
     });
 
     // Items.
@@ -212,4 +258,49 @@ pub fn default_world() -> World {
     });
 
     world
+}
+
+/// Spawn deputies based on the outlaw's wanted level.
+/// Returns the number of deputies spawned.
+pub fn spawn_deputies_for_wanted(world: &mut World, outlaw_pos: Pos, wanted: WantedLevel) -> usize {
+    let deputy_count = match wanted {
+        WantedLevel::None | WantedLevel::Low => 0,
+        WantedLevel::Medium => 1,
+        WantedLevel::High => 2,
+    };
+
+    if deputy_count == 0 {
+        return 0;
+    }
+
+    // Spawn deputies around the sheriff's position (7, 5) but not on top of each other
+    let sheriff_pos = Pos::new(7, 5);
+    let spawn_offsets = [
+        (1, 1),
+        (-1, 1),
+        (1, -1),
+        (-1, -1),
+        (2, 0),
+        (-2, 0),
+        (0, 2),
+        (0, -2),
+    ];
+
+    let mut spawned = 0;
+    for (dx, dy) in spawn_offsets {
+        if spawned >= deputy_count {
+            break;
+        }
+        let pos = Pos::new(sheriff_pos.x + dx, sheriff_pos.y + dy);
+        if world.in_bounds(pos) && world.is_walkable(pos) && pos != outlaw_pos {
+            world.npcs.push(Npc {
+                kind: NpcKind::Deputy,
+                pos,
+                bounty: 0,
+            });
+            spawned += 1;
+        }
+    }
+
+    spawned
 }

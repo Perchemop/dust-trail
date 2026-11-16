@@ -13,7 +13,7 @@ use crate::domain::player::Player;
 use crate::domain::save::SaveData;
 use crate::domain::slots::SaveStore;
 use crate::domain::tile::TileType;
-use crate::domain::world::{default_world, ItemKind, NpcKind, Pos, World};
+use crate::domain::world::{default_world, ItemKind, NpcKind, Pos, WantedLevel, World};
 use rand::prelude::IndexedRandom;
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
@@ -299,6 +299,25 @@ impl Game {
         }
     }
 
+    /// Collect bounty from an outlaw at the given position.
+    /// Returns the bounty amount collected (0 if no outlaw or no bounty).
+    fn collect_outlaw_bounty_at(&mut self, pos: Pos) -> u32 {
+        if let Some(idx) = self
+            .world
+            .npcs
+            .iter()
+            .position(|n| n.kind == NpcKind::Outlaw && n.pos == pos)
+        {
+            let bounty = self.world.npcs[idx].bounty;
+            if bounty > 0 {
+                self.player.score = self.player.score.saturating_add(bounty);
+                self.world.npcs.remove(idx);
+                return bounty;
+            }
+        }
+        0
+    }
+
     /// Interact with an adjacent NPC or item (press E).
     pub fn interact(&mut self) -> Interaction {
         if self.game_over {
@@ -325,6 +344,9 @@ impl Game {
                                 "The outlaw laughs. 'You'll never take me alive on foot.'"
                             }
                         }
+                        crate::domain::world::NpcKind::Deputy => {
+                            "Deputy: 'Sheriff sent us to bring in the outlaw.'"
+                        }
                     };
                     self.message = format!("{}: {}", npc.kind.glyph(), line);
                     let interacted = Interaction::Talked {
@@ -334,9 +356,18 @@ impl Game {
                     if matches!(npc.kind, crate::domain::world::NpcKind::Outlaw)
                         && self.player.mounted
                     {
+                        // Collect bounty
+                        let bounty = self.collect_outlaw_bounty_at(pos);
+                        if bounty > 0 {
+                            self.message = format!(
+                                "Outlaw captured! Bounty claimed: ${}. Town is safe!",
+                                bounty
+                            );
+                        } else {
+                            self.message = "Outlaw captured! Town is safe.".to_string();
+                        }
                         self.game_over = true;
                         self.won = true;
-                        self.message = "Outlaw captured! Town is safe.".to_string();
                     }
                     return interacted;
                 }
@@ -450,15 +481,70 @@ impl Game {
     /// Advance NPCs one turn.
     /// is testable headlessly.
     fn update_npcs(&mut self) {
+        // Decay outlaw bounties over time
+        self.decay_outlaw_bounties();
+
+        // Spawn deputies based on wanted level
+        self.spawn_deputies_if_needed();
+
         // Smarter Outlaw AI with Patrol/Chase/Flee states
         let outlaw_target = self.compute_outlaw_target();
 
-        // Sheriff stays at his post; apply the outlaw's move.
+        // Apply outlaw move
         if let Some(target) = outlaw_target {
             for npc in &mut self.world.npcs {
                 if npc.kind == crate::domain::world::NpcKind::Outlaw {
                     npc.pos = target;
                 }
+            }
+        }
+
+        // Sheriff and Deputy AI
+        self.update_law_enforcement_ai();
+    }
+
+    /// Decay outlaw bounties over time (1 per 10 turns).
+    fn decay_outlaw_bounties(&mut self) {
+        if self.turn % 10 == 0 {
+            for npc in &mut self.world.npcs {
+                if npc.kind == crate::domain::world::NpcKind::Outlaw {
+                    npc.decay_bounty();
+                }
+            }
+        }
+    }
+
+    /// Spawn deputies based on the outlaw's wanted level.
+    fn spawn_deputies_if_needed(&mut self) {
+        // Find outlaw position and wanted level (avoiding double borrow)
+        let (outlaw_pos, wanted) = {
+            let outlaw = self.world.npcs.iter().find(|n| n.kind == NpcKind::Outlaw);
+            match outlaw {
+                Some(o) => (o.pos, o.wanted_level()),
+                None => return,
+            }
+        };
+
+        // Only spawn if we don't already have enough deputies
+        let current_deputies = self
+            .world
+            .npcs
+            .iter()
+            .filter(|n| n.kind == NpcKind::Deputy)
+            .count();
+        let needed = match wanted {
+            WantedLevel::None | WantedLevel::Low => 0,
+            WantedLevel::Medium => 1,
+            WantedLevel::High => 2,
+        };
+        if current_deputies < needed {
+            let spawned = crate::domain::world::spawn_deputies_for_wanted(
+                &mut self.world,
+                outlaw_pos,
+                wanted,
+            );
+            if spawned > 0 {
+                self.message = format!("A posse of {} deputy(s) has been deployed!", spawned);
             }
         }
     }
@@ -472,7 +558,7 @@ impl Game {
             for npc in &self.world.npcs {
                 match npc.kind {
                     NpcKind::Outlaw => outlaw = Some(npc.pos),
-                    NpcKind::Sheriff => sheriff = Some(npc.pos),
+                    NpcKind::Sheriff | NpcKind::Deputy => sheriff = Some(npc.pos),
                 }
             }
             (outlaw?, sheriff)
@@ -547,6 +633,161 @@ impl Game {
             }
         }
         moves
+    }
+
+    /// Update Sheriff and Deputy AI based on wanted level.
+    fn update_law_enforcement_ai(&mut self) {
+        // Get sheriff position and outlaw info first (immutable borrows)
+        let sheriff_pos = self
+            .world
+            .npcs
+            .iter()
+            .find(|n| n.kind == NpcKind::Sheriff)
+            .map(|n| n.pos);
+
+        let (outlaw_pos, wanted) = {
+            let outlaw = self.world.npcs.iter().find(|n| n.kind == NpcKind::Outlaw);
+            match outlaw {
+                Some(o) => (Some(o.pos), o.wanted_level()),
+                None => (None, WantedLevel::None),
+            }
+        };
+
+        // Sheriff AI
+        if let (Some(sheriff_pos), Some(outlaw_pos)) = (sheriff_pos, outlaw_pos) {
+            let sheriff_target = self.compute_sheriff_target(sheriff_pos, Some(outlaw_pos), wanted);
+            if let Some(target) = sheriff_target {
+                for npc in &mut self.world.npcs {
+                    if npc.kind == NpcKind::Sheriff {
+                        npc.pos = target;
+                    }
+                }
+            }
+        }
+
+        // Deputy AI - deputies move toward outlaw
+        if let Some(outlaw_pos) = outlaw_pos {
+            // Collect deputy positions first, then compute targets
+            let deputy_positions: Vec<Pos> = self
+                .world
+                .npcs
+                .iter()
+                .filter(|n| n.kind == NpcKind::Deputy)
+                .map(|n| n.pos)
+                .collect();
+
+            // Compute targets for each deputy
+            let mut deputy_moves = Vec::new();
+            for pos in deputy_positions {
+                if let Some(target) = self.compute_deputy_target(pos, outlaw_pos) {
+                    deputy_moves.push((pos, target));
+                }
+            }
+            // Apply deputy moves
+            for (from_pos, target_pos) in deputy_moves {
+                for npc in &mut self.world.npcs {
+                    if npc.kind == NpcKind::Deputy && npc.pos == from_pos {
+                        npc.pos = target_pos;
+                    }
+                }
+            }
+        }
+    }
+
+    /// Compute Sheriff's target based on wanted level.
+    fn compute_sheriff_target(
+        &mut self,
+        sheriff_pos: Pos,
+        outlaw_pos: Option<Pos>,
+        wanted: WantedLevel,
+    ) -> Option<Pos> {
+        let outlaw_pos = outlaw_pos?;
+
+        // Sheriff behavior scales with wanted level
+        let pursuit_range = match wanted {
+            WantedLevel::None => 6,
+            WantedLevel::Low => 10,
+            WantedLevel::Medium => 15,
+            WantedLevel::High => 25,
+        };
+
+        let dist = self.manhattan_distance(sheriff_pos, outlaw_pos);
+
+        // Only pursue if outlaw is in range
+        if dist > pursuit_range {
+            return None;
+        }
+
+        // Get valid moves for sheriff
+        let valid_moves = self.get_valid_moves(sheriff_pos);
+        if valid_moves.is_empty() {
+            return None;
+        }
+
+        // Choose move that minimizes distance to outlaw
+        let mut best = valid_moves[0];
+        let mut best_dist = self.manhattan_distance(valid_moves[0], outlaw_pos);
+        for &m in &valid_moves[1..] {
+            let d = self.manhattan_distance(m, outlaw_pos);
+            if d < best_dist {
+                best_dist = d;
+                best = m;
+            }
+        }
+
+        // Add some randomness (10% chance for random move)
+        if self.rng.random_ratio(1, 10) {
+            Some(valid_moves.choose(&mut self.rng).copied().unwrap())
+        } else {
+            Some(best)
+        }
+    }
+
+    /// Compute Deputy's target - deputies coordinate with sheriff.
+    fn compute_deputy_target(&mut self, deputy_pos: Pos, outlaw_pos: Pos) -> Option<Pos> {
+        let valid_moves = self.get_valid_moves(deputy_pos);
+        if valid_moves.is_empty() {
+            return None;
+        }
+
+        // Deputies try to flank - approach from different angle than sheriff
+        let sheriff_pos = self
+            .world
+            .npcs
+            .iter()
+            .find(|n| n.kind == NpcKind::Sheriff)
+            .map(|n| n.pos);
+
+        // Choose move that minimizes distance to outlaw but also tries to flank
+        let mut best = valid_moves[0];
+        let mut best_score = i32::MAX;
+        for &m in &valid_moves {
+            let dist_to_outlaw = self.manhattan_distance(m, outlaw_pos);
+            let flank_bonus = if let Some(sheriff) = sheriff_pos {
+                // Bonus for being on opposite side of outlaw from sheriff
+                let dx1 = outlaw_pos.x - sheriff.x;
+                let dx2 = m.x - outlaw_pos.x;
+                if dx1 * dx2 < 0 {
+                    -5
+                } else {
+                    0
+                }
+            } else {
+                0
+            };
+            let score = dist_to_outlaw + flank_bonus;
+            if score < best_score {
+                best_score = score;
+                best = m;
+            }
+        }
+
+        // Add some randomness
+        if self.rng.random_ratio(1, 5) {
+            Some(valid_moves.choose(&mut self.rng).copied().unwrap())
+        } else {
+            Some(best)
+        }
     }
 
     /// Choose a move that flees from the sheriff.
@@ -969,5 +1210,206 @@ mod tests {
         // Different seeds should generally produce different paths
         // (though there's a small chance they could be the same)
         assert_ne!(pos1, pos2, "Different seeds should produce different paths");
+    }
+
+    #[test]
+    fn outlaw_bounty_increases_on_crimes() {
+        let mut g = Game::new_with_seed(42);
+
+        // Find outlaw
+        let outlaw_idx = g
+            .world
+            .npcs
+            .iter()
+            .position(|n| n.kind == NpcKind::Outlaw)
+            .expect("outlaw exists");
+
+        let initial_bounty = g.world.npcs[outlaw_idx].bounty;
+
+        // Simulate crimes by calling add_bounty
+        g.world.npcs[outlaw_idx].add_bounty(50); // Killing sheriff
+        assert_eq!(g.world.npcs[outlaw_idx].bounty, initial_bounty + 50);
+
+        g.world.npcs[outlaw_idx].add_bounty(20); // Stealing horse
+        assert_eq!(g.world.npcs[outlaw_idx].bounty, initial_bounty + 70);
+
+        g.world.npcs[outlaw_idx].add_bounty(10); // Stealing loot
+        assert_eq!(g.world.npcs[outlaw_idx].bounty, initial_bounty + 80);
+
+        g.world.npcs[outlaw_idx].add_bounty(30); // Assaulting player
+        assert_eq!(g.world.npcs[outlaw_idx].bounty, initial_bounty + 110);
+    }
+
+    #[test]
+    fn outlaw_bounty_decays_over_time() {
+        let mut g = Game::new_with_seed(42);
+
+        let outlaw_idx = g
+            .world
+            .npcs
+            .iter()
+            .position(|n| n.kind == NpcKind::Outlaw)
+            .expect("outlaw exists");
+
+        g.world.npcs[outlaw_idx].add_bounty(100);
+        assert_eq!(g.world.npcs[outlaw_idx].bounty, 100);
+
+        // Advance 10 turns - bounty should decay by 1
+        g.turn = 10;
+        g.decay_outlaw_bounties();
+        assert_eq!(g.world.npcs[outlaw_idx].bounty, 99);
+
+        // Advance another 10 turns
+        g.turn = 20;
+        g.decay_outlaw_bounties();
+        assert_eq!(g.world.npcs[outlaw_idx].bounty, 98);
+
+        // Bounty should not go below 0
+        g.world.npcs[outlaw_idx].bounty = 0;
+        g.decay_outlaw_bounties();
+        assert_eq!(g.world.npcs[outlaw_idx].bounty, 0);
+    }
+
+    #[test]
+    fn wanted_level_calculated_correctly() {
+        let mut g = Game::new_with_seed(42);
+        let outlaw_idx = g
+            .world
+            .npcs
+            .iter()
+            .position(|n| n.kind == NpcKind::Outlaw)
+            .expect("outlaw exists");
+
+        // Level None (0-10)
+        g.world.npcs[outlaw_idx].bounty = 5;
+        assert_eq!(g.world.npcs[outlaw_idx].wanted_level(), WantedLevel::None);
+
+        g.world.npcs[outlaw_idx].bounty = 10;
+        assert_eq!(g.world.npcs[outlaw_idx].wanted_level(), WantedLevel::None);
+
+        // Level Low (11-30)
+        g.world.npcs[outlaw_idx].bounty = 11;
+        assert_eq!(g.world.npcs[outlaw_idx].wanted_level(), WantedLevel::Low);
+
+        g.world.npcs[outlaw_idx].bounty = 30;
+        assert_eq!(g.world.npcs[outlaw_idx].wanted_level(), WantedLevel::Low);
+
+        // Level Medium (31-60)
+        g.world.npcs[outlaw_idx].bounty = 31;
+        assert_eq!(g.world.npcs[outlaw_idx].wanted_level(), WantedLevel::Medium);
+
+        g.world.npcs[outlaw_idx].bounty = 60;
+        assert_eq!(g.world.npcs[outlaw_idx].wanted_level(), WantedLevel::Medium);
+
+        // Level High (61+)
+        g.world.npcs[outlaw_idx].bounty = 61;
+        assert_eq!(g.world.npcs[outlaw_idx].wanted_level(), WantedLevel::High);
+
+        g.world.npcs[outlaw_idx].bounty = 100;
+        assert_eq!(g.world.npcs[outlaw_idx].wanted_level(), WantedLevel::High);
+    }
+
+    #[test]
+    fn outlaw_add_bounty_only_affects_outlaws() {
+        let mut g = Game::new_with_seed(42);
+
+        // Try to add bounty to sheriff (should be ignored)
+        let sheriff_idx = g
+            .world
+            .npcs
+            .iter()
+            .position(|n| n.kind == NpcKind::Sheriff)
+            .expect("sheriff exists");
+
+        g.world.npcs[sheriff_idx].add_bounty(50);
+        assert_eq!(g.world.npcs[sheriff_idx].bounty, 0);
+    }
+
+    #[test]
+    fn spawn_deputies_medium_wanted() {
+        let mut g = Game::new_with_seed(42);
+
+        // Set outlaw bounty to Medium level
+        let outlaw_idx = g
+            .world
+            .npcs
+            .iter()
+            .position(|n| n.kind == NpcKind::Outlaw)
+            .expect("outlaw exists");
+
+        g.world.npcs[outlaw_idx].bounty = 31; // Medium level
+        assert_eq!(g.world.npcs[outlaw_idx].wanted_level(), WantedLevel::Medium);
+
+        // Initially no deputies
+        let initial_deputies = g
+            .world
+            .npcs
+            .iter()
+            .filter(|n| n.kind == NpcKind::Deputy)
+            .count();
+        assert_eq!(initial_deputies, 0);
+
+        // Spawn deputies
+        g.spawn_deputies_if_needed();
+
+        let deputies = g
+            .world
+            .npcs
+            .iter()
+            .filter(|n| n.kind == NpcKind::Deputy)
+            .count();
+        assert_eq!(deputies, 1, "Should spawn 1 deputy for Medium wanted level");
+    }
+
+    #[test]
+    fn spawn_deputies_high_wanted() {
+        let mut g = Game::new_with_seed(42);
+
+        // Set outlaw bounty to High level
+        let outlaw_idx = g
+            .world
+            .npcs
+            .iter()
+            .position(|n| n.kind == NpcKind::Outlaw)
+            .expect("outlaw exists");
+
+        g.world.npcs[outlaw_idx].bounty = 61; // High level
+        assert_eq!(g.world.npcs[outlaw_idx].wanted_level(), WantedLevel::High);
+
+        // Spawn deputies
+        g.spawn_deputies_if_needed();
+
+        let deputies = g
+            .world
+            .npcs
+            .iter()
+            .filter(|n| n.kind == NpcKind::Deputy)
+            .count();
+        assert_eq!(deputies, 2, "Should spawn 2 deputies for High wanted level");
+    }
+
+    #[test]
+    fn collect_outlaw_bounty() {
+        let mut g = Game::new_with_seed(42);
+
+        // Set outlaw bounty
+        let outlaw_idx = g
+            .world
+            .npcs
+            .iter()
+            .position(|n| n.kind == NpcKind::Outlaw)
+            .expect("outlaw exists");
+
+        g.world.npcs[outlaw_idx].bounty = 500;
+
+        let outlaw_pos = g.world.npcs[outlaw_idx].pos;
+
+        // Collect bounty
+        let collected = g.collect_outlaw_bounty_at(outlaw_pos);
+        assert_eq!(collected, 500);
+        assert_eq!(g.player.score, 500);
+
+        // Outlaw should be removed
+        assert!(!g.world.npcs.iter().any(|n| n.kind == NpcKind::Outlaw));
     }
 }
