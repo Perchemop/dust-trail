@@ -4,7 +4,7 @@ name: Release
 # manual dispatch. Every release MUST attach platform installers (not a zip of
 # source): Windows .msi, macOS .dmg, Linux .deb + .AppImage, plus SHA256SUMS.txt.
 # See AGENTS.md (installable-builds directive).
-on:
+"on":
   push:
     tags: ["v*"]
   workflow_dispatch:
@@ -109,15 +109,7 @@ jobs:
           mkdir -p "$DEBDIR/DEBIAN" "$DEBDIR/usr/bin" \
                    "$DEBDIR/usr/share/applications" \
                    "$DEBDIR/usr/share/icons/hicolor/256x256/apps"
-          cat > "$DEBDIR/DEBIAN/control" <<'EOF'
-Package: dust-trail
-Version: 0.1.0-1
-Section: games
-Priority: optional
-Architecture: __ARCH__
-Maintainer: Dust Trail Dev <dev@example.com>
-Description: Original Western-themed ASCII adventure game (TUI + GUI)
-EOF
+          printf 'Package: dust-trail\nVersion: 0.1.0-1\nSection: games\nPriority: optional\nArchitecture: __ARCH__\nMaintainer: Dust Trail Dev <dev@example.com>\nDescription: Original Western-themed ASCII adventure game (TUI + GUI)\n' > "$DEBDIR/DEBIAN/control"
           sed -i "s/__ARCH__/${ARCH}/g" "$DEBDIR/DEBIAN/control"
           cp "target/${TRIPLE}/release/dust-trail" "$DEBDIR/usr/bin/dust-trail"
           cp packaging/linux/dust-trail.desktop "$DEBDIR/usr/share/applications/"
