@@ -263,7 +263,7 @@ impl Game {
                     self.game_over = true;
                     self.won = true;
                     Interaction::None
-                }
+                },
             };
         }
 
@@ -276,7 +276,7 @@ impl Game {
                     ItemKind::Horse => {
                         self.player.mounted = true;
                         self.player.score.saturating_add(5)
-                    }
+                    },
                 };
                 self.message = match item.kind {
                     ItemKind::Loot => "You picked up a satchel of coins (+10).".to_string(),
@@ -284,12 +284,12 @@ impl Game {
                         #[cfg(feature = "sound")]
                         self.sound_manager.play(SoundEffect::HorseMount);
                         "You mounted a horse. The trail moves faster now.".to_string()
-                    }
+                    },
                 };
                 #[cfg(feature = "sound")]
                 match item.kind {
                     ItemKind::Loot => self.sound_manager.play(SoundEffect::LootPickup),
-                    ItemKind::Horse => {}
+                    ItemKind::Horse => {},
                 };
                 return Interaction::Collected { kind: item.kind };
             }
@@ -323,8 +323,8 @@ impl Game {
             match new_wanted {
                 WantedLevel::Low | WantedLevel::Medium | WantedLevel::High => {
                     self.sound_manager.play(SoundEffect::GameOver);
-                }
-                _ => {}
+                },
+                _ => {},
             };
         }
 
@@ -351,9 +351,9 @@ impl Game {
             match action {
                 NpcAction::Move(pos) if self.world.is_walkable(pos) => {
                     npc.pos = pos;
-                }
-                NpcAction::Move(_) => {} // Invalid move, skip
-                NpcAction::Wait => {}
+                },
+                NpcAction::Move(_) => {}, // Invalid move, skip
+                NpcAction::Wait => {},
                 NpcAction::Attack(target) => {
                     if let Some(target_npc) = self.world.npcs.iter_mut().find(|n| n.pos == target) {
                         target_npc.bounty = target_npc.bounty.saturating_add(50);
@@ -361,7 +361,7 @@ impl Game {
                         #[cfg(feature = "sound")]
                         self.sound_manager.play(SoundEffect::Hit);
                     }
-                }
+                },
             }
             new_npcs.push(npc);
         }
@@ -621,7 +621,10 @@ mod tests {
         );
         // Commit crime to increase wanted
         game.world.npcs[outlaw_idx].add_bounty(20);
-        assert_eq!(game.world.npcs[outlaw_idx].wanted_level(), WantedLevel::Low);
+        assert_eq!(
+            game.world.npcs[outlaw_idx].wanted_level(),
+            WantedLevel::Low
+        );
     }
 
     #[test]
