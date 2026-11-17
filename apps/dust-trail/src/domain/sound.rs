@@ -103,7 +103,9 @@ impl SoundSettings {
             return 0.0;
         }
         let master = self.master_volume;
-        let category_vol = self.category_volumes.iter()
+        let category_vol = self
+            .category_volumes
+            .iter()
             .find(|(c, _)| *c == category)
             .map(|(_, v)| *v)
             .unwrap_or(1.0);
@@ -141,19 +143,49 @@ impl SoundManager {
     /// Load embedded sound files.
     fn load_sound_files() -> Result<std::collections::HashMap<SoundEffect, Vec<u8>>, Box<dyn std::error::Error>> {
         let mut sounds = std::collections::HashMap::new();
-        
+
         // Embed sound files using include_bytes!
-        sounds.insert(SoundEffect::Footstep, include_bytes!("../../assets/sounds/footstep.wav").to_vec());
-        sounds.insert(SoundEffect::LootPickup, include_bytes!("../../assets/sounds/loot_pickup.wav").to_vec());
-        sounds.insert(SoundEffect::HorseMount, include_bytes!("../../assets/sounds/horse_mount.wav").to_vec());
-        sounds.insert(SoundEffect::Hit, include_bytes!("../../assets/sounds/hit.wav").to_vec());
-        sounds.insert(SoundEffect::EnemyDeath, include_bytes!("../../assets/sounds/enemy_death.wav").to_vec());
-        sounds.insert(SoundEffect::Save, include_bytes!("../../assets/sounds/save.wav").to_vec());
-        sounds.insert(SoundEffect::Load, include_bytes!("../../assets/sounds/load.wav").to_vec());
-        sounds.insert(SoundEffect::GameOver, include_bytes!("../../assets/sounds/game_over.wav").to_vec());
-        sounds.insert(SoundEffect::Victory, include_bytes!("../../assets/sounds/victory.wav").to_vec());
-        sounds.insert(SoundEffect::Ambient, include_bytes!("../../assets/sounds/ambient.wav").to_vec());
-        
+        sounds.insert(
+            SoundEffect::Footstep,
+            include_bytes!("../../assets/sounds/footstep.wav").to_vec(),
+        );
+        sounds.insert(
+            SoundEffect::LootPickup,
+            include_bytes!("../../assets/sounds/loot_pickup.wav").to_vec(),
+        );
+        sounds.insert(
+            SoundEffect::HorseMount,
+            include_bytes!("../../assets/sounds/horse_mount.wav").to_vec(),
+        );
+        sounds.insert(
+            SoundEffect::Hit,
+            include_bytes!("../../assets/sounds/hit.wav").to_vec(),
+        );
+        sounds.insert(
+            SoundEffect::EnemyDeath,
+            include_bytes!("../../assets/sounds/enemy_death.wav").to_vec(),
+        );
+        sounds.insert(
+            SoundEffect::Save,
+            include_bytes!("../../assets/sounds/save.wav").to_vec(),
+        );
+        sounds.insert(
+            SoundEffect::Load,
+            include_bytes!("../../assets/sounds/load.wav").to_vec(),
+        );
+        sounds.insert(
+            SoundEffect::GameOver,
+            include_bytes!("../../assets/sounds/game_over.wav").to_vec(),
+        );
+        sounds.insert(
+            SoundEffect::Victory,
+            include_bytes!("../../assets/sounds/victory.wav").to_vec(),
+        );
+        sounds.insert(
+            SoundEffect::Ambient,
+            include_bytes!("../../assets/sounds/ambient.wav").to_vec(),
+        );
+
         Ok(sounds)
     }
 
@@ -162,17 +194,17 @@ impl SoundManager {
         if self.settings.muted {
             return;
         }
-        
+
         // Get the sound data
         if let Some(data) = self.sound_files.get(&effect) {
             if data.is_empty() {
                 return; // No sound data loaded
             }
-            
+
             // Try to decode and play
-            if let Ok(source) = Decoder::new(std::io::BufReader::new(
-                std::io::Cursor::new(data.clone())
-            )) {
+            if let Ok(source) = Decoder::new(std::io::BufReader::new(std::io::Cursor::new(
+                data.clone(),
+            ))) {
                 let volume = self.settings.effective_volume(self.category_for_effect(effect));
                 let sink = self.sink.lock().unwrap();
                 let mut source = source.amplify(volume);
@@ -187,7 +219,10 @@ impl SoundManager {
             SoundEffect::Footstep => SoundCategory::Movement,
             SoundEffect::LootPickup | SoundEffect::HorseMount => SoundCategory::Collection,
             SoundEffect::Hit | SoundEffect::EnemyDeath => SoundCategory::Combat,
-            SoundEffect::Save | SoundEffect::Load | SoundEffect::GameOver | SoundEffect::Victory => SoundCategory::Ui,
+            SoundEffect::Save
+            | SoundEffect::Load
+            | SoundEffect::GameOver
+            | SoundEffect::Victory => SoundCategory::Ui,
             SoundEffect::Ambient => SoundCategory::Master,
         }
     }
@@ -231,7 +266,12 @@ impl SoundManager {
     /// Set category volume.
     pub fn set_category_volume(&mut self, category: SoundCategory, volume: f32) {
         let volume = volume.clamp(0.0, 1.0);
-        if let Some((_, v)) = self.settings.category_volumes.iter_mut().find(|(c, _)| *c == category) {
+        if let Some((_, v)) = self
+            .settings
+            .category_volumes
+            .iter_mut()
+            .find(|(c, _)| *c == category)
+        {
             *v = volume;
         } else {
             self.settings.category_volumes.push((category, volume));
@@ -240,7 +280,9 @@ impl SoundManager {
 
     /// Get category volume.
     pub fn category_volume(&self, category: SoundCategory) -> f32 {
-        self.settings.category_volumes.iter()
+        self.settings
+            .category_volumes
+            .iter()
             .find(|(c, _)| *c == category)
             .map(|(_, v)| *v)
             .unwrap_or(1.0)
@@ -255,7 +297,11 @@ impl SoundManager {
     pub fn load_settings(&mut self, settings: SoundSettings) {
         self.settings = settings;
         let sink = self.sink.lock().unwrap();
-        sink.set_volume(if self.settings.muted { 0.0 } else { self.settings.master_volume });
+        sink.set_volume(if self.settings.muted {
+            0.0
+        } else {
+            self.settings.master_volume
+        });
     }
 }
 
@@ -273,15 +319,21 @@ impl SoundManager {
     pub fn set_master_volume(&mut self, _volume: f32) {}
     pub fn toggle_mute(&mut self) {}
     pub fn set_muted(&mut self, _muted: bool) {}
-    pub fn is_muted(&self) -> bool { true }
-    pub fn master_volume(&self) -> f32 { 0.0 }
+    pub fn is_muted(&self) -> bool {
+        true
+    }
+    pub fn master_volume(&self) -> f32 {
+        0.0
+    }
     pub fn set_category_volume(&mut self, _category: SoundCategory, _volume: f32) {}
-    pub fn category_volume(&self, _category: SoundCategory) -> f32 { 0.0 }
-    pub fn settings(&self) -> &SoundSettings { 
+    pub fn category_volume(&self, _category: SoundCategory) -> f32 {
+        0.0
+    }
+    pub fn settings(&self) -> &SoundSettings {
         static SETTINGS: OnceLock<SoundSettings> = OnceLock::new();
-        SETTINGS.get_or_init(|| SoundSettings { 
-            master_volume: 0.0, 
-            muted: true, 
+        SETTINGS.get_or_init(|| SoundSettings {
+            master_volume: 0.0,
+            muted: true,
             category_volumes: vec![
                 (SoundCategory::Master, 1.0),
                 (SoundCategory::Movement, 0.5),
@@ -292,5 +344,7 @@ impl SoundManager {
         })
     }
     pub fn load_settings(&mut self, _settings: SoundSettings) {}
-    pub fn default() -> Self { SoundManager }
+    pub fn default() -> Self {
+        SoundManager
+    }
 }

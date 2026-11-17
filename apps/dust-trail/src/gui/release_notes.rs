@@ -1,7 +1,7 @@
 //! In-app release-notes popup (guide §9, §12.1).
 //!
 //! The changelog (`CHANGELOG.md`) and the CI-managed token ledger
-//! (`docs/tokens.json`) are embedded at build time so the popup works in a
+//! (`docs/tokens.md`) are embedded at build time so the popup works in a
 //! packaged binary, not only in a source checkout.
 
 use egui::{Align, Layout};
@@ -13,7 +13,7 @@ use crate::theme;
 const EMBEDDED_CHANGELOG: &str = include_str!("../../../../CHANGELOG.md");
 
 /// CI-managed token ledger embedded at build time.
-const EMBEDDED_TOKENS: &str = include_str!("../../../../docs/tokens.json");
+const EMBEDDED_TOKENS: &str = include_str!("../../../../docs/tokens.md");
 
 /// A single parsed release entry from the changelog.
 #[derive(Clone, Debug)]
@@ -63,11 +63,7 @@ pub fn parse_releases(changelog: &str) -> Vec<Release> {
                     s.1.push(bullet);
                 }
             } else {
-                if !rel
-                    .sections
-                    .iter()
-                    .any(|(h, _)| h == "Notes")
-                {
+                if !rel.sections.iter().any(|(h, _)| h == "Notes") {
                     rel.sections.push(("Notes".to_string(), Vec::new()));
                 }
                 if let Some(s) = rel.sections.iter_mut().find(|(h, _)| h == "Notes") {

@@ -146,26 +146,15 @@ impl World {
         }
     }
 
-    /// Generate a world procedurally using the given configuration.
-    /// Same seed produces the same map (deterministic).
-    /// This replaces the former `default_world()` for v1.0+.
-    pub fn generate(config: &crate::domain::procgen::GenerationConfig) -> Self {
-        use crate::domain::procgen::generate;
-        let gw = generate(config);
-        gw.world
-    }
-
-    /// Convenience: generate from individual parameters.
-    pub fn generate_from_params(
-        width: i32,
-        height: i32,
-        building_count: usize,
-        wilderness_ratio: f64,
-        seed: u64,
-    ) -> Self {
-        use crate::domain::procgen::generate_from_params;
-        let gw = generate_from_params(width, height, building_count, wilderness_ratio, seed);
-        gw.world
+    /// Generate a world from a deterministic seed.
+    ///
+    /// Same seed always produces the same map (deterministic).  The world
+    /// includes terrain, border walls, a town block, river, trees, NPCs
+    /// (sheriff/outlaw), and items (loot/horse).  Connectivity between the
+    /// player start and key entities is guaranteed by internal retries.
+    pub fn generate(seed: u64) -> Self {
+        use crate::domain::procgen;
+        procgen::generate(seed)
     }
 }
 

@@ -15,8 +15,7 @@ use crate::domain::slots::SaveStore;
 use crate::domain::sound::{SoundEffect, SoundManager, SoundSettings};
 use crate::domain::slots::SaveStore;
 use crate::domain::tile::TileType;
-use crate::domain::procgen::{generate_from_params, GenerationConfig};
-use crate::domain::world::{default_world, ItemKind, NpcKind, Pos, WantedLevel, World};
+use crate::domain::world::{World, WantedLevel};
 use rand::prelude::IndexedRandom;
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
@@ -89,6 +88,48 @@ enum AIState {
 }
 
 impl Game {
+    /// Create a new game with a procedurally generated world.
+    /// Uses deterministic generation from seed for reproducibility.
+    pub fn new_with_seed(seed: u64) -> Self {
+        let world = World::generate(seed);
+        let player = Player::new(Pos::new(2, 2));
+        Self {
+            world,
+            player,
+            turn: 0,
+            message: "Welcome to Dust Trail. Use WASD to move, E to interact, S to save, L to load, Q to quit.".to_string(),
+            game_over: false,
+            won: false,
+            rng: StdRng::seed_from_u64(seed),
+            #[cfg(feature = "sound")]
+            sound_manager: SoundManager::new().unwrap_or_default(),
+            #[cfg(not(feature = "sound"))]
+            sound_settings: SoundSettings::new_stub(),
+        }
+    }
+
+    /// Create a new game with a procedurally generated world using a random seed.
+    pub fn new() -> Self {
+        use rand::Rng;
+        let seed: u64 = rand::random();
+        let world = World::generate(seed);
+        let player = Player::new(Pos::new(2, 2));
+        Self {
+            world,
+            player,
+            turn: 0,
+            message: "Welcome to Dust Trail. Use WASD to move, E to interact, S to save, L to load, Q to quit.".to_string(),
+            game_over: false,
+            won: false,
+            rng: StdRng::from_os_rng(),
+            #[cfg(feature = "sound")]
+            sound_manager: SoundManager::new().unwrap_or_default(),
+            #[cfg(not(feature = "sound"))]
+            sound_settings: SoundSettings::new_stub(),
+        }
+    }
+
+    /// Create a new game with a default (static) world.
     pub fn new() -> Self {
         let world = default_world();
         let player = Player::new(Pos::new(2, 2));
