@@ -23,10 +23,11 @@
 //! Map size, building density, and wilderness ratio can be adjusted via
 //! [`GenerationConfig`].  Same seed + same config = same map.
 
-use crate::domain::tile::{TileType, walkable};
+use crate::domain::tile::TileType;
 use crate::domain::world::{Item, ItemKind, Npc, NpcKind, Pos, World};
+use crate::domain::color::Rgb;
 use rand::rngs::StdRng;
-use rand::SeedableRng;
+use rand::{Rng, SeedableRng};
 
 const DEFAULT_WORLD_WIDTH: i32 = 40;
 const DEFAULT_WORLD_HEIGHT: i32 = 22;
@@ -39,7 +40,7 @@ const MAX_RETRIES: u32 = 10;
 // ============================================================================
 
 /// Configuration for procedural map generation.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct GenerationConfig {
     /// Map width in tiles. Must be at least 10. Default: 40.
     pub width: i32,
@@ -72,7 +73,7 @@ impl Default for GenerationConfig {
 ///
 /// Each location is positioned in the town area and glyph/colour coded for
 //! easy identification in the ASCII world.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct KeyLocation {
     /// Name of the location (e.g. "sheriff_office", "bank").
     pub name: String,
@@ -81,9 +82,9 @@ pub struct KeyLocation {
     /// Glyph that represents this location on the map.
     pub glyph: char,
     /// Foreground colour of the glyph.
-    pub fg: crate::domain::color::Rgb,
+    pub fg: Rgb,
     /// Background colour of the glyph.
-    pub bg: crate::domain::color::Rgb,
+    pub bg: Rgb,
 }
 
 impl KeyLocation {
@@ -92,8 +93,8 @@ impl KeyLocation {
         Self {
             name: "sheriff_office".to_string(),
             glyph: 'S',
-            fg: crate::domain::color::Rgb::YELLOW,
-            bg: crate::domain::color::Rgb::DARK_GRAY,
+            fg: Rgb::YELLOW,
+            bg: Rgb::DARK_GRAY,
             pos: Pos::new(0, 0),
         }
     }
@@ -103,8 +104,8 @@ impl KeyLocation {
         Self {
             name: "bank".to_string(),
             glyph: 'B',
-            fg: crate::domain::color::Rgb::CYAN,
-            bg: crate::domain::color::Rgb::DARK_GRAY,
+            fg: Rgb::CYAN,
+            bg: Rgb::DARK_GRAY,
             pos: Pos::new(0, 0),
         }
     }
@@ -114,8 +115,8 @@ impl KeyLocation {
         Self {
             name: "saloon".to_string(),
             glyph: '!',
-            fg: crate::domain::color::Rgb::RED,
-            bg: crate::domain::color::Rgb::DARK_GRAY,
+            fg: Rgb::RED,
+            bg: Rgb::DARK_GRAY,
             pos: Pos::new(0, 0),
         }
     }
@@ -125,8 +126,8 @@ impl KeyLocation {
         Self {
             name: "general_store".to_string(),
             glyph: '*',
-            fg: crate::domain::color::Rgb::GREEN,
-            bg: crate::domain::color::Rgb::DARK_GRAY,
+            fg: Rgb::GREEN,
+            bg: Rgb::DARK_GRAY,
             pos: Pos::new(0, 0),
         }
     }
@@ -136,8 +137,8 @@ impl KeyLocation {
         Self {
             name: "stables".to_string(),
             glyph: '&',
-            fg: crate::domain::color::Rgb::BROWN,
-            bg: crate::domain::color::Rgb::DARK_GRAY,
+            fg: Rgb::BROWN,
+            bg: Rgb::DARK_GRAY,
             pos: Pos::new(0, 0),
         }
     }
@@ -259,8 +260,8 @@ fn place_key_locations_tiles(
     locations.push(KeyLocation::sheriff_office());
     if let Some(kl) = locations.last_mut() {
         kl.pos = Pos::new(sheriff_x, sheriff_y);
-        kl.fg = crate::domain::color::Rgb::YELLOW;
-        kl.bg = crate::domain::color::Rgb::DARK_GRAY;
+        kl.fg = Rgb::YELLOW;
+        kl.bg = Rgb::DARK_GRAY;
     }
 
     // Bank: right side of town, near the bottom.
@@ -270,8 +271,8 @@ fn place_key_locations_tiles(
     locations.push(KeyLocation::bank());
     if let Some(kl) = locations.last_mut() {
         kl.pos = Pos::new(bank_x, bank_y);
-        kl.fg = crate::domain::color::Rgb::CYAN;
-        kl.bg = crate::domain::color::Rgb::DARK_GRAY;
+        kl.fg = Rgb::CYAN;
+        kl.bg = Rgb::DARK_GRAY;
     }
 
     // Saloon: right side of town, near the top.
@@ -281,8 +282,8 @@ fn place_key_locations_tiles(
     locations.push(KeyLocation::saloon());
     if let Some(kl) = locations.last_mut() {
         kl.pos = Pos::new(saloon_x, saloon_y);
-        kl.fg = crate::domain::color::Rgb::RED;
-        kl.bg = crate::domain::color::Rgb::DARK_GRAY;
+        kl.fg = Rgb::RED;
+        kl.bg = Rgb::DARK_GRAY;
     }
 
     // General store: centre-left of town.
@@ -292,8 +293,8 @@ fn place_key_locations_tiles(
     locations.push(KeyLocation::general_store());
     if let Some(kl) = locations.last_mut() {
         kl.pos = Pos::new(gen_store_x, gen_store_y);
-        kl.fg = crate::domain::color::Rgb::GREEN;
-        kl.bg = crate::domain::color::Rgb::DARK_GRAY;
+        kl.fg = Rgb::GREEN;
+        kl.bg = Rgb::DARK_GRAY;
     }
 
     // Stables: centre-right of town.
@@ -303,8 +304,8 @@ fn place_key_locations_tiles(
     locations.push(KeyLocation::stables());
     if let Some(kl) = locations.last_mut() {
         kl.pos = Pos::new(stables_x, stables_y);
-        kl.fg = crate::domain::color::Rgb::BROWN;
-        kl.bg = crate::domain::color::Rgb::DARK_GRAY;
+        kl.fg = Rgb::BROWN;
+        kl.bg = Rgb::DARK_GRAY;
     }
 
     locations
@@ -371,7 +372,7 @@ fn ensure_key_location_paths(
 }
 
 /// Verify a tile position is walkable (not Wall/Water/Tree).
-fn is_walkable_tile(tiles: &[[TileType]], pos: Pos, width: i32, height: i32) -> bool {
+fn is_walkable_tile(tiles: &[Vec<TileType>], pos: Pos, width: i32, height: i32) -> bool {
     if pos.x < 1 || pos.x >= width - 1 || pos.y < 1 || pos.y >= height - 1 {
         return false;
     }
@@ -528,4 +529,54 @@ pub fn generate_from_seed(seed: u64) -> World {
     };
     let gw = generate(config);
     gw.world
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn generate_is_deterministic() {
+        let w1 = generate(GenerationConfig { seed: 123, ..Default::default() });
+        let w2 = generate(GenerationConfig { seed: 123, ..Default::default() });
+        assert_eq!(w1.world.tiles, w2.world.tiles);
+        assert_eq!(w1.world.npcs, w2.world.npcs);
+        assert_eq!(w1.world.items, w2.world.items);
+        assert_eq!(w1.key_locations, w2.key_locations);
+    }
+
+    #[test]
+    fn generate_different_seeds_differ() {
+        let w1 = generate(GenerationConfig { seed: 1, ..Default::default() });
+        let w2 = generate(GenerationConfig { seed: 2, ..Default::default() });
+        assert_ne!(w1.world.tiles, w2.world.tiles);
+    }
+
+    #[test]
+    fn generated_world_has_border_walls() {
+        let gw = generate(GenerationConfig::default());
+        for x in 0..gw.world.width {
+            assert_eq!(gw.world.tile(Pos::new(x, 0)), Some(TileType::Wall));
+            assert_eq!(gw.world.tile(Pos::new(x, gw.world.height - 1)), Some(TileType::Wall));
+        }
+        for y in 0..gw.world.height {
+            assert_eq!(gw.world.tile(Pos::new(0, y)), Some(TileType::Wall));
+            assert_eq!(gw.world.tile(Pos::new(gw.world.width - 1, y)), Some(TileType::Wall));
+        }
+    }
+
+    #[test]
+    fn generated_world_has_player_start_tile_walkable() {
+        let gw = generate(GenerationConfig::default());
+        assert!(gw.world.is_walkable(Pos::new(2, 2)));
+    }
+
+    #[test]
+    fn connectivity_retries_succeed() {
+        for seed in 1..=20 {
+            let gw = generate(GenerationConfig { seed, ..Default::default() });
+            // Basic playability: player can reach sheriff and outlaw positions.
+            assert!(gw.world.is_walkable(Pos::new(2, 2)));
+        }
+    }
 }

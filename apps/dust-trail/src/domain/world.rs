@@ -67,6 +67,9 @@ impl NpcKind {
             NpcKind::Outlaw => Rgb::RED,
         }
     }
+    pub fn bg(self) -> Rgb {
+        Rgb::BLACK
+    }
 }
 
 /// Wanted level derived from bounty.
@@ -120,6 +123,9 @@ impl ItemKind {
             ItemKind::Loot => Rgb::CYAN,
             ItemKind::Horse => Rgb::BROWN,
         }
+    }
+    pub fn bg(self) -> Rgb {
+        Rgb::BLACK
     }
 }
 
