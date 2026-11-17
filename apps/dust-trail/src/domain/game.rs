@@ -193,7 +193,7 @@ impl Game {
             px,
             py,
             Cell::new(self.player.glyph(), self.player.fg(), self.player.bg()),
-        ))
+        ));
 
         // Convert to frame grid.
         let min_x = drawn.iter().map(|d| d.0).min().unwrap_or(0);
@@ -481,7 +481,7 @@ impl Game {
     /// TUI-compatible load method.
     pub fn load(path: &Path) -> Result<Self, String> {
         let store = SaveStore::new(path);
-        let mut game = Self::from_save_data(store.load_data("default")?);
+        let game = Self::from_save_data(store.load_data("default")?);
         #[cfg(feature = "sound")]
         game.sound_manager.play(SoundEffect::Load);
         Ok(game)
@@ -490,7 +490,7 @@ impl Game {
     /// Load the game from the named slot of the slot document at `path`.
     pub fn load_named_from(slot: &str, path: &Path) -> Result<Self, String> {
         let store = SaveStore::new(path);
-        let mut game = Self::from_save_data(store.load_data(slot)?);
+        let game = Self::from_save_data(store.load_data(slot)?);
         #[cfg(feature = "sound")]
         game.sound_manager.play(SoundEffect::Load);
         Ok(game)
