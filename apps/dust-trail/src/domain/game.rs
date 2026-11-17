@@ -289,7 +289,7 @@ impl Game {
                 #[cfg(feature = "sound")]
                 match item.kind {
                     ItemKind::Loot => self.sound_manager.play(SoundEffect::LootPickup),
-                    ItemKind::Horse => {},
+                    ItemKind::Horse => {}
                 };
                 return Interaction::Collected { kind: item.kind };
             }
@@ -323,8 +323,8 @@ impl Game {
             match new_wanted {
                 WantedLevel::Low | WantedLevel::Medium | WantedLevel::High => {
                     self.sound_manager.play(SoundEffect::GameOver);
-                },
-                _ => {},
+                }
+                _ => {}
             };
         }
 
@@ -351,9 +351,9 @@ impl Game {
             match action {
                 NpcAction::Move(pos) if self.world.is_walkable(pos) => {
                     npc.pos = pos;
-                },
-                NpcAction::Move(_) => {}, // Invalid move, skip
-                NpcAction::Wait => {},
+                }
+                NpcAction::Move(_) => {} // Invalid move, skip
+                NpcAction::Wait => {}
                 NpcAction::Attack(target) => {
                     if let Some(target_npc) = self.world.npcs.iter_mut().find(|n| n.pos == target) {
                         target_npc.bounty = target_npc.bounty.saturating_add(50);
@@ -361,7 +361,7 @@ impl Game {
                         #[cfg(feature = "sound")]
                         self.sound_manager.play(SoundEffect::Hit);
                     }
-                },
+                }
             }
             new_npcs.push(npc);
         }
