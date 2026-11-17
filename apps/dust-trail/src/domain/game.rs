@@ -370,11 +370,7 @@ impl Game {
 
     /// Sheriff AI: patrol town, pursue outlaw at high wanted.
     fn sheriff_ai(&mut self, npc: &Npc) -> NpcAction {
-        let outlaw = self
-            .world
-            .npcs
-            .iter()
-            .find(|n| n.kind == NpcKind::Outlaw);
+        let outlaw = self.world.npcs.iter().find(|n| n.kind == NpcKind::Outlaw);
 
         if let Some(outlaw) = outlaw {
             let dist = (outlaw.pos.x - npc.pos.x).abs() + (outlaw.pos.y - npc.pos.y).abs();
@@ -393,12 +389,7 @@ impl Game {
 
     /// Deputy AI: flank and support sheriff.
     fn deputy_ai(&mut self, npc: &Npc) -> NpcAction {
-        if let Some(sheriff) = self
-            .world
-            .npcs
-            .iter()
-            .find(|n| n.kind == NpcKind::Sheriff)
-        {
+        if let Some(sheriff) = self.world.npcs.iter().find(|n| n.kind == NpcKind::Sheriff) {
             let dx = (sheriff.pos.x - npc.pos.x).signum();
             let dy = (sheriff.pos.y - npc.pos.y).signum();
             let target = Pos::new(npc.pos.x + dx, npc.pos.y + dy);
@@ -417,9 +408,7 @@ impl Game {
             .npcs
             .iter()
             .filter(|n| n.kind == NpcKind::Sheriff || n.kind == NpcKind::Deputy)
-            .min_by_key(|n| {
-                (n.pos.x - npc.pos.x).abs() + (n.pos.y - npc.pos.y).abs()
-            });
+            .min_by_key(|n| (n.pos.x - npc.pos.x).abs() + (n.pos.y - npc.pos.y).abs());
 
         if let Some(law) = law {
             let dist = (law.pos.x - npc.pos.x).abs() + (law.pos.y - npc.pos.y).abs();

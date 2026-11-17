@@ -367,15 +367,7 @@ fn ensure_key_location_paths(
 ) {
     // Carve corridors between consecutive key locations.
     for pair in key_positions.windows(2) {
-        carve_corridor(
-            tiles,
-            pair[0].x,
-            pair[0].y,
-            pair[1].x,
-            pair[1].y,
-            width,
-            height,
-        );
+        carve_corridor(tiles, pair[0].x, pair[0].y, pair[1].x, pair[1].y, width, height);
     }
     // Also connect first and last (wrap-around).
     if key_positions.len() >= 2 {
