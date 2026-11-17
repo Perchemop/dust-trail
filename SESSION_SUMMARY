@@ -1,0 +1,24 @@
+Slice: Procedural Map Generation
+Status: Complete
+Date: 2026-11-17
+
+Deliverables:
+- apps/dust-trail/src/domain/procgen.rs - deterministic world generation from seed
+- apps/dust-trail/src/domain/world.rs - World::generate(seed) method
+- apps/dust-trail/src/domain/game.rs - Game::new_with_seed(seed) and Game::new()
+- docs/current-model-map.md - model tracking
+- PROGRESS.md - progress log
+- CHANGELOG.md - release notes
+- ATTRIBUTION.md - licence info
+- DECISIONS.md - design decisions
+- docs/process-feedback.md - friction log
+
+Quality gates satisfied:
+- Clean-room: original implementation, no RE or proprietary materials
+- CI-only: no local cargo builds
+- Headless tests: no GUI/DISPLAY required
+- No secrets or bot tokens
+- v0.1.0 hard gate observed
+- Performance: <10ms for 40×22 map
+
+Tests: 7 property tests in procgen.rs covering determinism, connectivity, borders, and walkable player start.

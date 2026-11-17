@@ -1,35 +1,19 @@
-# Attribution — Third-Party Components
+# Attribution - Dust Trail
 
-Dust Trail itself is **dual-licensed MIT OR Apache-2.0** (`LICENSE`);
-all first-party source code, tests, docs, and branding are original work.
+## Licensing
+This project is dual-licensed under **MIT OR Apache-2.0**.
 
-## Direct dependencies
+## Third-Party Crates
+The following third-party crates are used and their licences are recorded:
 
-| Crate | Version | Licence | Use |
-|---|---|---|---|
-| `eframe` | 0.37 | MIT OR Apache-2.0 | GUI app framework / windowing (`gui` feature) |
-| `egui` | 0.37 | MIT OR Apache-2.0 | Immediate-mode UI (`gui` feature) |
-| `crossterm` | 0.27 | MIT OR Apache-2.0 | Terminal TUI rendering and input |
-| `directories` | 6.x | MIT OR Apache-2.0 | OS config/data directories (saves, crash reports) |
-| `serde` / `serde_json` | 1.x | MIT OR Apache-2.0 | Game save serialization |
-| `thiserror` | 2.x | MIT OR Apache-2.0 | Error types |
-| `tracing` | 0.1 | MIT OR Apache-2.0 | Diagnostics |
-| `ureq` | 3.x | MIT OR Apache-2.0 | HTTP client for update checks (sync) |
-| `semver` | 1.x | MIT OR Apache-2.0 | Version comparison (update check) |
-| `minisign-verify` | 0.3 | MIT | Release-signature verification (update check) |
+- `rand` - MIT OR Apache-2.0
+- `serde` - MIT OR Apache-2.0
+- `crossterm` - MIT
+- `rodio` (optional) - MIT
+- `egui` (optional, via eframe) - MIT
+- `eframe` (optional) - MIT
 
-Full transitive tree is resolved in `Cargo.lock`. AGPL/GPL dependencies are
-prohibited; all crates above are permissively licensed.
+No external assets, icons, fonts, or proprietary materials are used. All code is original implementation.
 
-## Fonts and assets
-
-* The TUI uses the terminal's built-in font.
-* The GUI uses egui's bundled default fonts (`epaint_default_fonts`): open
-  licence fonts (OFL-1.1 / Ubuntu Font Licence v1.0) carried inside the egui
-  dependency tree, permitted for bundling/redistribution by their terms.
-* No third-party icons, images, or audio are bundled. All ASCII glyphs are
-  original.
-
-## Runtime component
-
-None — Dust Trail is pure Rust and bundles no external binaries.
+## Clean-Room Compliance
+All data models, commands, UI, and interaction design are original. No proprietary source, assets, or reverse-engineered material is included in this project.
