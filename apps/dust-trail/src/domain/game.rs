@@ -14,10 +14,10 @@ use crate::domain::save::SaveData;
 use crate::domain::slots::SaveStore;
 use crate::domain::sound::{SoundEffect, SoundManager, SoundSettings};
 use crate::domain::tile::TileType;
-use crate::domain::world::{World, WantedLevel, NpcKind, Pos, ItemKind, default_world, spawn_deputies_for_wanted};
+use crate::domain::world::{World, WantedLevel, NpcKind, Npc, Pos, ItemKind, default_world, spawn_deputies_for_wanted};
 use rand::prelude::IndexedRandom;
 use rand::rngs::StdRng;
-use rand::{Rng, SeedableRng};
+use rand::{Rng, SeedableRng, seq::SliceRandom};
 
 /// A movement direction.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -192,29 +192,34 @@ impl Game {
         drawn.push((
             px,
             py,
-            Cell::new(self.player.glyph, self.player.fg, self.player.bg),
+            Cell::new(self.player.glyph(), self.player.fg(), self.player.bg()),
         ));
 
         // Convert to frame grid.
         let min_x = drawn.iter().map(|d| d.0).min().unwrap_or(0);
-        let max_x = drawn.iter().map(|d| d.1).max().unwrap_or(0);
+        let max_x = drawn.iter().map(|d| d.0).max().unwrap_or(0);
         let min_y = drawn.iter().map(|d| d.1).min().unwrap_or(0);
         let max_y = drawn.iter().map(|d| d.1).max().unwrap_or(0);
 
         let width = (max_x - min_x + 1) as usize;
         let height = (max_y - min_y + 1) as usize;
 
-        let mut rows = vec![vec![Cell::default(); width]; height];
+        let mut cells = vec![vec![Cell::default(); width]; height];
 
         for (sx, sy, cell) in drawn {
             let row = (sy - min_y) as usize;
             let col = (sx - min_x) as usize;
             if row < height && col < width {
-                rows[row][col] = cell;
+                cells[row][col] = cell;
             }
         }
 
-        Frame { rows }
+        Frame {
+            width,
+            height,
+            cells,
+            message: self.message.clone(),
+        }
     }
 
     /// Move the player one step in `dir`. Returns the interaction result.
@@ -302,7 +307,6 @@ impl Game {
             .unwrap_or(WantedLevel::None);
 
         // Check if outlaw's bounty changed (crimes committed).
-        // In this simplified model, we just track the current wanted level.
         let new_wanted = self.world.npcs.iter()
             .find(|n| n.kind == NpcKind::Outlaw)
             .map(|n| n.wanted_level())
@@ -341,7 +345,7 @@ impl Game {
                 NpcAction::Attack(target) => {
                     if let Some(target_npc) = self.world.npcs.iter_mut().find(|n| n.pos == target) {
                         target_npc.bounty = target_npc.bounty.saturating_add(50);
-                        self.message = format!("{} was wounded!", target_npc.kind);
+                        self.message = format!("{:?} was wounded!", target_npc.kind);
                         #[cfg(feature = "sound")]
                         self.sound_manager.play(SoundEffect::Hit);
                     }
@@ -422,7 +426,7 @@ impl Game {
     }
 
     /// Patrol around town center area.
-    fn patrol_town(&self, pos: Pos) -> NpcAction {
+    fn patrol_town(&mut self, pos: Pos) -> NpcAction {
         let center = Pos::new(self.world.width / 2, self.world.height / 2);
         let dx = (center.x - pos.x).signum();
         let dy = (center.y - pos.y).signum();
@@ -443,7 +447,6 @@ impl Game {
             Direction::Right,
         ];
         let mut dirs = dirs;
-        use rand::seq::SliceRandom;
         dirs.shuffle(&mut self.rng);
         for dir in dirs {
             let (dx, dy) = dir.offset();
@@ -464,6 +467,22 @@ impl Game {
         #[cfg(feature = "sound")]
         self.sound_manager.play(SoundEffect::Save);
         Ok(saved_as)
+    }
+
+    /// TUI-compatible save method (takes a path).
+    pub fn save(&self, path: &Path) -> Result<(), String> {
+        let store = SaveStore::new(path);
+        store.save_data("default", SaveData::with_slot(self, "default"))
+            .map(|_| ())
+    }
+
+    /// TUI-compatible load method.
+    pub fn load(path: &Path) -> Result<Self, String> {
+        let store = SaveStore::new(path);
+        let mut game = Self::from_save_data(store.load_data("default")?);
+        #[cfg(feature = "sound")]
+        game.sound_manager.play(SoundEffect::Load);
+        Ok(game)
     }
 
     /// Load the game from the named slot of the slot document at `path`.

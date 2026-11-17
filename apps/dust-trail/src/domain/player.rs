@@ -1,6 +1,7 @@
 //! The player character.
 
 use crate::domain::world::Pos;
+use crate::domain::color::Rgb;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Player {
@@ -24,7 +25,11 @@ impl Player {
         '@'
     }
 
-    pub fn fg(&self) -> crate::domain::color::Rgb {
-        crate::domain::color::Rgb::WHITE
+    pub fn fg(&self) -> Rgb {
+        Rgb::WHITE
+    }
+
+    pub fn bg(&self) -> Rgb {
+        Rgb::BLACK
     }
 }

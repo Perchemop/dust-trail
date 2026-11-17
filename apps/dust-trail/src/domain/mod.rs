@@ -9,6 +9,7 @@ pub mod frame;
 pub mod game;
 pub mod iso;
 pub mod player;
+pub mod procgen;
 pub mod save;
 pub mod slots;
 pub mod sound;
