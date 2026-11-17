@@ -13,7 +13,7 @@ use std::io::BufReader;
 use std::sync::{Arc, Mutex};
 
 use serde::{Deserialize, Serialize};
-use std::sync::{Arc, Mutex, OnceLock};
+use std::sync::OnceLock;
 
 /// Sound effect categories for volume control.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]

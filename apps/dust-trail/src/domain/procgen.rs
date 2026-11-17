@@ -399,7 +399,7 @@ pub fn generate(config: GenerationConfig) -> GeneratedWorld {
 
     // 1. Create blank tile grid (all Ground).
     let mut tiles: Vec<Vec<TileType>> = (0..height)
-        .map(|y| (0..width).map(|x| TileType::Ground).collect())
+        .map(|_y| (0..width).map(|_x| TileType::Ground).collect())
         .collect();
 
     // 2. Place border walls.

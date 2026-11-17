@@ -11,7 +11,9 @@ use crate::domain::iso::{screen_depth, world_to_screen};
 use crate::domain::player::Player;
 use crate::domain::save::SaveData;
 use crate::domain::slots::SaveStore;
-use crate::domain::sound::{SoundEffect, SoundManager, SoundSettings};
+use crate::domain::sound::SoundSettings;
+#[cfg(feature = "sound")]
+use crate::domain::sound::{SoundEffect, SoundManager};
 use crate::domain::tile::TileType;
 use crate::domain::world::{World, WantedLevel, NpcKind, Npc, Pos, ItemKind, default_world, spawn_deputies_for_wanted};
 use rand::rngs::StdRng;
@@ -319,9 +321,11 @@ impl Game {
         }
 
         // Deputy spawning logic based on outlaw's wanted level.
-        if let Some(outlaw) = self.world.npcs.iter().find(|n| n.kind == NpcKind::Outlaw) {
-            let wanted = outlaw.wanted_level();
-            spawn_deputies_for_wanted(&mut self.world, outlaw.pos, wanted);
+        let outlaw_data = self.world.npcs.iter()
+            .find(|n| n.kind == NpcKind::Outlaw)
+            .map(|n| (n.pos, n.wanted_level()));
+        if let Some((pos, wanted)) = outlaw_data {
+            spawn_deputies_for_wanted(&mut self.world, pos, wanted);
         }
 
         // Move each NPC.
