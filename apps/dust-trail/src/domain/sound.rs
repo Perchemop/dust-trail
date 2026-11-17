@@ -198,8 +198,12 @@ impl SoundManager {
             }
 
             // Try to decode and play
-            if let Ok(source) = Decoder::new(std::io::BufReader::new(std::io::Cursor::new(data.clone()))) {
-                let volume = self.settings.effective_volume(self.category_for_effect(effect));
+            if let Ok(source) =
+                Decoder::new(std::io::BufReader::new(std::io::Cursor::new(data.clone())))
+            {
+                let volume = self
+                    .settings
+                    .effective_volume(self.category_for_effect(effect));
                 let sink = self.sink.lock().unwrap();
                 let mut source = source.amplify(volume);
                 sink.append(source);

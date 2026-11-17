@@ -621,10 +621,7 @@ mod tests {
         );
         // Commit crime to increase wanted
         game.world.npcs[outlaw_idx].add_bounty(20);
-        assert_eq!(
-            game.world.npcs[outlaw_idx].wanted_level(),
-            WantedLevel::Low
-        );
+        assert_eq!(game.world.npcs[outlaw_idx].wanted_level(), WantedLevel::Low);
     }
 
     #[test]
