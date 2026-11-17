@@ -23,9 +23,9 @@
 //! Map size, building density, and wilderness ratio can be adjusted via
 //! [`GenerationConfig`].  Same seed + same config = same map.
 
+use crate::domain::color::Rgb;
 use crate::domain::tile::TileType;
 use crate::domain::world::{Item, ItemKind, Npc, NpcKind, Pos, World};
-use crate::domain::color::Rgb;
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
 

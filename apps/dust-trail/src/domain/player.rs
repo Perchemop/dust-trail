@@ -1,7 +1,7 @@
 //! The player character.
 
-use crate::domain::world::Pos;
 use crate::domain::color::Rgb;
+use crate::domain::world::Pos;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Player {
