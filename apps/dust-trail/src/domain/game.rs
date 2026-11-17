@@ -263,7 +263,7 @@ impl Game {
                     self.game_over = true;
                     self.won = true;
                     Interaction::None
-                },
+                }
             };
         }
 
@@ -276,7 +276,7 @@ impl Game {
                     ItemKind::Horse => {
                         self.player.mounted = true;
                         self.player.score.saturating_add(5)
-                    },
+                    }
                 };
                 self.message = match item.kind {
                     ItemKind::Loot => "You picked up a satchel of coins (+10).".to_string(),
@@ -284,7 +284,7 @@ impl Game {
                         #[cfg(feature = "sound")]
                         self.sound_manager.play(SoundEffect::HorseMount);
                         "You mounted a horse. The trail moves faster now.".to_string()
-                    },
+                    }
                 };
                 #[cfg(feature = "sound")]
                 match item.kind {
@@ -633,7 +633,6 @@ mod tests {
             .unwrap();
         game.world.npcs[outlaw_idx].bounty = 50;
         game.update_npcs();
-        let has_deputy = game.world.npcs.iter().any(|n| n.kind == NpcKind::Deputy);
-        assert!(has_deputy);
+        let has_deputy = game.world.npcs.iter().any(|n| n.kind == NpcKind::Deputy); assert!(has_deputy);
     }
 }
