@@ -3,8 +3,6 @@
 //! Provides optional sound effects with volume control and mute support.
 //! Feature-gated behind the `sound` Cargo feature.
 
-use std::path::Path;
-
 #[cfg(feature = "sound")]
 use rodio::{Decoder, OutputStream, Sink, Source};
 #[cfg(feature = "sound")]
@@ -13,11 +11,8 @@ use std::fs::File;
 use std::io::BufReader;
 #[cfg(feature = "sound")]
 use std::sync::{Arc, Mutex};
-#[cfg(feature = "sound")]
-use std::path::Path;
 
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use std::sync::{Arc, Mutex, OnceLock};
 
 /// Sound effect categories for volume control.

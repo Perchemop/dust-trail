@@ -405,7 +405,7 @@ pub fn generate(config: GenerationConfig) -> GeneratedWorld {
     // 2. Place border walls.
     for x in 0..width {
         tiles[0][x as usize] = TileType::Wall;
-        tiles[height - 1][x as usize] = TileType::Wall;
+        tiles[(height - 1) as usize][x as usize] = TileType::Wall;
     }
     for y in 0..height {
         tiles[y as usize][0] = TileType::Wall;

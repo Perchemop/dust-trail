@@ -15,7 +15,7 @@ use crate::domain::sound::{SoundEffect, SoundManager, SoundSettings};
 use crate::domain::tile::TileType;
 use crate::domain::world::{World, WantedLevel, NpcKind, Npc, Pos, ItemKind, default_world, spawn_deputies_for_wanted};
 use rand::rngs::StdRng;
-use rand::{Rng, SeedableRng, seq::SliceRandom};
+use rand::{SeedableRng, seq::SliceRandom};
 
 /// A movement direction.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -79,7 +79,6 @@ fn default_rng() -> StdRng {
 impl Game {
     /// Create a new game with a procedurally generated world using a random seed.
     pub fn new() -> Self {
-        use rand::Rng;
         let seed: u64 = rand::random();
         let world = World::generate(seed);
         let player = Player::new(Pos::new(2, 2));
@@ -401,7 +400,7 @@ impl Game {
             .world
             .npcs
             .iter()
-            .filter(|n| (n.kind == NpcKind::Sheriff || n.kind == NpcKind::Deputy))
+            .filter(|n| n.kind == NpcKind::Sheriff || n.kind == NpcKind::Deputy)
             .min_by_key(|n| {
                 (n.pos.x - npc.pos.x).abs() + (n.pos.y - npc.pos.y).abs()
             });
