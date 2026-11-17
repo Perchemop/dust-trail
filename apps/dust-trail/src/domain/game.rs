@@ -193,7 +193,7 @@ impl Game {
             px,
             py,
             Cell::new(self.player.glyph(), self.player.fg(), self.player.bg()),
-        ));
+        ))
 
         // Convert to frame grid.
         let min_x = drawn.iter().map(|d| d.0).min().unwrap_or(0);

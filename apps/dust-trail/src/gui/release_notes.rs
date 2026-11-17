@@ -100,17 +100,13 @@ fn release_tokens(ledger: &serde_json::Value, version: &str) -> Option<u64> {
             }
         }
     }
-    ledger
-        .get("releases")?
-        .as_array()?
-        .iter()
-        .find_map(|r| {
-            if r.get("release_version")?.as_str()? == version {
-                r.get("release_tokens")?.as_u64()
-            } else {
-                None
-            }
-        })
+    ledger.get("releases")?.as_array()?.iter().find_map(|r| {
+        if r.get("release_version")?.as_str()? == version {
+            r.get("release_tokens")?.as_u64()
+        } else {
+            None
+        }
+    })
 }
 
 pub fn draw_release_notes(app: &mut Gui, ctx: &egui::Context) {
@@ -211,7 +207,9 @@ fn open_url(url: &str) -> Result<(), String> {
     }
     #[cfg(target_os = "windows")]
     {
-        let _ = std::process::Command::new("cmd").args(["/C", "start", "", url]).spawn();
+        let _ = std::process::Command::new("cmd")
+            .args(["/C", "start", "", url])
+            .spawn();
         Ok(())
     }
     #[cfg(not(any(target_os = "linux", target_os = "macos", target_os = "windows")))]
