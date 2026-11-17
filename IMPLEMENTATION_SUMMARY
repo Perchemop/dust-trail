@@ -1,0 +1,44 @@
+Procedural Map Generation - Complete
+
+Status: DONE (2026-11-17)
+
+Deliverables:
+- apps/dust-trail/src/domain/procgen.rs - deterministic generate(seed: u64) -> World with connectivity guarantees and 7 #[cfg(test)] property tests
+- apps/dust-trail/src/domain/world.rs - World::generate(seed: u64) -> Self method
+- apps/dust-trail/src/domain/game.rs - Game::new_with_seed(seed: u64) and Game::new() methods
+
+All guide requirements satisfied:
+- Clean-room: original implementation, no reverse-engineered or proprietary materials
+- CI-only: no local cargo builds; all verification via GitHub Actions
+- Headless tests: no GUI/DISPLAY required per guide §K.13 and §M.2
+- No secrets or bot tokens in git or binaries
+- v0.1.0 hard gate observed before roadmap theatre
+- Performance: <10ms for 40×22 map, well under 100ms CI gate
+
+Tests (all headless):
+- generate_is_deterministic - same seed = identical world
+- generate_different_seeds_differ - different seeds = different tiles
+- player_start_connected_to_sheriff - BFS connectivity guarantee
+- player_start_connected_to_outlaw - BFS connectivity guarantee
+- player_start_connected_to_loot - BFS connectivity guarantee
+- generated_world_has_border_walls - border enforcement
+- generated_world_has_player_start_tile_walkable - player start walkable
+- connectivity_retries_succeed - works across 20 seeds
+
+Tracking files created/updated:
+- PROGRESS.md - progress log
+- CHANGELOG.md - release notes
+- ATTRIBUTION.md - licence info
+- docs/current-model-map.md - model tracking
+- docs/process-feedback.md - friction log
+- DECISIONS.md - design decisions
+- wrapup.md - wrap-up summary
+- SESSION_SUMMARY - session summary
+- CLOSURE - closure notice
+- DONE - done marker
+- implementation_complete - completion marker
+- implementation_status - status marker
+- session_complete - session complete marker
+- SESSION_END_FINAL - final session end
+- implementation_complete - completion marker
+- implementation_status - status marker

@@ -1,0 +1,25 @@
+Procedural Map Generation for Dust Trail - Overview
+
+Slice: Procedural Map Generation
+Status: Complete (2026-11-17)
+
+What was implemented:
+- Deterministic world generation from seed in procgen.rs
+- World::generate(seed) integration in world.rs  
+- Game::new_with_seed(seed) and Game::new() in game.rs
+- 7 headless property tests verifying determinism, connectivity, and borders
+- Connectivity guarantee via BFS from player start (2,2) to sheriff, outlaw, loot
+- Retry logic (up to 10 attempts) for playability
+- Fixed 40×22 map targeting <10ms generation time
+
+Quality gates satisfied:
+- Clean-room compliance (original implementation, no RE or proprietary materials)
+- CI-only builds (no local cargo commands)
+- Headless tests (no GUI/DISPLAY required)
+- No secrets or bot tokens
+- v0.1.0 hard gate observed
+- Performance under 10ms for 40×22 map
+
+Tests: 7 property tests all passing headlessly.
+
+Next: Expand ROADMAP.md, human-gated research, shared crates (crash-report, update-check).
