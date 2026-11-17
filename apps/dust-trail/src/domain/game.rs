@@ -19,7 +19,7 @@ use crate::domain::world::{
     default_world, spawn_deputies_for_wanted, ItemKind, Npc, NpcKind, Pos, WantedLevel, World,
 };
 use rand::rngs::StdRng;
-use rand::{SeedableRng, seq::SliceRandom};
+use rand::{seq::SliceRandom, SeedableRng};
 
 /// A movement direction.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
