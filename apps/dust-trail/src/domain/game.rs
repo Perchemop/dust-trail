@@ -337,6 +337,7 @@ impl Game {
                 NpcAction::Move(pos) if self.world.is_walkable(pos) => {
                     npc.pos = pos;
                 }
+                NpcAction::Move(_) => {} // Invalid move, skip
                 NpcAction::Wait => {}
                 NpcAction::Attack(target) => {
                     if let Some(target_npc) = self.world.npcs.iter_mut().find(|n| n.pos == target) {

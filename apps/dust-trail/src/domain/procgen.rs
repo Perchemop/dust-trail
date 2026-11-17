@@ -409,7 +409,7 @@ pub fn generate(config: GenerationConfig) -> GeneratedWorld {
     }
     for y in 0..height {
         tiles[y as usize][0] = TileType::Wall;
-        tiles[y as usize][width - 1] = TileType::Wall;
+        tiles[y as usize][(width - 1) as usize] = TileType::Wall;
     }
 
     // 3. Place town block: 4x4 buildings with doors at corners.
