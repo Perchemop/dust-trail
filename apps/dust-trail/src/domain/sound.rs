@@ -136,7 +136,8 @@ impl SoundManager {
     }
 
     /// Load embedded sound files.
-    fn load_sound_files() -> Result<std::collections::HashMap<SoundEffect, Vec<u8>>, Box<dyn std::error::Error>> {
+    fn load_sound_files(
+    ) -> Result<std::collections::HashMap<SoundEffect, Vec<u8>>, Box<dyn std::error::Error>> {
         let mut sounds = std::collections::HashMap::new();
 
         // Embed sound files using include_bytes!
@@ -338,7 +339,9 @@ impl SoundManager {
             ],
         })
     }
+
     pub fn load_settings(&mut self, _settings: SoundSettings) {}
+
     pub fn default() -> Self {
         SoundManager
     }

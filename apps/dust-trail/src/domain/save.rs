@@ -41,7 +41,7 @@ impl SaveData {
         let sound_settings = game.sound_manager.settings().clone();
         #[cfg(not(feature = "sound"))]
         let sound_settings = game.sound_settings.clone();
-        
+
         Self {
             version: env!("CARGO_PKG_VERSION").to_string(),
             slot: slot.to_owned(),
