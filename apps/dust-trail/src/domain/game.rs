@@ -15,6 +15,7 @@ use crate::domain::slots::SaveStore;
 use crate::domain::sound::{SoundEffect, SoundManager, SoundSettings};
 use crate::domain::slots::SaveStore;
 use crate::domain::tile::TileType;
+use crate::domain::procgen::{generate_from_params, GenerationConfig};
 use crate::domain::world::{default_world, ItemKind, NpcKind, Pos, WantedLevel, World};
 use rand::prelude::IndexedRandom;
 use rand::rngs::StdRng;

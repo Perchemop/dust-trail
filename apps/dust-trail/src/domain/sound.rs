@@ -143,16 +143,16 @@ impl SoundManager {
         let mut sounds = std::collections::HashMap::new();
         
         // Embed sound files using include_bytes!
-        sounds.insert(SoundEffect::Footstep, include_bytes!("../assets/sounds/footstep.wav").to_vec());
-        sounds.insert(SoundEffect::LootPickup, include_bytes!("../assets/sounds/loot_pickup.wav").to_vec());
-        sounds.insert(SoundEffect::HorseMount, include_bytes!("../assets/sounds/horse_mount.wav").to_vec());
-        sounds.insert(SoundEffect::Hit, include_bytes!("../assets/sounds/hit.wav").to_vec());
-        sounds.insert(SoundEffect::EnemyDeath, include_bytes!("../assets/sounds/enemy_death.wav").to_vec());
-        sounds.insert(SoundEffect::Save, include_bytes!("../assets/sounds/save.wav").to_vec());
-        sounds.insert(SoundEffect::Load, include_bytes!("../assets/sounds/load.wav").to_vec());
-        sounds.insert(SoundEffect::GameOver, include_bytes!("../assets/sounds/game_over.wav").to_vec());
-        sounds.insert(SoundEffect::Victory, include_bytes!("../assets/sounds/victory.wav").to_vec());
-        sounds.insert(SoundEffect::Ambient, include_bytes!("../assets/sounds/ambient.wav").to_vec());
+        sounds.insert(SoundEffect::Footstep, include_bytes!("../../assets/sounds/footstep.wav").to_vec());
+        sounds.insert(SoundEffect::LootPickup, include_bytes!("../../assets/sounds/loot_pickup.wav").to_vec());
+        sounds.insert(SoundEffect::HorseMount, include_bytes!("../../assets/sounds/horse_mount.wav").to_vec());
+        sounds.insert(SoundEffect::Hit, include_bytes!("../../assets/sounds/hit.wav").to_vec());
+        sounds.insert(SoundEffect::EnemyDeath, include_bytes!("../../assets/sounds/enemy_death.wav").to_vec());
+        sounds.insert(SoundEffect::Save, include_bytes!("../../assets/sounds/save.wav").to_vec());
+        sounds.insert(SoundEffect::Load, include_bytes!("../../assets/sounds/load.wav").to_vec());
+        sounds.insert(SoundEffect::GameOver, include_bytes!("../../assets/sounds/game_over.wav").to_vec());
+        sounds.insert(SoundEffect::Victory, include_bytes!("../../assets/sounds/victory.wav").to_vec());
+        sounds.insert(SoundEffect::Ambient, include_bytes!("../../assets/sounds/ambient.wav").to_vec());
         
         Ok(sounds)
     }
@@ -170,13 +170,13 @@ impl SoundManager {
             }
             
             // Try to decode and play
-            if let Ok(cursor) = std::io::Cursor::new(data.clone()).into_inner() {
-                if let Ok(source) = Decoder::new(BufReader::new(cursor)) {
-                    let volume = self.settings.effective_volume(self.category_for_effect(effect));
-                    let sink = self.sink.lock().unwrap();
-                    let mut source = source.amplify(volume);
-                    sink.append(source);
-                }
+            if let Ok(source) = Decoder::new(std::io::BufReader::new(
+                std::io::Cursor::new(data.clone())
+            )) {
+                let volume = self.settings.effective_volume(self.category_for_effect(effect));
+                let sink = self.sink.lock().unwrap();
+                let mut source = source.amplify(volume);
+                sink.append(source);
             }
         }
     }
