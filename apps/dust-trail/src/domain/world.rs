@@ -160,7 +160,11 @@ impl World {
     /// player start and key entities is guaranteed by internal retries.
     pub fn generate(seed: u64) -> Self {
         use crate::domain::procgen;
-        procgen::generate(seed)
+        let config = procgen::GenerationConfig {
+            seed,
+            ..Default::default()
+        };
+        procgen::generate(config).world
     }
 
     pub fn in_bounds(&self, pos: Pos) -> bool {

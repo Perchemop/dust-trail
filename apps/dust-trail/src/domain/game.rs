@@ -6,7 +6,6 @@
 use std::path::Path;
 
 use crate::domain::cell::Cell;
-use crate::domain::color::Rgb;
 use crate::domain::frame::Frame;
 use crate::domain::iso::{screen_depth, world_to_screen};
 use crate::domain::player::Player;
@@ -15,7 +14,6 @@ use crate::domain::slots::SaveStore;
 use crate::domain::sound::{SoundEffect, SoundManager, SoundSettings};
 use crate::domain::tile::TileType;
 use crate::domain::world::{World, WantedLevel, NpcKind, Npc, Pos, ItemKind, default_world, spawn_deputies_for_wanted};
-use rand::prelude::IndexedRandom;
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng, seq::SliceRandom};
 
@@ -144,7 +142,6 @@ impl Game {
         // World (x, y) -> screen (sx, sy): sx = (x-y)*2, sy = x+y.
         // Nearer tiles (larger screen depth) are drawn last so they overlap
         // farther ones (painter's algorithm).
-        let pad = 2;
         let mut drawn: Vec<(i32, i32, Cell)> = Vec::new();
 
         // World tiles, back-to-front by screen depth.
@@ -357,7 +354,7 @@ impl Game {
     }
 
     /// Sheriff AI: patrol town, pursue outlaw at high wanted.
-    fn sheriff_ai(&self, npc: &Npc) -> NpcAction {
+    fn sheriff_ai(&mut self, npc: &Npc) -> NpcAction {
         let outlaw = self
             .world
             .npcs
@@ -380,7 +377,7 @@ impl Game {
     }
 
     /// Deputy AI: flank and support sheriff.
-    fn deputy_ai(&self, npc: &Npc) -> NpcAction {
+    fn deputy_ai(&mut self, npc: &Npc) -> NpcAction {
         if let Some(sheriff) = self
             .world
             .npcs
@@ -398,7 +395,7 @@ impl Game {
     }
 
     /// Outlaw AI: evade law, seek cover.
-    fn outlaw_ai(&self, npc: &Npc) -> NpcAction {
+    fn outlaw_ai(&mut self, npc: &Npc) -> NpcAction {
         // Find nearest law (sheriff or deputy).
         let law = self
             .world

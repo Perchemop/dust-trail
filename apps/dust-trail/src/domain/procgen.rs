@@ -72,7 +72,7 @@ impl Default for GenerationConfig {
 /// Key locations that can be placed in a generated town.
 ///
 /// Each location is positioned in the town area and glyph/colour coded for
-//! easy identification in the ASCII world.
+/// easy identification in the ASCII world.
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct KeyLocation {
     /// Name of the location (e.g. "sheriff_office", "bank").
@@ -201,6 +201,13 @@ fn place_2x2_building_tile(
             tiles[by as usize][(bx + 1) as usize] = TileType::Building;
             tiles[(by + 1) as usize][bx as usize] = TileType::Building;
         }
+        _ => {
+            // Default to door on top for invalid values.
+            tiles[by as usize][bx as usize] = TileType::Door;
+            tiles[(by + 1) as usize][bx as usize] = TileType::Building;
+            tiles[by as usize][(bx + 1) as usize] = TileType::Building;
+            tiles[(by + 1) as usize][(bx + 1) as usize] = TileType::Building;
+        }
     }
 }
 
@@ -250,7 +257,6 @@ fn place_key_locations_tiles(
     let town_right = width.saturating_sub(4);
     let town_top = 3i32;
     let town_bottom = height.saturating_sub(4);
-    let town_width = town_right.saturating_sub(town_left);
     let town_height = town_bottom.saturating_sub(town_top);
 
     // Sheriff's office: left side of town, near the top.
