@@ -3,6 +3,8 @@
 //!
 //! Clean-room: original layout and ASCII style.
 
+pub mod release_notes;
+
 use crate::domain::cell::Cell;
 use crate::domain::game::{Direction, Game, Interaction};
 use crate::theme::{danger_color32, rgb_to_color32, Variant};
@@ -12,6 +14,7 @@ use eframe::egui;
 pub struct Gui {
     game: Game,
     save_load: SaveLoadState,
+    show_release_notes: bool,
 }
 
 impl Gui {
@@ -19,6 +22,7 @@ impl Gui {
         Self {
             game: Game::new(),
             save_load: SaveLoadState::default(),
+            show_release_notes: false,
         }
     }
 
@@ -101,7 +105,14 @@ impl Gui {
                     continue;
                 }
                 match key {
-                    egui::Key::Q | egui::Key::Escape => {
+                    egui::Key::Escape => {
+                        if self.show_release_notes {
+                            self.show_release_notes = false;
+                        } else {
+                            ctx_close(ctx);
+                        }
+                    }
+                    egui::Key::Q => {
                         ctx_close(ctx);
                     }
                     egui::Key::W | egui::Key::K | egui::Key::ArrowUp => {
@@ -414,6 +425,22 @@ impl eframe::App for Gui {
         }
         self.render_save_dialog(ui);
         self.render_load_dialog(ui);
+        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+            let version_btn = egui::Button::new(
+                egui::RichText::new(format!("v{}", env!("CARGO_PKG_VERSION")))
+                    .small()
+                    .weak(),
+            )
+            .frame(false);
+            if ui
+                .add(version_btn)
+                .on_hover_text("Click for release notes")
+                .clicked()
+            {
+                self.show_release_notes = true;
+            }
+        });
+        crate::gui::release_notes::draw_release_notes(self, ui.ctx());
     }
 }
 

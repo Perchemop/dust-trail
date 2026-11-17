@@ -11,6 +11,7 @@ pub mod iso;
 pub mod player;
 pub mod save;
 pub mod slots;
+pub mod sound;
 pub mod tile;
 pub mod world;
 

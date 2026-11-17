@@ -12,6 +12,8 @@ use crate::domain::iso::{screen_depth, world_to_screen};
 use crate::domain::player::Player;
 use crate::domain::save::SaveData;
 use crate::domain::slots::SaveStore;
+use crate::domain::sound::{SoundEffect, SoundManager, SoundSettings};
+use crate::domain::slots::SaveStore;
 use crate::domain::tile::TileType;
 use crate::domain::world::{default_world, ItemKind, NpcKind, Pos, WantedLevel, World};
 use rand::prelude::IndexedRandom;
@@ -59,6 +61,18 @@ pub struct Game {
     /// RNG for AI decisions (seeded for reproducibility).
     #[serde(skip, default = "default_rng")]
     rng: StdRng,
+    /// Sound manager for optional sound effects.
+    #[cfg(feature = "sound")]
+    #[serde(skip, default = "default_sound_manager")]
+    pub sound_manager: SoundManager,
+    /// Sound settings for persistence (used when sound feature is disabled).
+    #[cfg(not(feature = "sound"))]
+    pub sound_settings: SoundSettings,
+}
+
+#[cfg(feature = "sound")]
+fn default_sound_manager() -> SoundManager {
+    SoundManager::new().unwrap_or_default()
 }
 
 fn default_rng() -> StdRng {
@@ -85,6 +99,10 @@ impl Game {
             game_over: false,
             won: false,
             rng: StdRng::from_os_rng(),
+            #[cfg(feature = "sound")]
+            sound_manager: SoundManager::new().unwrap_or_default(),
+            #[cfg(not(feature = "sound"))]
+            sound_settings: SoundSettings::new_stub(),
         }
     }
 
@@ -100,6 +118,10 @@ impl Game {
             game_over: false,
             won: false,
             rng: StdRng::seed_from_u64(seed),
+            #[cfg(feature = "sound")]
+            sound_manager: SoundManager::new().unwrap_or_default(),
+            #[cfg(not(feature = "sound"))]
+            sound_settings: SoundSettings::new_stub(),
         }
     }
 
@@ -275,6 +297,9 @@ impl Game {
         self.turn = self.turn.saturating_add(1);
         self.update_npcs();
         self.message = "You move along the dusty trail.".to_string();
+        // Play footstep sound
+        #[cfg(feature = "sound")]
+        self.sound_manager.play(SoundEffect::Footstep);
         Interaction::None
     }
 
@@ -283,10 +308,14 @@ impl Game {
             ItemKind::Loot => {
                 self.player.score = self.player.score.saturating_add(10);
                 self.message = "You picked up a satchel of coins (+10).".to_string();
+                #[cfg(feature = "sound")]
+                self.sound_manager.play(SoundEffect::LootPickup);
             }
             ItemKind::Horse => {
                 self.player.mounted = true;
                 self.message = "You mounted a horse. The trail moves faster now.".to_string();
+                #[cfg(feature = "sound")]
+                self.sound_manager.play(SoundEffect::HorseMount);
             }
         }
         if let Some(item) = self
@@ -366,6 +395,8 @@ impl Game {
                         } else {
                             self.message = "Outlaw captured! Town is safe.".to_string();
                         }
+                        #[cfg(feature = "sound")]
+                        self.sound_manager.play(SoundEffect::Victory);
                         self.game_over = true;
                         self.won = true;
                     }
@@ -410,7 +441,7 @@ impl Game {
     /// End-of-game flags are not part of a save, so a loaded game always
     /// resumes as playable.
     pub fn from_save_data(save: SaveData) -> Self {
-        Self {
+        let mut game = Self {
             world: save.world,
             player: save.player,
             turn: save.turn,
@@ -418,7 +449,17 @@ impl Game {
             game_over: false,
             won: false,
             rng: StdRng::from_os_rng(),
-        }
+            #[cfg(feature = "sound")]
+            sound_manager: SoundManager::new().unwrap_or_default(),
+            #[cfg(not(feature = "sound"))]
+            sound_settings: SoundSettings::new(),
+        };
+        // Restore sound settings from save data
+        #[cfg(feature = "sound")]
+        game.sound_manager.load_settings(save.sound_settings);
+        #[cfg(not(feature = "sound"))]
+        { game.sound_settings = save.sound_settings; }
+        game
     }
 
     /// Save the game into the named slot of the default slot document.
@@ -434,6 +475,8 @@ impl Game {
         let store = SaveStore::new(path);
         let saved_as = store.save_data(slot, SaveData::with_slot(self, slot))?;
         self.message = format!("Game saved to slot \"{saved_as}\".");
+        #[cfg(feature = "sound")]
+        self.sound_manager.play(SoundEffect::Save);
         Ok(())
     }
 
@@ -445,7 +488,10 @@ impl Game {
     /// Load the game from the named slot of the slot document at `path`.
     pub fn load_named_from(slot: &str, path: &Path) -> Result<Self, String> {
         let store = SaveStore::new(path);
-        Ok(Self::from_save_data(store.load_data(slot)?))
+        let mut game = Self::from_save_data(store.load_data(slot)?);
+        #[cfg(feature = "sound")]
+        game.sound_manager.play(SoundEffect::Load);
+        Ok(game)
     }
 
     /// Names of the save slots in the default slot document, alphabetically.
