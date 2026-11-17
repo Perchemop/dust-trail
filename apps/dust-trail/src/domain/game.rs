@@ -615,16 +615,10 @@ mod tests {
             .position(|n| n.kind == NpcKind::Outlaw)
             .unwrap();
         game.world.npcs[outlaw_idx].bounty = 0;
-        assert_eq!(
-            game.world.npcs[outlaw_idx].wanted_level(),
-            WantedLevel::None
-        );
+        assert_eq!(game.world.npcs[outlaw_idx].wanted_level(), WantedLevel::None);
         // Commit crime to increase wanted
         game.world.npcs[outlaw_idx].add_bounty(20);
-        assert_eq!(
-            game.world.npcs[outlaw_idx].wanted_level(),
-            WantedLevel::Low
-        );
+        assert_eq!(game.world.npcs[outlaw_idx].wanted_level(), WantedLevel::Low);
     }
 
     #[test]
