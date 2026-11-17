@@ -301,13 +301,19 @@ impl Game {
     /// Update all NPCs (AI turns).
     fn update_npcs(&mut self) {
         // Update wanted level based on outlaw's bounty.
-        let old_wanted = self.world.npcs.iter()
+        let old_wanted = self
+            .world
+            .npcs
+            .iter()
             .find(|n| n.kind == NpcKind::Outlaw)
             .map(|n| n.wanted_level())
             .unwrap_or(WantedLevel::None);
 
         // Check if outlaw's bounty changed (crimes committed).
-        let new_wanted = self.world.npcs.iter()
+        let new_wanted = self
+            .world
+            .npcs
+            .iter()
             .find(|n| n.kind == NpcKind::Outlaw)
             .map(|n| n.wanted_level())
             .unwrap_or(WantedLevel::None);
@@ -323,7 +329,10 @@ impl Game {
         }
 
         // Deputy spawning logic based on outlaw's wanted level.
-        let outlaw_data = self.world.npcs.iter()
+        let outlaw_data = self
+            .world
+            .npcs
+            .iter()
             .find(|n| n.kind == NpcKind::Outlaw)
             .map(|n| (n.pos, n.wanted_level()));
         if let Some((pos, wanted)) = outlaw_data {
@@ -475,7 +484,8 @@ impl Game {
     /// TUI-compatible save method (takes a path).
     pub fn save(&self, path: &Path) -> Result<(), String> {
         let store = SaveStore::new(path);
-        store.save_data("default", SaveData::with_slot(self, "default"))
+        store
+            .save_data("default", SaveData::with_slot(self, "default"))
             .map(|_| ())
     }
 
@@ -517,7 +527,9 @@ impl Game {
         #[cfg(feature = "sound")]
         game.sound_manager.load_settings(save.sound_settings);
         #[cfg(not(feature = "sound"))]
-        { game.sound_settings = save.sound_settings; }
+        {
+            game.sound_settings = save.sound_settings;
+        }
         game
     }
 
@@ -607,19 +619,35 @@ mod tests {
     #[test]
     fn wanted_level_escalates() {
         let mut game = Game::new_static();
-        let outlaw_idx = game.world.npcs.iter().position(|n| n.kind == NpcKind::Outlaw).unwrap();
+        let outlaw_idx = game
+            .world
+            .npcs
+            .iter()
+            .position(|n| n.kind == NpcKind::Outlaw)
+            .unwrap();
         game.world.npcs[outlaw_idx].bounty = 0;
-        assert_eq!(game.world.npcs[outlaw_idx].wanted_level(), WantedLevel::None);
+        assert_eq!(
+            game.world.npcs[outlaw_idx].wanted_level(),
+            WantedLevel::None
+        );
         // Commit crime to increase wanted
         game.world.npcs[outlaw_idx].add_bounty(20);
-        assert_eq!(game.world.npcs[outlaw_idx].wanted_level(), WantedLevel::Low);
+        assert_eq!(
+            game.world.npcs[outlaw_idx].wanted_level(),
+            WantedLevel::Low
+        );
     }
 
     #[test]
     fn deputy_spawns_at_medium_wanted() {
         let mut game = Game::new_static();
         // Force medium wanted level
-        let outlaw_idx = game.world.npcs.iter().position(|n| n.kind == NpcKind::Outlaw).unwrap();
+        let outlaw_idx = game
+            .world
+            .npcs
+            .iter()
+            .position(|n| n.kind == NpcKind::Outlaw)
+            .unwrap();
         game.world.npcs[outlaw_idx].bounty = 50;
         game.update_npcs();
         let has_deputy = game.world.npcs.iter().any(|n| n.kind == NpcKind::Deputy);

@@ -367,7 +367,15 @@ fn ensure_key_location_paths(
 ) {
     // Carve corridors between consecutive key locations.
     for pair in key_positions.windows(2) {
-        carve_corridor(tiles, pair[0].x, pair[0].y, pair[1].x, pair[1].y, width, height);
+        carve_corridor(
+            tiles,
+            pair[0].x,
+            pair[0].y,
+            pair[1].x,
+            pair[1].y,
+            width,
+            height,
+        );
     }
     // Also connect first and last (wrap-around).
     if key_positions.len() >= 2 {
@@ -543,8 +551,14 @@ mod tests {
 
     #[test]
     fn generate_is_deterministic() {
-        let w1 = generate(GenerationConfig { seed: 123, ..Default::default() });
-        let w2 = generate(GenerationConfig { seed: 123, ..Default::default() });
+        let w1 = generate(GenerationConfig {
+            seed: 123,
+            ..Default::default()
+        });
+        let w2 = generate(GenerationConfig {
+            seed: 123,
+            ..Default::default()
+        });
         assert_eq!(w1.world.tiles, w2.world.tiles);
         assert_eq!(w1.world.npcs, w2.world.npcs);
         assert_eq!(w1.world.items, w2.world.items);
@@ -553,8 +567,14 @@ mod tests {
 
     #[test]
     fn generate_different_seeds_differ() {
-        let w1 = generate(GenerationConfig { seed: 1, ..Default::default() });
-        let w2 = generate(GenerationConfig { seed: 2, ..Default::default() });
+        let w1 = generate(GenerationConfig {
+            seed: 1,
+            ..Default::default()
+        });
+        let w2 = generate(GenerationConfig {
+            seed: 2,
+            ..Default::default()
+        });
         assert_ne!(w1.world.tiles, w2.world.tiles);
     }
 
@@ -563,11 +583,17 @@ mod tests {
         let gw = generate(GenerationConfig::default());
         for x in 0..gw.world.width {
             assert_eq!(gw.world.tile(Pos::new(x, 0)), Some(TileType::Wall));
-            assert_eq!(gw.world.tile(Pos::new(x, gw.world.height - 1)), Some(TileType::Wall));
+            assert_eq!(
+                gw.world.tile(Pos::new(x, gw.world.height - 1)),
+                Some(TileType::Wall)
+            );
         }
         for y in 0..gw.world.height {
             assert_eq!(gw.world.tile(Pos::new(0, y)), Some(TileType::Wall));
-            assert_eq!(gw.world.tile(Pos::new(gw.world.width - 1, y)), Some(TileType::Wall));
+            assert_eq!(
+                gw.world.tile(Pos::new(gw.world.width - 1, y)),
+                Some(TileType::Wall)
+            );
         }
     }
 
@@ -580,7 +606,10 @@ mod tests {
     #[test]
     fn connectivity_retries_succeed() {
         for seed in 1..=20 {
-            let gw = generate(GenerationConfig { seed, ..Default::default() });
+            let gw = generate(GenerationConfig {
+                seed,
+                ..Default::default()
+            });
             // Basic playability: player can reach sheriff and outlaw positions.
             assert!(gw.world.is_walkable(Pos::new(2, 2)));
         }
