@@ -3,8 +3,6 @@
 //!
 //! Clean-room: original mechanics; nothing copied from a commercial product.
 
-use std::path::Path;
-
 use crate::domain::cell::Cell;
 use crate::domain::frame::Frame;
 use crate::domain::iso::{screen_depth, world_to_screen};

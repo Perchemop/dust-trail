@@ -4,10 +4,10 @@
 //! (`docs/tokens.md`) are embedded at build time so the popup works in a
 //! packaged binary, not only in a source checkout.
 
-use egui::{Align, Layout};
-
 use crate::gui::Gui;
 use crate::theme;
+
+use egui::{Align, Layout};
 
 /// Changelog embedded at build time.
 const EMBEDDED_CHANGELOG: &str = include_str!("../../../../CHANGELOG.md");
