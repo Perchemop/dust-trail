@@ -512,8 +512,7 @@ impl Game {
             .min_by_key(|n| (n.pos.x - npc.pos.x).abs() + (n.pos.y - npc.pos.y).abs());
 
         // Distance to player.
-        let player_dist = (npc.pos.x - self.player.pos.x).abs()
-            + (npc.pos.y - self.player.pos.y).abs();
+        let player_dist = (npc.pos.x - self.player.pos.x).abs() + (npc.pos.y - self.player.pos.y).abs();
 
         if let Some(law) = law {
             let dist = (law.pos.x - npc.pos.x).abs() + (law.pos.y - npc.pos.y).abs();
