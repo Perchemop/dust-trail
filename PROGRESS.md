@@ -1,5 +1,32 @@
 # Progress Log - Dust Trail
 
+## v1.4.0 — Item System
+
+### Status: Released ✅
+
+**Tag:** `v1.4.0` pushed to origin  
+**GitHub Release:** Published with detailed notes  
+**CI:** All checks green — format, clippy, tests, multi-OS release builds  
+**Installers:** .deb (arm64/x86_64), .dmg (arm64), .msi (x86_64), SHA256SUMS.txt
+
+### Implemented
+
+| Item | Status | Evidence |
+|------|--------|----------|
+| Item system: inventory, `Game::use_item(kind)` | Complete | `apps/dust-trail/src/domain/game.rs`, `apps/dust-trail/src/domain/player.rs` |
+| Loot consumption (+5 score) | Complete | `Game::use_item(ItemKind::Loot)` |
+| Horse mount via item use | Complete | `Game::use_item(ItemKind::Horse)` sets mounted |
+| GUI toolbar inventory count | Complete | `apps/dust-trail/src/gui/mod.rs` toolbar |
+| TUI 'u' key uses first inventory item | Complete | `apps/dust-trail/src/tui/mod.rs` key binding |
+
+### CI Results (v1.4.0)
+- **check** (fmt + clippy): PASSED
+- **Build (linux-arm64)**: PASSED
+- **Build (linux-x86_64)**: PASSED
+- **Build (macos-arm64)**: PASSED
+- **Build (windows-x86_64)**: PASSED
+- **supply-chain**: PASSED
+
 ## v1.3.0 — UI Polish & Item System
 
 ### Status: Released ✅

@@ -1,5 +1,22 @@
 # Changelog - Dust Trail
 
+## v1.4.0 - 2026-11-18
+
+### Added
+- Item system: inventory, `Game::use_item(kind)` with arbitrary item kinds
+- Loot consumption: +5 score per loot item used
+- Horse mount: use horse item to mount (same as 'M' toggle)
+- GUI toolbar inventory count display
+- TUI: 'u' key uses first item from inventory
+
+### Changed
+- Collected items go to inventory instead of auto-scoring
+- Use items explicitly with 'u' key (TUI/GUI)
+
+### CI & Release
+- CI green: format, clippy, tests, multi-OS release builds (Linux arm64/x86_64, macOS arm64, Windows x86_64)
+- Installers published: .deb (arm64/x86_64), .dmg (arm64), .msi (x86_64), SHA256SUMS.txt
+
 ## v1.3.0 - 2026-11-18
 
 ### Added

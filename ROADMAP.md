@@ -93,10 +93,10 @@ verification), per guide §6.2.
 * Save format version migration (handles pre-1.2.0 saves)
 * CI green: format, clippy, tests, multi-OS release builds
 
-## v1.4.0 (planned — Item System & GUI Layout)
-* Item usage: consume loot for score bonus, toggle horse mount (M key)
-* Better GUI layout: side status panel with health, wanted level, score
-* Item descriptions/tooltips on hover
+## v1.4.0 (complete — 2026-11-18)
+* Item system: inventory, use_item (consume loot for score, use horse to mount)
+* GUI toolbar inventory count
+* TUI: 'u' key uses first item from inventory
 * CI green: format, clippy, tests, multi-OS release builds
 
 ## Out of scope

@@ -4,3 +4,4 @@
 | v1.1.0  | 2026-11-18 | 300_000             | 2_800_000         | Multi-save slots feature  |
 | v1.2.0  | 2026-11-18 | 400_000             | 3_200_000         | Combat system feature     |
 | v1.3.0  | 2026-11-18 | 350_000             | 3_550_000         | UI polish & item system   |
+| v1.4.0  | 2026-11-18 | 300_000             | 3_850_000         | Item system: inventory    |
