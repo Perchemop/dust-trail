@@ -188,7 +188,30 @@ impl Tui {
                 self.interact();
                 Ok(ControlFlow::Continue)
             }
-            KeyCode::Char('S') => {
+            KeyCode::Char('f') => {
+                // Attack adjacent NPCs (fight).
+                let adjacent = [
+                    Pos::new(self.player.pos.x + 1, self.player.pos.y),
+                    Pos::new(self.player.pos.x - 1, self.player.pos.y),
+                    Pos::new(self.player.pos.x, self.player.pos.y + 1),
+                    Pos::new(self.player.pos.x, self.player.pos.y - 1),
+                ];
+                let mut attacked = false;
+                for pos in adjacent {
+                    if self.game.world.npc_at(pos).is_some() {
+                        let dead = self.game.attack(pos);
+                        attacked = true;
+                        if dead {
+                            self.game.message = "Enemy defeated!".to_string();
+                        }
+                        break;
+                    }
+                }
+                if !attacked {
+                    self.game.message = "No enemy nearby to attack.".to_string();
+                }
+                Ok(ControlFlow::Continue)
+            }
                 let slots = Game::list_saves().unwrap_or_default();
                 if slots.is_empty() {
                     // No saves yet, save to slot "1".

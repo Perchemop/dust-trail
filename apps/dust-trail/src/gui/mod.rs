@@ -128,6 +128,7 @@ impl Gui {
                         self.step(Direction::Right);
                     }
                     egui::Key::E => self.interact(),
+                    egui::Key::F => self.attack(),
                     egui::Key::R => self.game = Game::new(),
                     _ => {}
                 }
@@ -162,6 +163,30 @@ impl Gui {
             Interaction::Talked { npc, line } => {
                 self.game.message = format!("{npc}: {line}");
             }
+        }
+    }
+
+    fn attack(&mut self) {
+        // Attack adjacent NPCs (fight).
+        let adjacent = [
+            Pos::new(self.game.player.pos.x + 1, self.game.player.pos.y),
+            Pos::new(self.game.player.pos.x - 1, self.game.player.pos.y),
+            Pos::new(self.game.player.pos.x, self.game.player.pos.y + 1),
+            Pos::new(self.game.player.pos.x, self.game.player.pos.y - 1),
+        ];
+        let mut attacked = false;
+        for pos in adjacent {
+            if self.game.world.npc_at(pos).is_some() {
+                let dead = self.game.attack(pos);
+                attacked = true;
+                if dead {
+                    self.game.message = "Enemy defeated!".to_string();
+                }
+                break;
+            }
+        }
+        if !attacked {
+            self.game.message = "No enemy nearby to attack.".to_string();
         }
     }
 

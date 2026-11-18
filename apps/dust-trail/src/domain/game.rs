@@ -303,6 +303,41 @@ impl Game {
         Interaction::None
     }
 
+    /// Attack an adjacent NPC, dealing damage. Returns true if the NPC died.
+    pub fn attack(&mut self, target_pos: Pos) -> bool {
+        // Find the NPC at the target position.
+        let npc_idx = self
+            .world
+            .npcs
+            .iter()
+            .position(|n| n.pos == target_pos);
+
+        if let Some(idx) = npc_idx {
+            let npc_kind = self.world.npcs[idx].kind;
+            let damage = 25;
+
+            self.world.npcs[idx].health = self.world.npcs[idx].health.saturating_sub(damage);
+            let dead = self.world.npcs[idx].health == 0;
+
+            if dead {
+                self.message = format!("You killed the {:?}.", npc_kind);
+                #[cfg(feature = "sound")]
+                self.sound_manager.play(SoundEffect::EnemyDeath);
+                self.player.score = self.player.score.saturating_add(20);
+                // Remove dead NPC.
+                self.world.npcs.remove(idx);
+            } else {
+                self.message = format!("You hit the {:?} for {} damage.", npc_kind, damage);
+                #[cfg(feature = "sound")]
+                self.sound_manager.play(SoundEffect::Hit);
+            }
+
+            dead
+        } else {
+            false
+        }
+    }
+
     /// Update all NPCs (AI turns).
     fn update_npcs(&mut self) {
         // Update wanted level based on outlaw's bounty.
@@ -360,16 +395,49 @@ impl Game {
                 NpcAction::Move(_) => {} // Invalid move, skip
                 NpcAction::Wait => {}
                 NpcAction::Attack(target) => {
-                    if let Some(target_npc) = self.world.npcs.iter_mut().find(|n| n.pos == target) {
-                        target_npc.bounty = target_npc.bounty.saturating_add(50);
-                        self.message = format!("{:?} was wounded!", target_npc.kind);
+                    // If the target is the player, damage the player.
+                    if target == self.player.pos {
+                        let damage = 15;
+                        let player_died = self.player.take_damage(damage);
+                        self.message = format!(
+                            "The {:?} attacks you for {} damage! HP: {}",
+                            npc.kind, damage, self.player.health
+                        );
                         #[cfg(feature = "sound")]
                         self.sound_manager.play(SoundEffect::Hit);
+                        if player_died {
+                            self.game_over = true;
+                            self.message = "You have been killed. Game over.".to_string();
+                        }
+                    } else if let Some(target_npc) = self
+                        .world
+                        .npcs
+                        .iter_mut()
+                        .find(|n| n.pos == target)
+                    {
+                        // NPC vs NPC combat (e.g., sheriff vs outlaw).
+                        let damage = 20;
+                        target_npc.health = target_npc.health.saturating_sub(damage);
+                        self.message = format!(
+                            "The {:?} attacks the {:?}! {} HP remaining.",
+                            npc.kind, target_npc.kind, target_npc.health
+                        );
+                        #[cfg(feature = "sound")]
+                        self.sound_manager.play(SoundEffect::Hit);
+                        if target_npc.health == 0 {
+                            self.message = format!("The {:?} was killed.", target_npc.kind);
+                            #[cfg(feature = "sound")]
+                            self.sound_manager.play(SoundEffect::EnemyDeath);
+                            // Mark for removal.
+                            target_npc.health = 0;
+                        }
                     }
                 }
             }
             new_npcs.push(npc);
         }
+        // Remove dead NPCs.
+        self.world.npcs.retain(|n| n.health > 0);
         self.world.npcs = new_npcs;
     }
 
@@ -627,6 +695,7 @@ mod tests {
             kind: NpcKind::Outlaw,
             pos: game.player.pos,
             bounty: 0,
+            health: 50,
         });
         game.interact();
         assert!(game.game_over);
@@ -695,5 +764,79 @@ mod tests {
         let loaded_beta = Game::load_named_from("beta", &path).unwrap();
         assert_eq!(loaded_beta.player.pos, Pos::new(1, 1)); // Up then Left from (2,2)
         assert_eq!(loaded_beta.turn, 2);
+    }
+
+    #[test]
+    fn player_take_damage_reduces_health() {
+        let mut game = Game::new_static();
+        let initial_health = game.player.health;
+        let damage = 25;
+        let died = game.player.take_damage(damage);
+        assert!(!died);
+        assert_eq!(game.player.health, initial_health - damage);
+    }
+
+    #[test]
+    fn player_take_damage_to_zero_dies() {
+        let mut game = Game::new_static();
+        let died = game.player.take_damage(game.player.health);
+        assert!(died);
+        assert!(game.player.is_dead());
+    }
+
+    #[test]
+    fn player_attack_kills_npc() {
+        let mut game = Game::new_static();
+        // Place an outlaw adjacent to player (at 3, 2).
+        game.world.npcs.push(crate::domain::world::Npc {
+            kind: NpcKind::Outlaw,
+            pos: Pos::new(3, 2),
+            bounty: 0,
+            health: 25, // One hit kills (damage = 25)
+        });
+        let dead = game.attack(Pos::new(3, 2));
+        assert!(dead);
+        assert!(game.world.npcs.is_empty());
+    }
+
+    #[test]
+    fn player_attack_damages_npc() {
+        let mut game = Game::new_static();
+        // Place an outlaw adjacent to player with 100 HP.
+        game.world.npcs.push(crate::domain::world::Npc {
+            kind: NpcKind::Outlaw,
+            pos: Pos::new(3, 2),
+            bounty: 0,
+            health: 100,
+        });
+        let dead = game.attack(Pos::new(3, 2));
+        assert!(!dead);
+        assert_eq!(game.world.npcs[0].health, 75); // 100 - 25 damage
+    }
+
+    #[test]
+    fn npc_attack_damages_player() {
+        let mut game = Game::new_static();
+        // Place an outlaw adjacent to player.
+        game.world.npcs.push(crate::domain::world::Npc {
+            kind: NpcKind::Outlaw,
+            pos: Pos::new(3, 2),
+            bounty: 0,
+            health: 50,
+        });
+        // Simulate NPC attacking player.
+        let player_died = game.player.take_damage(15);
+        assert!(!player_died);
+        assert_eq!(game.player.health, 85);
+    }
+
+    #[test]
+    fn player_death_sets_game_over() {
+        let mut game = Game::new_static();
+        // Damage player to death.
+        let _ = game.player.take_damage(game.player.health);
+        assert!(game.player.is_dead());
+        game.game_over = true;
+        assert!(game.game_over);
     }
 }

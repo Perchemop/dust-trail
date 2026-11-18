@@ -485,6 +485,7 @@ pub fn generate(config: GenerationConfig) -> GeneratedWorld {
                 kind: NpcKind::Sheriff,
                 pos: sheriff_pos,
                 bounty: 0,
+                health: 50,
             },
             // Outlaw entry - ensure valid position.
         ],

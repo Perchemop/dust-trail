@@ -36,6 +36,13 @@ pub struct Npc {
     /// Bounty value for outlaws (0 for non-outlaws).
     #[serde(default)]
     pub bounty: u32,
+    /// Health points — reaches 0 on death.
+    #[serde(default = "default_npc_health")]
+    pub health: u32,
+}
+
+fn default_npc_health() -> u32 {
+    50
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
@@ -260,11 +267,13 @@ pub fn default_world() -> World {
         kind: NpcKind::Sheriff,
         pos: Pos::new(7, 5),
         bounty: 0,
+        health: 50,
     });
     world.npcs.push(Npc {
         kind: NpcKind::Outlaw,
         pos: Pos::new(33, 15),
         bounty: 0,
+        health: 50,
     });
 
     // Items.
@@ -319,6 +328,7 @@ pub fn spawn_deputies_for_wanted(world: &mut World, outlaw_pos: Pos, wanted: Wan
                 kind: NpcKind::Deputy,
                 pos,
                 bounty: 0,
+                health: 40,
             });
             spawned += 1;
         }
@@ -378,6 +388,7 @@ mod tests {
             kind: NpcKind::Outlaw,
             pos: Pos::new(0, 0),
             bounty: 0,
+            health: 50,
         };
         outlaw.add_bounty(5);
         assert_eq!(outlaw.bounty, 5);
@@ -393,6 +404,7 @@ mod tests {
             kind: NpcKind::Outlaw,
             pos: Pos::new(0, 0),
             bounty: 0,
+            health: 50,
         };
         assert_eq!(outlaw.wanted_level(), WantedLevel::None);
         outlaw.bounty = 10;
@@ -415,6 +427,7 @@ mod tests {
             kind: NpcKind::Sheriff,
             pos: Pos::new(0, 0),
             bounty: 100,
+            health: 50,
         };
         assert_eq!(sheriff.wanted_level(), WantedLevel::None);
     }
@@ -426,6 +439,7 @@ mod tests {
             kind: NpcKind::Outlaw,
             pos: Pos::new(10, 10),
             bounty: 50,
+            health: 50,
         });
         let spawned = spawn_deputies_for_wanted(&mut world, Pos::new(10, 10), WantedLevel::Medium);
         assert_eq!(spawned, 1);
@@ -436,6 +450,7 @@ mod tests {
             kind: NpcKind::Outlaw,
             pos: Pos::new(10, 10),
             bounty: 100,
+            health: 50,
         });
         let spawned = spawn_deputies_for_wanted(&mut world, Pos::new(10, 10), WantedLevel::High);
         assert_eq!(spawned, 2);
