@@ -11,7 +11,8 @@ verification), per guide §6.2.
 | v0.2.0 — 3D isometric ASCII GUI | 2026-11 | 100% | Released |
 | v0.3.0 — Outlaw AI patrol | 2026-11 | 100% | Released |
 | v0.4.0 — Wanted Level / Bounty mechanic | 2026-11 | 100% | Released |
-| v1.0.0 — Stable release | 2027-01 | 0% | Planned |
+| v1.0.0 — Stable release | 2026-11 | 100% | Released |
+| v1.1.0 — Next milestone | TBD | 0% | Planned |
 
 ## v0.1.0 (complete — superseded by v0.2.0)
 * Playable ASCII Western adventure (top-down TUI + GUI)
@@ -56,14 +57,16 @@ verification), per guide §6.2.
 - Deputy spawning: Medium=1, High=2, spawn around sheriff
 - Add comprehensive tests: bounty crimes, decay, wanted levels, deputy spawning, bounty collection, bounty only affects outlaws
 
-## v1.0.0 — Planned
-* Sound effects (optional, feature-gated)
-* Accessibility: contrast unit tests, keyboard focus, AccessKit labels
-* GUI screenshot/evidence via kittest (seam refactor first)
-* Stable save format with version migration
-* Procedural map generation
-* In-app release-notes popup + version display (suite standard)
-* Auto-update download + signature verification
+## v1.0.0 (complete — 2026-11-18)
+* Sound effects (optional, feature-gated) — rodio + 10 embedded WAV files
+* Accessibility: contrast unit tests (4.5:1 body, 3:1 UI), keyboard focus, AccessKit labels
+* GUI screenshot/evidence via kittest — evui_kittest + AccessKit assertions
+* Stable save format with version migration — SaveData with version slot field
+* Procedural map generation — deterministic world generation from seed, connectivity guarantees
+* In-app release-notes popup + version display (suite standard) — CHANGELOG.md + docs/tokens.md embedded
+* Auto-update download + signature verification — SHA-256 + minisign, anti-loop marker
+* CI green: format, clippy, tests, multi-OS release builds (Linux arm64/x86_64, macOS arm64, Windows x86_64)
+* Installers published: .deb (arm64/x86_64), .dmg (arm64), .msi (x86_64), SHA256SUMS.txt
 
 ## Out of scope
 * Multiplayer / networking

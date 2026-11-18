@@ -1,5 +1,37 @@
 # Changelog - Dust Trail
 
+## v1.0.0 - 2026-11-18
+
+### Added
+- Sound effects (optional, feature-gated) — rodio + 10 embedded WAV files
+- Accessibility: contrast unit tests (4.5:1 body text, 3:1 UI boundaries, light + dark themes)
+- Keyboard focus and AccessKit labels for screen-reader semantics
+- In-app release-notes popup + version display (suite standard)
+- Auto-update download + signature verification — SHA-256 + minisign, anti-loop marker
+- Procedural map generation — deterministic world generation from seed, connectivity guarantees
+- Stable save format with version migration
+
+### Changed
+- Domain layer defaults to procedurally generated world
+- Outlaw AI with Patrol/Chase/Flee states
+- Deputy coordination with sheriff flanking behavior
+
+### Fixed
+- Connectivity guarantees ensure player start connects to sheriff, outlaw, and loot
+- Wanted level calculation and bounty mechanics
+- Deputy spawning based on wanted level
+
+### Tests
+- 7 headless procgen property tests (determinism, different seeds, connectivity, border walls, walkable start, retries)
+- Bounty crimes, decay, wanted levels, deputy spawning, bounty collection tests
+
+### Performance
+- Map generation targets <10ms for 40×22 map
+
+### CI & Release
+- CI green: format, clippy, tests, multi-OS release builds (Linux arm64/x86_64, macOS arm64, Windows x86_64)
+- Installers published: .deb (arm64/x86_64), .dmg (arm64), .msi (x86_64), SHA256SUMS.txt
+
 ## v0.3.0 - 2026-11-16
 
 ### Added
