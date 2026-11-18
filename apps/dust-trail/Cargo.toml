@@ -18,7 +18,7 @@ categories = ["games"]
 crash-report = { path = "../../crates/crash-report", version = "0.2.0" }
 update-check = { path = "../../crates/update-check", version = "0.2.0" }
 
-crossterm = "0.27"
+crossterm = "0.29"
 directories = "6"
 rand = "0.9"
 rodio = { version = "0.19", optional = true }
