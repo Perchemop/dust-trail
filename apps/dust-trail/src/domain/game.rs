@@ -14,7 +14,7 @@ use crate::domain::sound::SoundSettings;
 use crate::domain::sound::{SoundEffect, SoundManager};
 use crate::domain::tile::TileType;
 use crate::domain::world::{
-    ItemKind, Npc, NpcKind, Pos, WantedLevel, World, default_world, spawn_deputies_for_wanted,
+    default_world, spawn_deputies_for_wanted, ItemKind, Npc, NpcKind, Pos, WantedLevel, World,
 };
 use rand::{SeedableRng, seq::SliceRandom};
 use rand::rngs::StdRng;
@@ -258,7 +258,7 @@ impl Game {
                     self.game_over = true;
                     self.won = true;
                     Interaction::None
-                },
+                }
                 NpcKind::Sheriff => Interaction::Talked {
                     npc: "Sheriff".to_string(),
                     line: "Keep the peace, stranger.".to_string(),
@@ -274,7 +274,7 @@ impl Game {
                     ItemKind::Horse => {
                         self.player.mounted = true;
                         self.player.score.saturating_add(5)
-                    },
+                    }
                     ItemKind::Loot => self.player.score.saturating_add(10),
                 };
                 self.message = match item.kind {
@@ -282,7 +282,7 @@ impl Game {
                         #[cfg(feature = "sound")]
                         self.sound_manager.play(SoundEffect::HorseMount);
                         "You mounted a horse. The trail moves faster now.".to_string()
-                    },
+                    }
                     ItemKind::Loot => "You picked up a satchel of coins (+10).".to_string(),
                 };
                 #[cfg(feature = "sound")]
@@ -614,7 +614,10 @@ mod tests {
             .position(|n| n.kind == NpcKind::Outlaw)
             .unwrap();
         game.world.npcs[outlaw_idx].bounty = 0;
-        assert_eq!(game.world.npcs[outlaw_idx].wanted_level(), WantedLevel::None);
+        assert_eq!(
+            game.world.npcs[outlaw_idx].wanted_level(),
+            WantedLevel::None,
+        );
         // Commit crime to increase wanted
         game.world.npcs[outlaw_idx].add_bounty(20);
         assert_eq!(game.world.npcs[outlaw_idx].wanted_level(), WantedLevel::Low);

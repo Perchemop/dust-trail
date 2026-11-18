@@ -134,10 +134,7 @@ impl SoundManager {
     }
 
     /// Load embedded sound files.
-    fn load_sound_files() -> Result<
-        std::collections::HashMap<SoundEffect, Vec<u8>>,
-        Box<dyn std::error::Error>,
-    > {
+    fn load_sound_files() -> Result<std::collections::HashMap<SoundEffect, Vec<u8>>, Box<dyn std::error::Error>> {
         let mut sounds = std::collections::HashMap::new();
 
         // Embed sound files using include_bytes!
@@ -201,7 +198,9 @@ impl SoundManager {
             if let Ok(source) =
                 Decoder::new(std::io::BufReader::new(std::io::Cursor::new(data.clone())))
             {
-                let volume = self.settings.effective_volume(self.category_for_effect(effect));
+                let volume = self
+                    .settings
+                    .effective_volume(self.category_for_effect(effect));
                 let sink = self.sink.lock().unwrap();
                 let mut source = source.amplify(volume);
                 sink.append(source);

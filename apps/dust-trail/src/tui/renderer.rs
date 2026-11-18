@@ -5,7 +5,7 @@
 use crate::domain::color::Rgb;
 use crate::domain::frame::Frame;
 use crossterm::style::{Print, SetBackgroundColor, SetForegroundColor};
-use crossterm::{ExecutableCommand, cursor::MoveTo};
+use crossterm::{cursor::MoveTo, ExecutableCommand};
 use std::io::{Stdout, Write};
 
 /// Convert a domain RGB to a crossterm colour.
