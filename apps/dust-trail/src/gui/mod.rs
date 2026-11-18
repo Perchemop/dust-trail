@@ -264,6 +264,8 @@ impl Gui {
             }
         }
     }
+
+    fn save_game(&mut self) {
         let path = save_dir().join("saves.json");
         let slot = self.save_load.save_name_input.trim().to_string();
         if slot.is_empty() {
