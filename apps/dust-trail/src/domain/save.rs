@@ -68,7 +68,10 @@ impl SaveData {
         // Pre-1.2.0 saves lack `health` on Player and Npc; these default to
         // 0 via #[serde(default)], which means dead. Restore to full health
         // for playability.
-        if self.version.starts_with("0.") || self.version.starts_with("1.0.") || self.version.starts_with("1.1.") {
+        if self.version.starts_with("0.")
+            || self.version.starts_with("1.0.")
+            || self.version.starts_with("1.1.")
+        {
             self.player.health = self.player.health.max(100);
             for npc in &mut self.world.npcs {
                 npc.health = npc.health.max(50);

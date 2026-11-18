@@ -524,9 +524,11 @@ impl eframe::App for Gui {
                 .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
                 .show(ui.ctx(), |ui| {
                     ui.vertical_centered(|ui| {
-                        ui.heading(egui::RichText::new("GAME OVER").color(crate::theme::rgb_to_color32(
-                            crate::domain::color::Rgb::new(220, 60, 60),
-                        )));
+                        ui.heading(egui::RichText::new("GAME OVER").color(
+                            crate::theme::rgb_to_color32(crate::domain::color::Rgb::new(
+                                220, 60, 60,
+                            )),
+                        ));
                         ui.add_space(16.0);
                         ui.label("You have been killed. Your journey ends here.");
                         ui.add_space(16.0);
