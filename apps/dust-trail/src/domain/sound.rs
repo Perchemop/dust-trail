@@ -343,7 +343,7 @@ impl SoundManager {
 
     pub fn load_settings(&mut self, _settings: SoundSettings) {}
 
-    pub fn default() -> Self {
+    pub fn new_stub() -> Self {
         SoundManager
     }
 }

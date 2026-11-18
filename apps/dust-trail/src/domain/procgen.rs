@@ -33,7 +33,6 @@ const DEFAULT_WORLD_WIDTH: i32 = 40;
 const DEFAULT_WORLD_HEIGHT: i32 = 22;
 const DEFAULT_BUILDING_COUNT: usize = 6;
 const DEFAULT_TREE_PROB: f64 = 0.15;
-const MAX_RETRIES: u32 = 10;
 
 // ============================================================================
 // Generation configuration
@@ -162,7 +161,7 @@ pub struct GeneratedWorld {
 /// Place a 2x2 building with a door on the given side at position (bx, by).
 /// Writes directly into the tile grid `tiles`.
 fn place_2x2_building_tile(
-    tiles: &mut Vec<Vec<TileType>>,
+    tiles: &mut [Vec<TileType>],
     bx: i32,
     by: i32,
     door_side: usize,
@@ -213,7 +212,7 @@ fn place_2x2_building_tile(
 
 /// Scatter trees in the wilderness outside the town radius.
 fn place_trees(
-    tiles: &mut Vec<Vec<TileType>>,
+    tiles: &mut [Vec<TileType>],
     rng: &mut StdRng,
     wilderness_ratio: f64,
     width: i32,
@@ -247,7 +246,7 @@ fn place_trees(
 
 /// Place key locations as Building tiles in the town area, and return their metadata.
 fn place_key_locations_tiles(
-    tiles: &mut Vec<Vec<TileType>>,
+    tiles: &mut [Vec<TileType>],
     width: i32,
     height: i32,
 ) -> Vec<KeyLocation> {
@@ -319,7 +318,7 @@ fn place_key_locations_tiles(
 
 /// Carve a walkable corridor between two positions using a simplified Bresenham line.
 fn carve_corridor(
-    tiles: &mut Vec<Vec<TileType>>,
+    tiles: &mut [Vec<TileType>],
     mut x0: i32,
     mut y0: i32,
     mut x1: i32,
@@ -360,7 +359,7 @@ fn carve_corridor(
 
 /// Ensure walkable paths between all key locations by carving corridors.
 fn ensure_key_location_paths(
-    tiles: &mut Vec<Vec<TileType>>,
+    tiles: &mut [Vec<TileType>],
     key_positions: &[Pos],
     width: i32,
     height: i32,
@@ -379,24 +378,13 @@ fn ensure_key_location_paths(
     }
 }
 
-/// Verify a tile position is walkable (not Wall/Water/Tree).
-fn is_walkable_tile(tiles: &[Vec<TileType>], pos: Pos, width: i32, height: i32) -> bool {
-    if pos.x < 1 || pos.x >= width - 1 || pos.y < 1 || pos.y >= height - 1 {
-        return false;
-    }
-    !matches!(
-        tiles[pos.y as usize][pos.x as usize],
-        TileType::Wall | TileType::Water | TileType::Tree
-    )
-}
-
 /// Deterministically generate a world from a configuration.
 pub fn generate(config: GenerationConfig) -> GeneratedWorld {
     let mut rng = StdRng::seed_from_u64(config.seed);
 
-    let width = config.width.max(10).min(200);
-    let height = config.height.max(10).min(200);
-    let building_count = config.building_count.max(1).min(50);
+    let width = config.width.clamp(10, 200);
+    let height = config.height.clamp(10, 200);
+    let building_count = config.building_count.clamp(1, 50);
     let wilderness_ratio = config.wilderness_ratio.clamp(0.0, 1.0);
 
     // 1. Create blank tile grid (all Ground).

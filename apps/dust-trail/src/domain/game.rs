@@ -51,6 +51,7 @@ pub enum Interaction {
 
 /// The game state machine.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[allow(clippy::new_without_default)]
 pub struct Game {
     pub world: World,
     pub player: Player,
@@ -542,6 +543,7 @@ impl Game {
 enum NpcAction {
     Move(Pos),
     Wait,
+    #[allow(dead_code)]
     Attack(Pos),
 }
 
