@@ -93,7 +93,11 @@ impl Gui {
                 ui.separator();
                 let inv_count = self.game.player.inventory.len();
                 if inv_count > 0 {
-                    ui.label(format!("Inv: {} item{}", inv_count, if inv_count == 1 { "" } else { "s" }));
+                    ui.label(format!(
+                        "Inv: {} item{}",
+                        inv_count,
+                        if inv_count == 1 { "" } else { "s" }
+                    ));
                     ui.separator();
                 }
                 ui.label(format!(
