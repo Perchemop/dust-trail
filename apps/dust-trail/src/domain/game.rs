@@ -3,8 +3,6 @@
 //!
 //! Clean-room: original mechanics; nothing copied from a commercial product.
 
-use std::path::Path;
-
 use crate::domain::cell::Cell;
 use crate::domain::frame::Frame;
 use crate::domain::iso::{screen_depth, world_to_screen};
@@ -20,6 +18,7 @@ use crate::domain::world::{
 };
 use rand::rngs::StdRng;
 use rand::{seq::SliceRandom, SeedableRng};
+use std::path::Path;
 
 /// A movement direction.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

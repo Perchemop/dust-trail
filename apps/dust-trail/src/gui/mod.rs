@@ -7,7 +7,7 @@ pub mod release_notes;
 
 use crate::domain::cell::Cell;
 use crate::domain::game::{Direction, Game, Interaction};
-use crate::theme::{danger_color32, rgb_to_color32, Variant};
+use crate::theme::{Variant, danger_color32, rgb_to_color32};
 use eframe::egui;
 
 /// The GUI frontend.
