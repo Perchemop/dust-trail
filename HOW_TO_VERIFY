@@ -1,0 +1,17 @@
+To verify the implementation:
+
+1. Run headless tests:
+   cargo test -p dust-trail --domain procgen
+
+2. Verify World::generate integrates:
+   - World::generate(seed) returns a complete 40×22 world
+   - Delegates to procgen::generate(seed)
+
+3. Verify Game integration:
+   - Game::new_with_seed(seed) produces deterministic world
+   - Game::new() produces random procedural world
+
+4. Check performance (should be <10ms):
+   - Time 100 generations: cargo timing test
+
+5. Check CI is green - all tests pass in GitHub Actions

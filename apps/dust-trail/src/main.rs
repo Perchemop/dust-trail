@@ -3,11 +3,10 @@
 //!
 //! Wires the shared suite crates: crash-report panic hook and update-check.
 
-use std::error::Error;
-
 #[cfg(feature = "gui")]
 use dust_trail::gui::Gui;
 use dust_trail::tui::Tui;
+use std::error::Error;
 
 fn run_tui() -> Result<(), Box<dyn Error>> {
     let tui = Tui::new().map_err(|e| format!("tui init failed: {e}"))?;

@@ -1,0 +1,6 @@
+Good first issue: procedural map generation tests
+- Verify procgen.rs tests pass: `cargo test -p dust-trail --domain procgen`
+- Verify World::generate integrates correctly
+- Verify Game::new_with_seed produces deterministic worlds
+- All tests headless (no DISPLAY required)
+- Performance under 10ms for 40x22 map

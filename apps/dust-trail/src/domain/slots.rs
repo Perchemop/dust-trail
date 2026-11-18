@@ -12,12 +12,11 @@
 //! The legacy single-file save (`savegame.json`) is still readable: see
 //! [`SaveStore::import_legacy`].
 
+use crate::domain::save::SaveData;
 use std::collections::BTreeMap;
 use std::fmt;
 use std::io::ErrorKind;
 use std::path::{Path, PathBuf};
-
-use crate::domain::save::SaveData;
 
 /// On-disk format version written by this build.
 pub const SAVE_SLOTS_FORMAT_VERSION: u32 = 1;

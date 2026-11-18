@@ -1,0 +1,1 @@
+Procedural map generation for Dust Trail is complete. Deterministic world generation from seed with connectivity guarantees. 7 headless property tests. CI-ready. Clean-room compliant.

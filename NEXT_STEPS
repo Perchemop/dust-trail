@@ -1,0 +1,7 @@
+Next steps after this slice:
+1. Expand ROADMAP.md with procedural map generation milestone
+2. Human-gated research for remaining capabilities
+3. Share crash-report and update-check crates across suite
+4. Continue with remaining slices per implementation plan
+5. Maintain v0.1.0 gate integrity
+6. Observe CI green on all pushes to main

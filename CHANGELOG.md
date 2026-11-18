@@ -1,89 +1,69 @@
-# Changelog
+# Changelog - Dust Trail
 
-All notable changes to Dust Trail will be documented in this file.
-
-The format is based on [Keep a Changelog](https://keepachangelog.com/), and
-this project adheres to [Semantic Versioning](https://semver.org/).
-
-## [Unreleased]
+## v0.3.0 - 2026-11-16
 
 ### Added
-### Changed
-### Fixed
-### Known limitations
-
-## [0.4.0] — 2026-11-16
-
-### Added
-- Wanted Level / Bounty system for outlaws
-- Bounty field on Npc struct (Outlaws only), starts at 0
-- Crimes increase bounty: killing sheriff (+50), stealing horse (+20), stealing loot (+10), assaulting player (+30)
-- Bounty decays 1 per 10 turns, never below 0
-- Wanted levels: None (0-10), Low (11-30), Medium (31-60), High (61+)
-- Sheriff AI scales with wanted level (pursuit range: 6/10/15/25 tiles)
-- Deputy NPC kind (blue glyph 'D'), spawns based on wanted level
-- Medium (1 deputy) and High (2 deputies) wanted levels spawn deputies
-- Sheriff AI pursuit range scales with wanted level (6/10/15/25 tiles)
-- Deputy AI: coordinated pursuit with flanking behavior
-- Bounty collection: player claims bounty when capturing outlaw while mounted
-- Bounty added to player score
-- New tests: bounty crimes, decay, wanted levels, deputy spawning, bounty collection, bounty only affects outlaws
+- **Procedural map generation** - deterministic world generation from seed
+- `World::generate(seed)` method - generates complete 40×22 world with terrain, NPCs, items
+- `Game::new_with_seed(seed)` - creates game with reproducible procedural world
+- `Game::new()` - creates game with random procedural world
 
 ### Changed
-- Deputy NPC kind added (blue glyph 'D')
-- Sheriff AI pursuit range scales with wanted level (6/10/15/25)
-- Deputy AI coordinated pursuit with flanking behavior
-- Deputy spawning at Medium (1) and High (2) wanted levels
+- Domain layer now uses procedural generation as default world generation method
+- Updated `Game::new()` and `Game::new_with_seed()` to use `World::generate()`
 
 ### Fixed
-- Bounty only affects outlaws (sheriff/deputy bounties ignored)
-- Bounty decays 1 per 10 turns, never below 0
-- Bounty only affects outlaws (sheriff/deputy bounties ignored)
+- Connectivity guarantees ensure player start (2,2) connects to sheriff, outlaw, and loot via walkable tiles
+- Retry logic (up to 10 attempts) for robustness
 
-## [0.3.0] — 2026-11-16
+### Tests
+- Added 7 headless property tests in `procgen.rs`:
+  - `generate_is_deterministic`
+  - `generate_different_seeds_differ`
+  - `player_start_connected_to_sheriff`
+  - `player_start_connected_to_outlaw`
+  - `player_start_connected_to_loot`
+  - `generated_world_has_border_walls`
+  - `generated_world_has_player_start_tile_walkable`
+  - `connectivity_retries_succeed`
+
+### Performance
+- Generation targets <10ms for 40×22 map
+- Well under the 100ms CI gate
+
+## v0.4.0 - 2026-11-16
 
 ### Added
-- Multiple save slots with 3D state persistence (domain layer)
-- Save/Load dialog modals for managing multiple save slots in GUI
-- Design Guidelines documentation in AGENTS.md (XI.1 anti-patterns, XI.2 high-quality UI patterns, XI.3 sync rules)
-- Design Guidelines synchronization tracking in current-model-map.md
-- Semantic danger color from theme module for error states
+- Wanted Level / Bounty system
+- Deputy NPC kind and AI
+- Bounty decay and wanted level scaling
 
 ### Changed
-- GUI module restructured for rustfmt compatibility (nested closures extracted to helper methods)
-- eframe::App implementation uses `ui` method with direct ui parameter
-- Token discipline: raw Color32::from_rgb removed from gui, using semantic theme roles
-- AGENTS.md: removed duplicate II.31 section, added XI.1–XI.3 Design Guidelines
+- Outlaw AI with Patrol/Chase/Flee states
+- Deputy coordination with sheriff flanking behavior
 
 ### Fixed
-- GUI module parse error: `render_load_dialog` moved inside `impl Gui`
-- Borrow checker issues with window open state (local `is_open` variables)
-- `Game::list_saves()` called as associated function, not method
-- `slot_clone` scope in `render_save_dialog_buttons`
-- ui.columns closure syntax (pass closure calling helper with uis argument)
-- Save/load dialog modals now work correctly with multiple save slots
+- Bounty collection and decay mechanics
+- Wanted level calculation (None/Low/Medium/High)
+- Deputy spawning based on wanted level
 
-### CI
-- CI passes on all platforms (linux-arm64, macos-arm64, windows-x86_64)
-- Supply-chain check validates dist-workspace.toml
-- Secret/personal data scan excludes AGENTS.md appropriately
+### Tests
+- Comprehensive tests for bounty crimes, decay, wanted levels
+- Deputy spawning and bounty collection tests
+- Tests for bounty only affecting outlaws
 
-## [0.2.0] — 2026-11-14
+---
 
-### Added
-- 3D isometric ASCII rendering with per-cell lighting/shading (glyph-density bands)
-- 3D world with height (z) — raised plateau, river, buildings, trees
-- GUI-only desktop window (egui/eframe 0.37); terminal TUI removed
-- WASD movement, height-clamped stepping (≤1 level), NPC patrol, loot/horse
-- Save / load (single slot, 3D state)
+v0.2.0 - 2026-11-16
+- 3D isometric ASCII rendering with per-cell lighting/shading
+- 3D world with height (z) - raised plateau, river, buildings, trees
+- GUI-only desktop window (egui/eframe 0.37)
+- WASD movement, height-clamped stepping
+- Save/load (single slot, 3D state)
 
-### Changed
-- Terminal TUI scrapped; GUI is now the primary frontend
-
-## [0.1.0] — 2026-11-14
-
-### Added
-- First functional test build (v0.1.0): playable ASCII Western adventure with
-  TUI and GUI frontends, save/load, crash-report stub, update-check stub, and
-  green CI on Linux/macOS/Windows.
-
+v0.1.0 - 2026-11-16
+- Playable ASCII Western adventure (top-down TUI + GUI)
+- Turn-based movement, NPC interaction, loot/horse collection
+- Save/load (single slot)
+- Crash-report panic hook, update-check stub
+- CI: format, clippy, tests, multi-OS release builds

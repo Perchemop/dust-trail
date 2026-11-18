@@ -20,6 +20,13 @@ pub struct SaveData {
     pub player: crate::domain::player::Player,
     /// Turn counter at the moment of saving.
     pub turn: u64,
+    /// Sound settings for persistence.
+    #[cfg(feature = "sound")]
+    #[serde(default)]
+    pub sound_settings: crate::domain::sound::SoundSettings,
+    #[cfg(not(feature = "sound"))]
+    #[serde(default)]
+    pub sound_settings: crate::domain::sound::SoundSettings,
 }
 
 impl SaveData {
@@ -30,12 +37,18 @@ impl SaveData {
 
     /// Snapshot `game`, labelled with `slot`.
     pub fn with_slot(game: &Game, slot: &str) -> Self {
+        #[cfg(feature = "sound")]
+        let sound_settings = game.sound_manager.settings().clone();
+        #[cfg(not(feature = "sound"))]
+        let sound_settings = game.sound_settings.clone();
+
         Self {
             version: env!("CARGO_PKG_VERSION").to_string(),
             slot: slot.to_owned(),
             world: game.world.clone(),
             player: game.player.clone(),
             turn: game.turn,
+            sound_settings,
         }
     }
 

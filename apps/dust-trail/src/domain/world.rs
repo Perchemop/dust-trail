@@ -67,6 +67,9 @@ impl NpcKind {
             NpcKind::Outlaw => Rgb::RED,
         }
     }
+    pub fn bg(self) -> Rgb {
+        Rgb::BLACK
+    }
 }
 
 /// Wanted level derived from bounty.
@@ -121,6 +124,9 @@ impl ItemKind {
             ItemKind::Horse => Rgb::BROWN,
         }
     }
+    pub fn bg(self) -> Rgb {
+        Rgb::BLACK
+    }
 }
 
 /// The world grid and its entities.
@@ -134,6 +140,7 @@ pub struct World {
 }
 
 impl World {
+    /// Create a new world with the given dimensions (all Ground tiles, no entities).
     pub fn new(width: i32, height: i32) -> Self {
         let tiles = vec![vec![TileType::Ground; width as usize]; height as usize];
         Self {
@@ -143,6 +150,21 @@ impl World {
             npcs: Vec::new(),
             items: Vec::new(),
         }
+    }
+
+    /// Generate a world from a deterministic seed.
+    ///
+    /// Same seed always produces the same map (deterministic).  The world
+    /// includes terrain, border walls, a town block, river, trees, NPCs
+    /// (sheriff/outlaw), and items (loot/horse).  Connectivity between the
+    /// player start and key entities is guaranteed by internal retries.
+    pub fn generate(seed: u64) -> Self {
+        use crate::domain::procgen;
+        let config = procgen::GenerationConfig {
+            seed,
+            ..Default::default()
+        };
+        procgen::generate(config).world
     }
 
     pub fn in_bounds(&self, pos: Pos) -> bool {
@@ -303,4 +325,119 @@ pub fn spawn_deputies_for_wanted(world: &mut World, outlaw_pos: Pos, wanted: Wan
     }
 
     spawned
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn default_world_has_correct_dimensions() {
+        let w = default_world();
+        assert_eq!(w.width, 40);
+        assert_eq!(w.height, 22);
+    }
+
+    #[test]
+    fn default_world_has_border_walls() {
+        let w = default_world();
+        for x in 0..w.width {
+            assert_eq!(w.tile(Pos::new(x, 0)), Some(TileType::Wall));
+            assert_eq!(w.tile(Pos::new(x, w.height - 1)), Some(TileType::Wall));
+        }
+        for y in 0..w.height {
+            assert_eq!(w.tile(Pos::new(0, y)), Some(TileType::Wall));
+            assert_eq!(w.tile(Pos::new(w.width - 1, y)), Some(TileType::Wall));
+        }
+    }
+
+    #[test]
+    fn default_world_has_sheriff_and_outlaw() {
+        let w = default_world();
+        assert!(w.npcs.iter().any(|n| n.kind == NpcKind::Sheriff));
+        assert!(w.npcs.iter().any(|n| n.kind == NpcKind::Outlaw));
+    }
+
+    #[test]
+    fn default_world_has_items() {
+        let w = default_world();
+        assert!(w.items.iter().any(|i| i.kind == ItemKind::Loot));
+        assert!(w.items.iter().any(|i| i.kind == ItemKind::Horse));
+    }
+
+    #[test]
+    fn outlaw_bounty_starts_at_zero() {
+        let w = default_world();
+        let outlaw = w.npcs.iter().find(|n| n.kind == NpcKind::Outlaw).unwrap();
+        assert_eq!(outlaw.bounty, 0);
+    }
+
+    #[test]
+    fn bounty_increases_and_decays() {
+        let mut outlaw = Npc {
+            kind: NpcKind::Outlaw,
+            pos: Pos::new(0, 0),
+            bounty: 0,
+        };
+        outlaw.add_bounty(5);
+        assert_eq!(outlaw.bounty, 5);
+        outlaw.add_bounty(10);
+        assert_eq!(outlaw.bounty, 15);
+        outlaw.decay_bounty();
+        assert_eq!(outlaw.bounty, 14);
+    }
+
+    #[test]
+    fn wanted_level_from_bounty() {
+        let mut outlaw = Npc {
+            kind: NpcKind::Outlaw,
+            pos: Pos::new(0, 0),
+            bounty: 0,
+        };
+        assert_eq!(outlaw.wanted_level(), WantedLevel::None);
+        outlaw.bounty = 10;
+        assert_eq!(outlaw.wanted_level(), WantedLevel::None);
+        outlaw.bounty = 11;
+        assert_eq!(outlaw.wanted_level(), WantedLevel::Low);
+        outlaw.bounty = 30;
+        assert_eq!(outlaw.wanted_level(), WantedLevel::Low);
+        outlaw.bounty = 31;
+        assert_eq!(outlaw.wanted_level(), WantedLevel::Medium);
+        outlaw.bounty = 60;
+        assert_eq!(outlaw.wanted_level(), WantedLevel::Medium);
+        outlaw.bounty = 61;
+        assert_eq!(outlaw.wanted_level(), WantedLevel::High);
+    }
+
+    #[test]
+    fn non_outlaw_wanted_level_is_none() {
+        let sheriff = Npc {
+            kind: NpcKind::Sheriff,
+            pos: Pos::new(0, 0),
+            bounty: 100,
+        };
+        assert_eq!(sheriff.wanted_level(), WantedLevel::None);
+    }
+
+    #[test]
+    fn test_spawn_deputies_for_wanted() {
+        let mut world = World::new(20, 20);
+        world.npcs.push(Npc {
+            kind: NpcKind::Outlaw,
+            pos: Pos::new(10, 10),
+            bounty: 50,
+        });
+        let spawned = spawn_deputies_for_wanted(&mut world, Pos::new(10, 10), WantedLevel::Medium);
+        assert_eq!(spawned, 1);
+        assert!(world.npcs.iter().any(|n| n.kind == NpcKind::Deputy));
+
+        let mut world = World::new(20, 20);
+        world.npcs.push(Npc {
+            kind: NpcKind::Outlaw,
+            pos: Pos::new(10, 10),
+            bounty: 100,
+        });
+        let spawned = spawn_deputies_for_wanted(&mut world, Pos::new(10, 10), WantedLevel::High);
+        assert_eq!(spawned, 2);
+    }
 }

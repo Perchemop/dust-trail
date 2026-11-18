@@ -1,5 +1,4 @@
 # Implementation Plan
-
 Vertical slices for Dust Trail, each a PR with CI green.
 
 ## Slice 1 — Foundation (done, v0.1.0)
@@ -22,7 +21,10 @@ Vertical slices for Dust Trail, each a PR with CI green.
 
 ## Slice 3 — v1.0.0 stable (planned)
 * Stable save format with version migration.
-* Procedural map generation.
+* **Procedural map generation.**
 * In-app release-notes popup + bottom-right version display (suite standard).
 * Auto-update download + signature verification (minisign).
 * Multi-platform installers.
+
+## Slice 4 — Post-v1.0 enhancements
+* [TBD per roadmap]
