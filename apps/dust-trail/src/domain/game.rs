@@ -16,7 +16,7 @@ use crate::domain::sound::SoundSettings;
 use crate::domain::sound::{SoundEffect, SoundManager};
 use crate::domain::tile::TileType;
 use crate::domain::world::{
-    default_world, spawn_deputies_for_wanted, ItemKind, Npc, NpcKind, Pos, WantedLevel, World,
+    ItemKind, Npc, NpcKind, Pos, WantedLevel, World, default_world, spawn_deputies_for_wanted,
 };
 use rand::rngs::StdRng;
 use rand::{seq::SliceRandom, SeedableRng};
