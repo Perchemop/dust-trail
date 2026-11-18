@@ -50,8 +50,8 @@ pub enum Interaction {
 }
 
 /// The game state machine.
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 #[allow(clippy::new_without_default)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Game {
     pub world: World,
     pub player: Player,
