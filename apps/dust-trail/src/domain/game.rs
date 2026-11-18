@@ -971,7 +971,8 @@ mod tests {
             health: 50,
         });
 
-        let action = game.outlaw_ai(&game.world.npcs[0]);
+        let outlaw = game.world.npcs[0].clone();
+        let action = game.outlaw_ai(&outlaw);
         // Outlaw should try to move (flank or flee).
         assert!(matches!(action, NpcAction::Move(_)));
     }
@@ -994,13 +995,14 @@ mod tests {
             health: 40,
         });
 
-        let deputy_idx = game
+        let deputy = game
             .world
             .npcs
             .iter()
-            .position(|n| n.kind == NpcKind::Deputy)
+            .find(|n| n.kind == NpcKind::Deputy)
+            .cloned()
             .unwrap();
-        let action = game.deputy_ai(&game.world.npcs[deputy_idx]);
+        let action = game.deputy_ai(&deputy);
         // Deputy should try to move toward outlaw.
         assert!(matches!(action, NpcAction::Move(_)));
     }
