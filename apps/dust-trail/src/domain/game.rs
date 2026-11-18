@@ -541,6 +541,20 @@ impl Game {
         let store = SaveStore::new(path);
         store.list_saves_or_empty()
     }
+
+    /// Save the game to the named slot at `path`.
+    pub fn save_named_to(&self, slot: &str, path: &Path) -> Result<(), String> {
+        let store = SaveStore::new(path);
+        store.save_data(slot, SaveData::with_slot(self, slot))?;
+        Ok(())
+    }
+
+    /// List all save slot names in the default save directory.
+    pub fn list_saves() -> Result<Vec<String>, String> {
+        let path = save_dir();
+        let store = SaveStore::new(&path);
+        store.list_saves()
+    }
 }
 
 /// NPC action during AI turns.
