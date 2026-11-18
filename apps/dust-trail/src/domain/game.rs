@@ -480,18 +480,26 @@ impl Game {
     /// TUI-compatible load method.
     pub fn load(path: &Path) -> Result<Self, String> {
         let store = SaveStore::new(path);
-        let mut game = Self::from_save_data(store.load_data("default")?);
+        let game = Self::from_save_data(store.load_data("default")?);
         #[cfg(feature = "sound")]
-        game.sound_manager.play(SoundEffect::Load);
+        {
+            let mut game = game;
+            game.sound_manager.play(SoundEffect::Load);
+            return Ok(game);
+        }
         Ok(game)
     }
 
     /// Load the game from the named slot of the slot document at `path`.
     pub fn load_named_from(slot: &str, path: &Path) -> Result<Self, String> {
         let store = SaveStore::new(path);
-        let mut game = Self::from_save_data(store.load_data(slot)?);
+        let game = Self::from_save_data(store.load_data(slot)?);
         #[cfg(feature = "sound")]
-        game.sound_manager.play(SoundEffect::Load);
+        {
+            let mut game = game;
+            game.sound_manager.play(SoundEffect::Load);
+            return Ok(game);
+        }
         Ok(game)
     }
 

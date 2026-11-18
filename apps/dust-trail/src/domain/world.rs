@@ -420,7 +420,7 @@ mod tests {
     }
 
     #[test]
-    fn spawn_deputies_for_wanted() {
+    fn test_spawn_deputies_for_wanted() {
         let mut world = World::new(20, 20);
         world.npcs.push(Npc {
             kind: NpcKind::Outlaw,

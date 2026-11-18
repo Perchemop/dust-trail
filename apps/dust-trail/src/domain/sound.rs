@@ -3,6 +3,7 @@
 //! Provides optional sound effects with volume control and mute support.
 //! Feature-gated behind the `sound` Cargo feature.
 
+#[cfg(feature = "sound")]
 use rodio::{Decoder, OutputStream, Sink, Source};
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "sound")]
