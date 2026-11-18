@@ -915,7 +915,8 @@ mod tests {
             collected: false,
         });
         // Manually add to inventory to test inventory state.
-        game.player.inventory.push(crate::domain::world::ItemKind::Loot);
+        game.player
+            .inventory.push(crate::domain::world::ItemKind::Loot);
         assert_eq!(game.player.inventory.len(), 1);
         assert_eq!(game.player.inventory[0], crate::domain::world::ItemKind::Loot);
     }
@@ -923,7 +924,8 @@ mod tests {
     #[test]
     fn player_use_item_consumes_loot() {
         let mut game = Game::new_static();
-        game.player.inventory.push(crate::domain::world::ItemKind::Loot);
+        game.player
+            .inventory.push(crate::domain::world::ItemKind::Loot);
         let score_effect = game.use_item(crate::domain::world::ItemKind::Loot);
         assert_eq!(score_effect, Some(5));
         assert_eq!(game.player.score, 5);
@@ -933,7 +935,8 @@ mod tests {
     #[test]
     fn player_use_item_mounts_horse() {
         let mut game = Game::new_static();
-        game.player.inventory.push(crate::domain::world::ItemKind::Horse);
+        game.player
+            .inventory.push(crate::domain::world::ItemKind::Horse);
         let score_effect = game.use_item(crate::domain::world::ItemKind::Horse);
         assert_eq!(score_effect, Some(0));
         assert!(game.player.mounted);
