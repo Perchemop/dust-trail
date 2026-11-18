@@ -1,0 +1,10 @@
+name: awesome-llm-apps
+version: "0.1.0"
+description: "100+ open-source AI agents, agent skills, and RAG apps - catalog for skill discovery"
+source: https://github.com/shubhamsaboo/awesome-llm-apps
+licence: Apache-2.0
+capability: Catalog of installable agent skills for discovery; install with `npx skills add <repo>/tree/main/<path>`
+installation: npx skills add <repo>/tree/main/<path> (adapt into ~/.config/opencode/skill/ directory)
+clean_room_compliant: true
+cargo_free: true
+reasoning: Provides template scaffolding and architecture reference for agent skills

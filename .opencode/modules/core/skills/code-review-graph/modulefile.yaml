@@ -1,0 +1,10 @@
+name: code-review-graph
+version: "0.1.0"
+description: "Local-first code-intelligence graph for MCP/CLI; risk-scored PR reviews (~49× fewer tokens on daily tasks)."
+source: https://github.com/tirth8205/code-review-graph
+licence: MIT
+capability: Local-first code-intelligence graph; risk-scored PR reviews (~49× fewer tokens on daily tasks)
+installation: code-review-graph install (MCP server; wire it into OpenCode MCP config)
+clean_room_compliant: true
+cargo_free: true
+reasoning: Provides risk-scored PR reviews for Dust Trail code changes; measured token reduction

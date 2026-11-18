@@ -1,0 +1,10 @@
+name: code-context-engine
+version: "0.1.0"
+description: "Local MCP server; indexes the codebase so agents search instead of re-reading files; ~94% input-token savings."
+source: https://github.com/elara-labs/code-context-engine
+licence: "MIT (core); one optional component dual AGPL-3.0/commercial"
+capability: Codebase indexing for agents to search instead of re-reading files (~94% input-token savings)
+installation: uvx --from "code-context-engine[local]" cce init
+clean_room_compliant: true
+cargo_free: true
+reasoning: Reduces re-reading of files; highly applicable to Dust Trail codebase

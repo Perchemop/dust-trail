@@ -1,0 +1,10 @@
+name: caveman
+version: "0.1.0"
+description: "Aggressively cuts output tokens by making the agent reply more tersely ('caveman' style)."
+source: https://github.com/JuliusBrussee/caveman
+licence: MIT
+capability: Terse response style (~65% output token reduction)
+installation: Adapt into ~/.config/opencode/skill/caveman/ - create skill configuration file
+reasoning: Reduces output token volume significantly; highly applicable to Dust Trail agent workflows
+clean-room_compliant: true
+cargo_free: true

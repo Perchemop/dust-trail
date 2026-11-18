@@ -20,3 +20,12 @@
 ## Token metrics
 - **Decision:** Track token usage via `docs/tokens.md` schema per guide §24
 - **Rationale:** Guide §9.3 requires token metrics in release notes and in-app version popup
+
+## Agent Skills
+- **Skill: caveman (JuliusBrussee/caveman, v0.1.0, MIT)** - Terse response style (~65% output token reduction). Adopted into `~/.config/opencode/skill/caveman/`. Reduces output token volume for LLM interactions.
+- **Skill: code-context-engine (elara-labs/code-context-engine, v0.1.0, MIT)** - Local MCP server for codebase indexing (~94% input-token savings). Adopted into `~/.config/opencode/skill/code-context-engine/`. Reduces re-reading of files in CI workflows.
+- **Skill: headroom (headroomlabs-ai/headroom, v0.1.0, Apache-2.0)** - Context compression layer for tool outputs, logs, files, history. Adopted into `~/.config/opencode/skill/headroom/`. Compresses tool outputs to reduce token volume.
+- **Skill: code-review-graph (tirth8205/code-review-graph, v0.1.0, MIT)** - Local-first code-intelligence graph for MCP/CLI; risk-scored PR reviews. Adopted into `~/.config/opencode/skill/code-review-graph/`. Provides risk-scored PR reviews for Dust Trail code changes.
+- **Skill: rtk (rtk-ai/rtk, v0.1.0, Apache-2.0)** - CLI proxy; 60–90% token reduction on dev commands. Adopted into `~/.config/opencode/skill/rtk/`. Compresses CLI tool outputs to reduce token volume.
+- **Skill: awesome-llm-apps (shubhamsaboo/awesome-llm-apps, v0.1.0, Apache-2.0)** - Catalog of installable agent skills for discovery. Adopted into `~/.config/opencode/skill/awesome-llm-apps/`. Provides template scaffolding and architecture reference.
+- **Skill: awesome-mcp-servers (punkpeye/awesome-mcp-servers, v0.1.0, source repo licences)** - Catalog of MCP servers for research and tool integration. Adopted into `~/.config/opencode/skill/awesome-mcp-servers/`. Provides MCP server catalogue for tool integration.

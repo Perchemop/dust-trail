@@ -1,0 +1,10 @@
+name: headroom
+version: "0.1.0"
+description: "Context compression layer (library, proxy, MCP, headroom wrap); compresses tool outputs, logs, files, history; reversible."
+source: https://github.com/headroomlabs-ai/headroom
+licence: Apache-2.0
+capability: Context compression for tool outputs, logs, files, history (~94% input-token savings)
+installation: headroom wrap claude (after install) - adapt for OpenCode
+clean_room_compliant: true
+cargo_free: true
+reasoning: Reduces tool output volume significantly; highly applicable to Dust Trail agent workflows
