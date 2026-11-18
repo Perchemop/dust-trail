@@ -50,7 +50,6 @@ pub enum Interaction {
 }
 
 /// The game state machine.
-#[allow(clippy::new_without_default)]
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Game {
     pub world: World,
@@ -78,6 +77,12 @@ fn default_sound_manager() -> SoundManager {
 
 fn default_rng() -> StdRng {
     StdRng::from_os_rng()
+}
+
+impl Default for Game {
+    fn default() -> Self {
+        Self::new_static()
+    }
 }
 
 impl Game {
