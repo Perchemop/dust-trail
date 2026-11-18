@@ -129,7 +129,7 @@ impl Tui {
         // If waiting for slot selection, handle digit keys.
         if let Some(action) = self.pending_action.take() {
             if let KeyCode::Char(c) = key.code {
-                if c >= '1' && c <= '9' {
+                if ('1'..='9').contains(&c) {
                     let slot_idx = c.to_digit(10).unwrap() as usize - 1;
                     let slots = Game::list_saves().unwrap_or_default();
                     if slot_idx < slots.len() {
