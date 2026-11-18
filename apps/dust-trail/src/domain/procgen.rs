@@ -26,8 +26,8 @@
 use crate::domain::color::Rgb;
 use crate::domain::tile::TileType;
 use crate::domain::world::{Item, ItemKind, Npc, NpcKind, Pos, World};
-use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
+use rand::rngs::StdRng;
 
 const DEFAULT_WORLD_WIDTH: i32 = 40;
 const DEFAULT_WORLD_HEIGHT: i32 = 22;

@@ -16,8 +16,8 @@ use crate::domain::tile::TileType;
 use crate::domain::world::{
     ItemKind, Npc, NpcKind, Pos, WantedLevel, World, default_world, spawn_deputies_for_wanted,
 };
+use rand::{SeedableRng, seq::SliceRandom};
 use rand::rngs::StdRng;
-use rand::{seq::SliceRandom, SeedableRng};
 use std::path::Path;
 
 /// A movement direction.
