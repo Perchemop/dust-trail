@@ -3,14 +3,14 @@
 
 mod renderer;
 
-use crate::domain::game::{Direction, Game, Interaction};
-use crate::tui::renderer::render_frame;
 use crossterm::{
-    ExecutableCommand,
     cursor::{Hide, Show},
     event::{self, Event, KeyCode, KeyEvent, KeyModifiers},
     terminal::{EnterAlternateScreen, LeaveAlternateScreen},
+    ExecutableCommand,
 };
+use crate::domain::game::{Direction, Game, Interaction};
+use crate::tui::renderer::render_frame;
 use directories::ProjectDirs;
 use std::io::{stdout, Stdout};
 use std::path::{Path, PathBuf};

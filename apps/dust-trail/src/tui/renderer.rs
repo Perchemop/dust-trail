@@ -2,10 +2,10 @@
 //! Colours are grouped so consecutive same-colour cells share one escape
 //! sequence.
 
+use crossterm::style::{Print, SetBackgroundColor, SetForegroundColor};
 use crate::domain::color::Rgb;
 use crate::domain::frame::Frame;
-use crossterm::style::{Print, SetBackgroundColor, SetForegroundColor};
-use crossterm::{ExecutableCommand, cursor::MoveTo};
+use crossterm::{cursor::MoveTo, ExecutableCommand};
 use std::io::{Stdout, Write};
 
 /// Convert a domain RGB to a crossterm colour.
