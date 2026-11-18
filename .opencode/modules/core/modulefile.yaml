@@ -1,0 +1,38 @@
+name: core
+version: "0.6.0"
+description: "Framework directories, onboarding, validation, workflow foundation. Required."
+dependencies: []
+provides:
+  agents:
+    - creative-director
+    - technical-director
+    - producer
+    - /start
+    - /help
+    - /concept-brainstorm
+    - /setup-engine
+    - validation suite
+  skills:
+    - start
+    - help
+    - concept-brainstorm
+    - setup-engine
+    - test-helpers
+    - proof-generation-review
+    - autopilot-playtest
+  commands:
+    - start
+    - help
+    - concept-brainstorm
+    - setup-engine
+    - test-helpers
+    - proof-generation-review
+    - autopilot-playtest
+  rules: []
+  docs:
+    - workflow-catalog
+    - design-doc-catalog
+    - game-design-documents-directory
+    - ...
+  plugin-enabled: false
+  integration-points: []
