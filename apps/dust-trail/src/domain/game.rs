@@ -780,6 +780,7 @@ mod tests {
     #[test]
     fn player_attack_kills_npc() {
         let mut game = Game::new_static();
+        let npc_count_before = game.world.npcs.len();
         // Place an outlaw adjacent to player (at 3, 2).
         game.world.npcs.push(crate::domain::world::Npc {
             kind: NpcKind::Outlaw,
@@ -789,7 +790,7 @@ mod tests {
         });
         let dead = game.attack(Pos::new(3, 2));
         assert!(dead);
-        assert!(game.world.npcs.is_empty());
+        assert_eq!(game.world.npcs.len(), npc_count_before);
     }
 
     #[test]
@@ -804,7 +805,14 @@ mod tests {
         });
         let dead = game.attack(Pos::new(3, 2));
         assert!(!dead);
-        assert_eq!(game.world.npcs[0].health, 75); // 100 - 25 damage
+        // Find the NPC we added at (3, 2).
+        let attacked = game
+            .world
+            .npcs
+            .iter()
+            .find(|n| n.pos == Pos::new(3, 2))
+            .unwrap();
+        assert_eq!(attacked.health, 75); // 100 - 25 damage
     }
 
     #[test]
