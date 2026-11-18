@@ -89,9 +89,7 @@ impl Game {
             world,
             player,
             turn: 0,
-            message: "Welcome to Dust Trail. Use WASD to move, E to interact, S to save, "
-                "L to load, Q to quit."
-                .to_string(),
+            message: "Welcome to Dust Trail. Use WASD to move, E to interact, S to save, L to load, Q to quit.".to_string(),
             game_over: false,
             won: false,
             rng: StdRng::from_os_rng(),
@@ -110,9 +108,7 @@ impl Game {
             world,
             player,
             turn: 0,
-            message: "Welcome to Dust Trail. Use WASD to move, E to interact, S to save, "
-                "L to load, Q to quit."
-                .to_string(),
+            message: "Welcome to Dust Trail. Use WASD to move, E to interact, S to save, L to load, Q to quit.".to_string(),
             game_over: false,
             won: false,
             rng: StdRng::seed_from_u64(seed),
@@ -131,9 +127,7 @@ impl Game {
             world,
             player,
             turn: 0,
-            message: "Welcome to Dust Trail. Use WASD to move, E to interact, S to save, "
-                "L to load, Q to quit."
-                .to_string(),
+            message: "Welcome to Dust Trail. Use WASD to move, E to interact, S to save, L to load, Q to quit.".to_string(),
             game_over: false,
             won: false,
             rng: StdRng::from_os_rng(),
