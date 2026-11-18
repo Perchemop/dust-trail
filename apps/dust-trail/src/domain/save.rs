@@ -52,9 +52,28 @@ impl SaveData {
         }
     }
 
-    /// Turn this snapshot back into a playable game.
-    pub fn into_game(self) -> Game {
+    /// Turn this snapshot back into a playable game, applying any necessary
+    /// version migration for older save formats.
+    pub fn into_game(mut self) -> Game {
+        self.migrate();
         Game::from_save_data(self)
+    }
+
+    /// Apply version-based migration rules to older save formats.
+    ///
+    /// For v1.3.0, no breaking changes are expected, but this hook is
+    /// reserved for future compatibility. All fields use `#[serde(default)]`
+    /// so missing keys from older saves deserialize to safe defaults.
+    fn migrate(&mut self) {
+        // Pre-1.2.0 saves lack `health` on Player and Npc; these default to
+        // 0 via #[serde(default)], which means dead. Restore to full health
+        // for playability.
+        if self.version.starts_with("0.") || self.version.starts_with("1.0.") || self.version.starts_with("1.1.") {
+            self.player.health = self.player.health.max(100);
+            for npc in &mut self.world.npcs {
+                npc.health = npc.health.max(50);
+            }
+        }
     }
 }
 

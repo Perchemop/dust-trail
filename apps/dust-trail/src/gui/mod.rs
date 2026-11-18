@@ -44,6 +44,53 @@ impl Gui {
                 ctx_close(ui.ctx());
             }
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                // Wanted level (from outlaw).
+                let wanted = self
+                    .game
+                    .world
+                    .npcs
+                    .iter()
+                    .find(|n| n.kind == crate::domain::world::NpcKind::Outlaw)
+                    .map(|n| n.wanted_level())
+                    .unwrap_or(crate::domain::world::WantedLevel::None);
+                let wanted_label = match wanted {
+                    crate::domain::world::WantedLevel::None => "None".to_string(),
+                    crate::domain::world::WantedLevel::Low => "Low".to_string(),
+                    crate::domain::world::WantedLevel::Medium => "Medium".to_string(),
+                    crate::domain::world::WantedLevel::High => "High".to_string(),
+                };
+                let wanted_color = match wanted {
+                    crate::domain::world::WantedLevel::None => crate::theme::Role::Success,
+                    crate::domain::world::WantedLevel::Low => crate::theme::Role::Warning,
+                    crate::domain::world::WantedLevel::Medium => crate::theme::Role::Danger,
+                    crate::domain::world::WantedLevel::High => crate::theme::Role::Danger,
+                };
+                ui.colored_label(
+                    crate::theme::rgb_to_color32(crate::domain::color::Rgb::new(
+                        match wanted {
+                            crate::domain::world::WantedLevel::None => 80,
+                            crate::domain::world::WantedLevel::Low => 230,
+                            crate::domain::world::WantedLevel::Medium => 220,
+                            crate::domain::world::WantedLevel::High => 220,
+                        },
+                        match wanted {
+                            crate::domain::world::WantedLevel::None => 200,
+                            crate::domain::world::WantedLevel::Low => 170,
+                            crate::domain::world::WantedLevel::Medium => 60,
+                            crate::domain::world::WantedLevel::High => 60,
+                        },
+                        match wanted {
+                            crate::domain::world::WantedLevel::None => 80,
+                            crate::domain::world::WantedLevel::Low => 60,
+                            crate::domain::world::WantedLevel::Medium => 60,
+                            crate::domain::world::WantedLevel::High => 60,
+                        },
+                    )),
+                    format!("Wanted: {}", wanted_label),
+                );
+                ui.separator();
+                ui.label(format!("HP: {}/100", self.game.player.health));
+                ui.separator();
                 ui.label(format!(
                     "Turn: {}  Score: {}  {}",
                     self.game.turn,
@@ -130,6 +177,7 @@ impl Gui {
                     }
                     egui::Key::E => self.interact(),
                     egui::Key::F => self.attack(),
+                    egui::Key::M => self.game.player.toggle_mount(),
                     egui::Key::R => self.game = Game::new(),
                     _ => {}
                 }
@@ -467,6 +515,32 @@ impl eframe::App for Gui {
             }
         });
         crate::gui::release_notes::draw_release_notes(self, ui.ctx());
+
+        // Game over overlay.
+        if self.game.game_over {
+            egui::Window::new("GAME OVER")
+                .collapsible(false)
+                .resizable(false)
+                .anchor(egui::Align2::CENTER_CENTER, [0.0, 0.0])
+                .show(ui.ctx(), |ui| {
+                    ui.vertical_centered(|ui| {
+                        ui.heading(egui::RichText::new("GAME OVER").color(crate::theme::rgb_to_color32(
+                            crate::domain::color::Rgb::new(220, 60, 60),
+                        )));
+                        ui.add_space(16.0);
+                        ui.label("You have been killed. Your journey ends here.");
+                        ui.add_space(16.0);
+                        if ui.button("Restart").clicked() {
+                            self.game = Game::new();
+                            self.game.game_over = false;
+                            self.game.won = false;
+                        }
+                        if ui.button("Quit").clicked() {
+                            ctx_close(ui.ctx());
+                        }
+                    });
+                });
+        }
     }
 }
 

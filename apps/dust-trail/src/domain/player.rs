@@ -48,4 +48,9 @@ impl Player {
         self.health = self.health.saturating_sub(damage);
         self.health == 0
     }
+
+    /// Toggle mounted status.
+    pub fn toggle_mount(&mut self) {
+        self.mounted = !self.mounted;
+    }
 }

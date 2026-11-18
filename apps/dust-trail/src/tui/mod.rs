@@ -213,6 +213,16 @@ impl Tui {
                 }
                 Ok(ControlFlow::Continue)
             }
+            KeyCode::Char('m') => {
+                self.game.player.toggle_mount();
+                let status = if self.game.player.mounted {
+                    "mounted".to_string()
+                } else {
+                    "dismounted".to_string()
+                };
+                self.game.message = format!("You {}.", status);
+                Ok(ControlFlow::Continue)
+            }
             KeyCode::Char('S') => {
                 let slots = Game::list_saves().unwrap_or_default();
                 if slots.is_empty() {
