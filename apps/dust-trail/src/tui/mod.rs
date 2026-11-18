@@ -4,6 +4,7 @@
 mod renderer;
 
 use crate::domain::game::{Direction, Game, Interaction};
+use crate::domain::world::Pos;
 use crate::tui::renderer::render_frame;
 use crossterm::{
     cursor::{Hide, Show},
@@ -191,10 +192,10 @@ impl Tui {
             KeyCode::Char('f') => {
                 // Attack adjacent NPCs (fight).
                 let adjacent = [
-                    Pos::new(self.player.pos.x + 1, self.player.pos.y),
-                    Pos::new(self.player.pos.x - 1, self.player.pos.y),
-                    Pos::new(self.player.pos.x, self.player.pos.y + 1),
-                    Pos::new(self.player.pos.x, self.player.pos.y - 1),
+                    Pos::new(self.game.player.pos.x + 1, self.game.player.pos.y),
+                    Pos::new(self.game.player.pos.x - 1, self.game.player.pos.y),
+                    Pos::new(self.game.player.pos.x, self.game.player.pos.y + 1),
+                    Pos::new(self.game.player.pos.x, self.game.player.pos.y - 1),
                 ];
                 let mut attacked = false;
                 for pos in adjacent {
