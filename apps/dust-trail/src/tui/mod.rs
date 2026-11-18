@@ -22,6 +22,7 @@ enum ControlFlow {
 }
 
 /// Pending action waiting for the user to select a save slot.
+#[derive(Copy, Clone)]
 enum PendingAction {
     SaveSlot,
     LoadSlot,
@@ -70,8 +71,8 @@ impl Tui {
             render_frame(&mut self.stdout, &frame)?;
 
             // Render pending action prompt (slot selection).
-            if let Some(action) = &self.pending_action {
-                self.render_slot_prompt(action)?;
+            if let Some(action) = self.pending_action {
+                self.render_slot_prompt(&action)?;
                 self.stdout.flush()?;
             }
 
