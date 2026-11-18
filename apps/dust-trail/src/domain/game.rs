@@ -293,8 +293,8 @@ impl Game {
                 };
                 #[cfg(feature = "sound")]
                 match item.kind {
+                    ItemKind::Horse => {},
                     ItemKind::Loot => self.sound_manager.play(SoundEffect::LootPickup),
-                    ItemKind::Horse => {}
                 };
                 return Interaction::Collected { kind: item.kind };
             }
