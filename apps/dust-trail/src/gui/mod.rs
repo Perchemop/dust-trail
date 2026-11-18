@@ -420,7 +420,7 @@ impl eframe::App for Gui {
         self.toolbar(ui);
         // Render the game grid directly in the central panel area
         let frame = self.game.frame();
-        for (y, row) in frame.rows() {
+        for (_y, row) in frame.rows() {
             self.render_row(ui, row);
         }
         self.render_save_dialog(ui);
