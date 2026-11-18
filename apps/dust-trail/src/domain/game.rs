@@ -467,11 +467,7 @@ impl Game {
     /// Deputy AI: flank and support sheriff, box in outlaw.
     fn deputy_ai(&mut self, npc: &Npc) -> NpcAction {
         // Find nearest outlaw.
-        let outlaw = self
-            .world
-            .npcs
-            .iter()
-            .find(|n| n.kind == NpcKind::Outlaw);
+        let outlaw = self.world.npcs.iter().find(|n| n.kind == NpcKind::Outlaw);
 
         if let Some(outlaw) = outlaw {
             let dist = (outlaw.pos.x - npc.pos.x).abs() + (outlaw.pos.y - npc.pos.y).abs();
@@ -485,9 +481,7 @@ impl Game {
                     let flank_dx = (outlaw.pos.x - self.player.pos.x).signum();
                     let flank_dy = (outlaw.pos.y - self.player.pos.y).signum();
                     let flank_target = Pos::new(outlaw.pos.x + flank_dx, outlaw.pos.y + flank_dy);
-                    if self.world.is_walkable(flank_target)
-                        && flank_target != self.player.pos
-                    {
+                    if self.world.is_walkable(flank_target) && flank_target != self.player.pos {
                         return NpcAction::Move(flank_target);
                     }
                     return NpcAction::Move(target);
@@ -518,7 +512,8 @@ impl Game {
             .min_by_key(|n| (n.pos.x - npc.pos.x).abs() + (n.pos.y - npc.pos.y).abs());
 
         // Distance to player.
-        let player_dist = (npc.pos.x - self.player.pos.x).abs() + (npc.pos.y - self.player.pos.y).abs();
+        let player_dist = (npc.pos.x - self.player.pos.x).abs()
+            + (npc.pos.y - self.player.pos.y).abs();
 
         if let Some(law) = law {
             let dist = (law.pos.x - npc.pos.x).abs() + (law.pos.y - npc.pos.y).abs();
