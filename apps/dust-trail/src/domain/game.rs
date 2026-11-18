@@ -314,6 +314,11 @@ impl Game {
         Some(score_effect)
     }
 
+    /// Add an item to the player's inventory.
+    pub fn add_item(&mut self, kind: ItemKind) {
+        self.player.inventory.push(kind);
+    }
+
     /// Attack an adjacent NPC, dealing damage. Returns true if the NPC died.
     pub fn attack(&mut self, target_pos: Pos) -> bool {
         // Find the NPC at the target position.
@@ -928,9 +933,7 @@ mod tests {
     #[test]
     fn player_use_item_consumes_loot() {
         let mut game = Game::new_static();
-        game.player
-            .inventory
-            .push(crate::domain::world::ItemKind::Loot);
+        game.add_item(crate::domain::world::ItemKind::Loot);
         let score_effect = game.use_item(crate::domain::world::ItemKind::Loot);
         assert_eq!(score_effect, Some(5));
         assert_eq!(game.player.score, 5);
@@ -940,12 +943,11 @@ mod tests {
     #[test]
     fn player_use_item_mounts_horse() {
         let mut game = Game::new_static();
-        game.player
-            .inventory
-            .push(crate::domain::world::ItemKind::Horse);
+        game.add_item(crate::domain::world::ItemKind::Horse);
         let score_effect = game.use_item(crate::domain::world::ItemKind::Horse);
         assert_eq!(score_effect, Some(0));
         assert!(game.player.mounted);
+        assert!(game.player.inventory.is_empty());
         assert!(game.player.inventory.is_empty());
     }
 
