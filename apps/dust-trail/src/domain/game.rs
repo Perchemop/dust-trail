@@ -306,11 +306,7 @@ impl Game {
     /// Attack an adjacent NPC, dealing damage. Returns true if the NPC died.
     pub fn attack(&mut self, target_pos: Pos) -> bool {
         // Find the NPC at the target position.
-        let npc_idx = self
-            .world
-            .npcs
-            .iter()
-            .position(|n| n.pos == target_pos);
+        let npc_idx = self.world.npcs.iter().position(|n| n.pos == target_pos);
 
         if let Some(idx) = npc_idx {
             let npc_kind = self.world.npcs[idx].kind;
@@ -409,11 +405,8 @@ impl Game {
                             self.game_over = true;
                             self.message = "You have been killed. Game over.".to_string();
                         }
-                    } else if let Some(target_npc) = self
-                        .world
-                        .npcs
-                        .iter_mut()
-                        .find(|n| n.pos == target)
+                    } else if let Some(target_npc) =
+                        self.world.npcs.iter_mut().find(|n| n.pos == target)
                     {
                         // NPC vs NPC combat (e.g., sheriff vs outlaw).
                         let damage = 20;
