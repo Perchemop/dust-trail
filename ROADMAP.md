@@ -93,6 +93,12 @@ verification), per guide §6.2.
 * Save format version migration (handles pre-1.2.0 saves)
 * CI green: format, clippy, tests, multi-OS release builds
 
+## v1.4.0 (planned — Item System & GUI Layout)
+* Item usage: consume loot for score bonus, toggle horse mount (M key)
+* Better GUI layout: side status panel with health, wanted level, score
+* Item descriptions/tooltips on hover
+* CI green: format, clippy, tests, multi-OS release builds
+
 ## Out of scope
 * Multiplayer / networking
 * Commercial-licence assets or trademarked names

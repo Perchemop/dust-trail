@@ -223,6 +223,27 @@ impl Tui {
                 self.game.message = format!("You {}.", status);
                 Ok(ControlFlow::Continue)
             }
+            KeyCode::Char('u') => {
+                // Use first usable item from inventory.
+                if self.player.inventory.is_empty() {
+                    self.game.message = "Inventory empty.".to_string();
+                } else {
+                    let kind = self.player.inventory[0];
+                    let result = self.game.use_item(kind);
+                    match result {
+                        Some(score) if score > 0 => {
+                            self.game.message = format!("Used item (+{} score).", score);
+                        }
+                        Some(_) => {
+                            self.game.message = "Used item.".to_string();
+                        }
+                        None => {
+                            self.game.message = "Nothing to use.".to_string();
+                        }
+                    }
+                }
+                Ok(ControlFlow::Continue)
+            }
             KeyCode::Char('S') => {
                 let slots = Game::list_saves().unwrap_or_default();
                 if slots.is_empty() {

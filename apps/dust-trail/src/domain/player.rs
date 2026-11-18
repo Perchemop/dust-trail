@@ -1,7 +1,7 @@
 //! The player character.
 
 use crate::domain::color::Rgb;
-use crate::domain::world::Pos;
+use crate::domain::world::{ItemKind, Pos};
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct Player {
@@ -11,6 +11,8 @@ pub struct Player {
     pub name: String,
     /// Health points — reaches 0 on death.
     pub health: u32,
+    /// Inventory of collected items awaiting use.
+    pub inventory: Vec<ItemKind>,
 }
 
 const MAX_HEALTH: u32 = 100;
@@ -23,6 +25,7 @@ impl Player {
             mounted: false,
             name: "Dust".to_string(),
             health: MAX_HEALTH,
+            inventory: Vec::new(),
         }
     }
 
@@ -52,5 +55,22 @@ impl Player {
     /// Toggle mounted status.
     pub fn toggle_mount(&mut self) {
         self.mounted = !self.mounted;
+    }
+
+    /// Use the first item of `kind` from inventory, returning its effect score.
+    /// Returns `None` if no such item is in inventory.
+    pub fn use_item(&mut self, kind: ItemKind) -> Option<u32> {
+        if let Some(idx) = self.inventory.iter().position(|i| *i == kind) {
+            self.inventory.remove(idx);
+            Some(match kind {
+                ItemKind::Loot => 5,
+                ItemKind::Horse => {
+                    self.mounted = true;
+                    0
+                }
+            })
+        } else {
+            None
+        }
     }
 }

@@ -276,31 +276,42 @@ impl Game {
         if let Some(item) = self.world.item_at(self.player.pos) {
             if let Some(idx) = self.world.items.iter().position(|i| i.pos == item.pos) {
                 self.world.items[idx].collected = true;
-                self.player.score = match item.kind {
-                    ItemKind::Horse => {
-                        self.player.mounted = true;
-                        self.player.score.saturating_add(5)
-                    }
-                    ItemKind::Loot => self.player.score.saturating_add(10),
-                };
+                self.player.inventory.push(item.kind);
                 self.message = match item.kind {
                     ItemKind::Horse => {
                         #[cfg(feature = "sound")]
                         self.sound_manager.play(SoundEffect::HorseMount);
-                        "You mounted a horse. The trail moves faster now.".to_string()
+                        "You picked up a horse.".to_string()
                     }
-                    ItemKind::Loot => "You picked up a satchel of coins (+10).".to_string(),
-                };
-                #[cfg(feature = "sound")]
-                match item.kind {
-                    ItemKind::Horse => self.sound_manager.play(SoundEffect::HorseMount),
-                    ItemKind::Loot => self.sound_manager.play(SoundEffect::LootPickup),
+                    ItemKind::Loot => {
+                        #[cfg(feature = "sound")]
+                        self.sound_manager.play(SoundEffect::LootPickup);
+                        "You picked up a satchel of coins.".to_string()
+                    }
                 };
                 return Interaction::Collected { kind: item.kind };
             }
         }
 
         Interaction::None
+    }
+
+    /// Use an item from inventory by kind. Returns the score effect.
+    pub fn use_item(&mut self, kind: ItemKind) -> Option<u32> {
+        let score_effect = self.player.use_item(kind)?;
+        if score_effect > 0 {
+            self.player.score = self.player.score.saturating_add(score_effect);
+            self.message = match kind {
+                ItemKind::Loot => "You consumed a satchel of coins (+5).".to_string(),
+                ItemKind::Horse => "You mounted your horse.".to_string(),
+            };
+            #[cfg(feature = "sound")]
+            match kind {
+                ItemKind::Loot => self.sound_manager.play(SoundEffect::LootPickup),
+                ItemKind::Horse => self.sound_manager.play(SoundEffect::HorseMount),
+            }
+        }
+        Some(score_effect)
     }
 
     /// Attack an adjacent NPC, dealing damage. Returns true if the NPC died.

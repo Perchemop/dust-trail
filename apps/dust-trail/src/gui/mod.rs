@@ -91,6 +91,11 @@ impl Gui {
                 ui.separator();
                 ui.label(format!("HP: {}/100", self.game.player.health));
                 ui.separator();
+                let inv_count = self.game.player.inventory.len();
+                if inv_count > 0 {
+                    ui.label(format!("Inv: {} item{}", inv_count, if inv_count == 1 { "" } else { "s" }));
+                    ui.separator();
+                }
                 ui.label(format!(
                     "Turn: {}  Score: {}  {}",
                     self.game.turn,
@@ -178,6 +183,7 @@ impl Gui {
                     egui::Key::E => self.interact(),
                     egui::Key::F => self.attack(),
                     egui::Key::M => self.game.player.toggle_mount(),
+                    egui::Key::U => self.use_item(),
                     egui::Key::R => self.game = Game::new(),
                     _ => {}
                 }
@@ -239,7 +245,25 @@ impl Gui {
         }
     }
 
-    fn save_game(&mut self) {
+    fn use_item(&mut self) {
+        if self.game.player.inventory.is_empty() {
+            self.game.message = "Inventory empty.".to_string();
+            return;
+        }
+        let kind = self.game.player.inventory[0];
+        let result = self.game.use_item(kind);
+        match result {
+            Some(score) if score > 0 => {
+                self.game.message = format!("Used item (+{} score).", score);
+            }
+            Some(_) => {
+                self.game.message = "Used item.".to_string();
+            }
+            None => {
+                self.game.message = "Nothing to use.".to_string();
+            }
+        }
+    }
         let path = save_dir().join("saves.json");
         let slot = self.save_load.save_name_input.trim().to_string();
         if slot.is_empty() {
