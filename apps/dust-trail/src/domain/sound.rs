@@ -3,17 +3,15 @@
 //! Provides optional sound effects with volume control and mute support.
 //! Feature-gated behind the `sound` Cargo feature.
 
-#[cfg(feature = "sound")]
 use rodio::{Decoder, OutputStream, Sink, Source};
+use serde::{Deserialize, Serialize};
 #[cfg(feature = "sound")]
 use std::fs::File;
 #[cfg(feature = "sound")]
 use std::io::BufReader;
+use std::sync::OnceLock;
 #[cfg(feature = "sound")]
 use std::sync::{Arc, Mutex};
-
-use serde::{Deserialize, Serialize};
-use std::sync::OnceLock;
 
 /// Sound effect categories for volume control.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
