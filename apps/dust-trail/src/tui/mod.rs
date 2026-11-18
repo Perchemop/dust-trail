@@ -212,6 +212,7 @@ impl Tui {
                 }
                 Ok(ControlFlow::Continue)
             }
+            KeyCode::Char('S') => {
                 let slots = Game::list_saves().unwrap_or_default();
                 if slots.is_empty() {
                     // No saves yet, save to slot "1".
