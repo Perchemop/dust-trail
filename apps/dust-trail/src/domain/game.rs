@@ -971,7 +971,7 @@ mod tests {
             health: 50,
         });
 
-        let outlaw = game.world.npcs[0];
+        let outlaw = *game.world.npcs[0];
         let action = game.outlaw_ai(&outlaw);
         // Outlaw should try to move (flank or flee).
         assert!(matches!(action, NpcAction::Move(_)));
