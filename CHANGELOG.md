@@ -1,5 +1,20 @@
 # Changelog - Dust Trail
 
+## v1.1.0 - 2026-11-18
+
+### Added
+- Multiple named save slots — `Game::save_named_to(slot, path)` with arbitrary slot names
+- `Game::list_saves()` returns all available save slots
+- GUI slot selection UI — selectable slot list in save/load dialogs
+- TUI slot selection — keyboard-navigable slot list (1-9 keys, Esc to cancel)
+- Save slot naming — user can name each save slot when saving
+
+### Changed
+- TUI save/load now prompts for slot selection instead of hardcoded "savegame"
+
+### Tests
+- Multi-save slot roundtrip test: save to "alpha" and "beta", load each and verify state
+
 ## v1.0.0 - 2026-11-18
 
 ### Added

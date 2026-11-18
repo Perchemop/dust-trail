@@ -1,5 +1,30 @@
 # Progress Log - Dust Trail
 
+## v1.1.0 — Multi-save Slots
+
+### Status: CI Green ✅
+
+**CI:** All checks green — format, clippy, tests, multi-OS release builds  
+**Ready for tag:** v1.1.0
+
+### Implemented
+
+| Item | Status | Evidence |
+|------|--------|----------|
+| Multiple named save slots | Complete | `Game::save_named_to(slot, path)`, `Game::list_saves()` |
+| GUI slot selection UI | Complete | `apps/dust-trail/src/gui/mod.rs` save/load dialogs |
+| TUI slot selection | Complete | `apps/dust-trail/src/tui/mod.rs` key-based slot selection (1-9, Esc) |
+| Save slot naming | Complete | User enters slot name when saving |
+| Multi-save slot roundtrip test | Complete | `save_named_to_load_named_from_roundtrip` test |
+
+### CI Results (v1.1.0)
+- **check** (fmt + clippy): PASSED
+- **Build (linux-arm64)**: PASSED
+- **Build (linux-x86_64)**: PASSED
+- **Build (macos-arm64)**: PASSED
+- **Build (windows-x86_64)**: PASSED
+- **supply-chain**: PASSED
+
 ## v1.0.0 — Stable Release
 
 ### Status: Released ✅
