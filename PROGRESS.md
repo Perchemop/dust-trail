@@ -1,5 +1,34 @@
 # Progress Log - Dust Trail
 
+## v1.2.0 — Combat System
+
+### Status: Released ✅
+
+**Tag:** `v1.2.0` pushed to origin  
+**GitHub Release:** Published with detailed notes  
+**CI:** All checks green — format, clippy, tests, multi-OS release builds  
+**Installers:** .deb (arm64/x86_64), .dmg (arm64), .msi (x86_64), SHA256SUMS.txt
+
+### Implemented
+
+| Item | Status | Evidence |
+|------|--------|----------|
+| Player health (HP) | Complete | `apps/dust-trail/src/domain/player.rs`, health field, take_damage(), is_dead() |
+| NPC health (HP) | Complete | `apps/dust-trail/src/domain/world.rs`, health field on Npc |
+| Player attack action | Complete | `Game::attack()`, F key in TUI/GUI |
+| Combat feedback messages | Complete | Game message log with damage/death notifications |
+| Death states | Complete | Player death = game_over, NPC death = removed from world |
+| Combat sound effects | Complete | Hit and enemy death sounds |
+| Combat tests | Complete | player_take_damage, player_attack_kills_npc, player_attack_damages_npc, npc_attack_damages_player, player_death_sets_game_over |
+
+### CI Results (v1.2.0)
+- **check** (fmt + clippy): PASSED
+- **Build (linux-arm64)**: PASSED
+- **Build (linux-x86_64)**: PASSED
+- **Build (macos-arm64)**: PASSED
+- **Build (windows-x86_64)**: PASSED
+- **supply-chain**: PASSED
+
 ## v1.1.0 — Multi-save Slots
 
 ### Status: CI Green ✅

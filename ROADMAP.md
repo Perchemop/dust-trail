@@ -77,13 +77,13 @@ verification), per guide §6.2.
 * Save slot naming — user can name each save slot when saving
 * CI green: format, clippy, tests, multi-OS release builds
 
-## v1.2.0 (planned — Combat System)
-* Player health (HP) — default 100, damaged by NPC attacks
-* NPC health (HP) — can be damaged by player attacks, removed from world at 0 HP
-* Player attack action (E key to attack adjacent NPCs)
+## v1.2.0 (complete — 2026-11-18)
+* Player health (HP) — default 100, damaged by NPC attacks, death = game over
+* NPC health (HP) — sheriff 50 HP, deputy 40 HP, outlaw 50 HP, removed from world at 0 HP
+* Player attack action (F key in TUI/GUI to attack adjacent NPCs)
 * Combat feedback messages in game log
 * Death states: player death = game over, NPC death = removed from world
-* Combat sound effects (hit, death)
+* Combat sound effects (hit, enemy death)
 * CI green: format, clippy, tests, multi-OS release builds
 
 ## Out of scope

@@ -1,5 +1,23 @@
 # Changelog - Dust Trail
 
+## v1.2.0 - 2026-11-18
+
+### Added
+- Player health (HP) — default 100, damaged by NPC attacks, death = game over
+- NPC health (HP) — sheriff 50 HP, deputy 40 HP, outlaw 50 HP, removed from world at 0 HP
+- Player attack action (F key in TUI/GUI to attack adjacent NPCs)
+- Combat feedback messages in game log
+- Death states: player death = game over, NPC death = removed from world
+- Combat sound effects (hit, enemy death)
+
+### Changed
+- NPC Attack action now damages the player instead of just increasing bounty
+- NPC vs NPC combat (e.g., sheriff vs outlaw) with damage and death
+
+### CI & Release
+- CI green: format, clippy, tests, multi-OS release builds (Linux arm64/x86_64, macOS arm64, Windows x86_64)
+- Installers published: .deb (arm64/x86_64), .dmg (arm64), .msi (x86_64), SHA256SUMS.txt
+
 ## v1.1.0 - 2026-11-18
 
 ### Added
