@@ -971,14 +971,11 @@ mod tests {
             health: 50,
         });
 
-        let outlaw = {
-            let n = &game.world.npcs[0];
-            Npc {
-                kind: n.kind,
-                pos: n.pos,
-                bounty: n.bounty,
-                health: n.health,
-            }
+        let outlaw = Npc {
+            kind: game.world.npcs[0].kind,
+            pos: game.world.npcs[0].pos,
+            bounty: game.world.npcs[0].bounty,
+            health: game.world.npcs[0].health,
         };
         let action = game.outlaw_ai(&outlaw);
         // Outlaw should try to move (flank or flee).
