@@ -971,7 +971,15 @@ mod tests {
             health: 50,
         });
 
-        let outlaw = game.world.npcs[0].clone();
+        let outlaw = {
+            let n = &game.world.npcs[0];
+            Npc {
+                kind: n.kind,
+                pos: n.pos,
+                bounty: n.bounty,
+                health: n.health,
+            }
+        };
         let action = game.outlaw_ai(&outlaw);
         // Outlaw should try to move (flank or flee).
         assert!(matches!(action, NpcAction::Move(_)));
