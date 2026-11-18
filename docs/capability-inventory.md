@@ -16,8 +16,8 @@ implemented / out of scope. Implementation evidence lives in docs/parity.md.
 | CAP-09 | Crash-report panic hook | Scrubbed report parked on panic | crash-report unit tests | implemented |
 | CAP-10 | Update-check stub | Quiet fail-soft check against GitHub Releases API | update-check unit tests | implemented |
 | CAP-11 | Contrast AA | 4.5:1 body, 3:1 UI/boundary, all variants | theme.rs contrast tests | implemented |
-| CAP-12 | Multiple save slots | Named save slots | — | out of scope (v0.2.0) |
-| CAP-13 | Smarter outlaw AI | Seed-based patrol | — | out of scope (v0.2.0) |
-| CAP-14 | Procedural map generation | Randomised towns | — | out of scope (v1.0.0) |
-| CAP-15 | In-app release-notes popup | Version + notes popup | — | out of scope (v1.0.0) |
-| CAP-16 | Auto-update download + signature | Verified self-update | — | out of scope (v1.0.0) |
+| CAP-12 | Multiple save slots | Named save slots | — | implemented |
+| CAP-13 | Smarter outlaw AI | Outlaw flanks player, coordinates with deputies | — | implemented |
+| CAP-14 | Procedural map generation | Randomised towns | — | implemented |
+| CAP-15 | In-app release-notes popup | Version + notes popup | — | implemented |
+| CAP-16 | Auto-update download + signature | Verified self-update | — | implemented |

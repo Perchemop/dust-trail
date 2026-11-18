@@ -99,6 +99,11 @@ verification), per guide §6.2.
 * TUI: 'u' key uses first item from inventory
 * CI green: format, clippy, tests, multi-OS release builds
 
+## v1.5.0 (planned — Smarter AI & Inventory UI)
+* Smarter outlaw AI: flanking behavior, group coordination with deputies
+* Inventory UI panel in GUI with item tooltips on hover
+* CI green: format, clippy, tests, multi-OS release builds
+
 ## Out of scope
 * Multiplayer / networking
 * Commercial-licence assets or trademarked names

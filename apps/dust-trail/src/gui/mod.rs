@@ -269,6 +269,38 @@ impl Gui {
         }
     }
 
+    fn render_inventory_panel(&mut self, ui: &mut egui::Ui) {
+        if self.game.player.inventory.is_empty() {
+            return;
+        }
+        egui::Window::new("Inventory")
+            .collapsible(false)
+            .resizable(false)
+            .anchor(egui::Align2::LEFT_TOP, [10.0, 100.0])
+            .show(ui.ctx(), |ui| {
+                ui.vertical(|ui| {
+                    ui.label("Inventory:");
+                    for kind in &self.game.player.inventory {
+                        let (glyph, label) = match kind {
+                            ItemKind::Loot => ("$", "Satchel of coins"),
+                            ItemKind::Horse => ("&", "Horse"),
+                        };
+                        ui.button(
+                            egui::RichText::new(format!("{} {}", glyph, label))
+                                .monospace()
+                                .color(crate::theme::rgb_to_color32(
+                                    crate::domain::color::Rgb::new(255, 255, 255),
+                                )),
+                        )
+                        .on_hover_text(match kind {
+                            ItemKind::Loot => "Consume for +5 score bonus.",
+                            ItemKind::Horse => "Mount to move faster.",
+                        });
+                    }
+                });
+            });
+    }
+
     fn save_game(&mut self) {
         let path = save_dir().join("saves.json");
         let slot = self.save_load.save_name_input.trim().to_string();
@@ -522,6 +554,7 @@ impl eframe::App for Gui {
         let ctx = ui.ctx();
         self.handle_keyboard(ctx);
         self.toolbar(ui);
+        self.render_inventory_panel(ui);
         // Render the game grid directly in the central panel area
         let frame = self.game.frame();
         for (_y, row) in frame.rows() {

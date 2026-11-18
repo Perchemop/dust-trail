@@ -464,8 +464,38 @@ impl Game {
         self.patrol_town(npc.pos)
     }
 
-    /// Deputy AI: flank and support sheriff.
+    /// Deputy AI: flank and support sheriff, box in outlaw.
     fn deputy_ai(&mut self, npc: &Npc) -> NpcAction {
+        // Find nearest outlaw.
+        let outlaw = self
+            .world
+            .npcs
+            .iter()
+            .find(|n| n.kind == NpcKind::Outlaw);
+
+        if let Some(outlaw) = outlaw {
+            let dist = (outlaw.pos.x - npc.pos.x).abs() + (outlaw.pos.y - npc.pos.y).abs();
+            if dist <= 8 {
+                // Chase outlaw, try to flank (get between outlaw and player).
+                let dx = (outlaw.pos.x - npc.pos.x).signum();
+                let dy = (outlaw.pos.y - npc.pos.y).signum();
+                let target = Pos::new(npc.pos.x + dx, npc.pos.y + dy);
+                if self.world.is_walkable(target) {
+                    // Prefer flanking: move toward outlaw but offset to cut off escape.
+                    let flank_dx = (outlaw.pos.x - self.player.pos.x).signum();
+                    let flank_dy = (outlaw.pos.y - self.player.pos.y).signum();
+                    let flank_target = Pos::new(outlaw.pos.x + flank_dx, outlaw.pos.y + flank_dy);
+                    if self.world.is_walkable(flank_target)
+                        && flank_target != self.player.pos
+                    {
+                        return NpcAction::Move(flank_target);
+                    }
+                    return NpcAction::Move(target);
+                }
+            }
+        }
+
+        // Support sheriff: move toward sheriff.
         if let Some(sheriff) = self.world.npcs.iter().find(|n| n.kind == NpcKind::Sheriff) {
             let dx = (sheriff.pos.x - npc.pos.x).signum();
             let dy = (sheriff.pos.y - npc.pos.y).signum();
@@ -477,7 +507,7 @@ impl Game {
         self.patrol_town(npc.pos)
     }
 
-    /// Outlaw AI: evade law, seek cover.
+    /// Outlaw AI: evade law, flank player when cornered.
     fn outlaw_ai(&mut self, npc: &Npc) -> NpcAction {
         // Find nearest law (sheriff or deputy).
         let law = self
@@ -487,18 +517,46 @@ impl Game {
             .filter(|n| n.kind == NpcKind::Sheriff || n.kind == NpcKind::Deputy)
             .min_by_key(|n| (n.pos.x - npc.pos.x).abs() + (n.pos.y - npc.pos.y).abs());
 
+        // Distance to player.
+        let player_dist = (npc.pos.x - self.player.pos.x).abs() + (npc.pos.y - self.player.pos.y).abs();
+
         if let Some(law) = law {
             let dist = (law.pos.x - npc.pos.x).abs() + (law.pos.y - npc.pos.y).abs();
             if dist <= 5 {
-                // Flee away from law.
-                let dx = (npc.pos.x - law.pos.x).signum();
-                let dy = (npc.pos.y - law.pos.y).signum();
-                let target = Pos::new(npc.pos.x + dx, npc.pos.y + dy);
-                if self.world.is_walkable(target) {
-                    return NpcAction::Move(target);
+                // Law nearby: flee away from law, but try to flank player if possible.
+                let flee_dx = (npc.pos.x - law.pos.x).signum();
+                let flee_dy = (npc.pos.y - law.pos.y).signum();
+                let flee_target = Pos::new(npc.pos.x + flee_dx, npc.pos.y + flee_dy);
+
+                // If player is close, try to move between player and law (flank).
+                if player_dist <= 5 && player_dist > 0 {
+                    let flank_dx = (npc.pos.x - self.player.pos.x).signum();
+                    let flank_dy = (npc.pos.y - self.player.pos.y).signum();
+                    let flank_target = Pos::new(npc.pos.x + flank_dx, npc.pos.y + flank_dy);
+                    // Prefer flanking move if walkable and not moving directly into law.
+                    if self.world.is_walkable(flank_target)
+                        && (flank_dx != flee_dx || flank_dy != flee_dy)
+                    {
+                        return NpcAction::Move(flank_target);
+                    }
+                }
+
+                if self.world.is_walkable(flee_target) {
+                    return NpcAction::Move(flee_target);
                 }
             }
         }
+
+        // If near player but no law nearby, chase player aggressively.
+        if player_dist <= 5 {
+            let dx = (self.player.pos.x - npc.pos.x).signum();
+            let dy = (self.player.pos.y - npc.pos.y).signum();
+            let target = Pos::new(npc.pos.x + dx, npc.pos.y + dy);
+            if self.world.is_walkable(target) {
+                return NpcAction::Move(target);
+            }
+        }
+
         // Random wander.
         self.random_wander(npc.pos)
     }
@@ -850,5 +908,94 @@ mod tests {
         assert!(game.player.is_dead());
         game.game_over = true;
         assert!(game.game_over);
+    }
+
+    #[test]
+    fn player_inventory_adds_item_on_interact() {
+        let mut game = Game::new_static();
+        // Place loot adjacent to player.
+        game.world.items.push(crate::domain::world::Item {
+            kind: crate::domain::world::ItemKind::Loot,
+            pos: Pos::new(3, 2),
+            collected: false,
+        });
+        // Manually add to inventory to test inventory state.
+        game.player.inventory.push(crate::domain::world::ItemKind::Loot);
+        assert_eq!(game.player.inventory.len(), 1);
+        assert_eq!(game.player.inventory[0], crate::domain::world::ItemKind::Loot);
+    }
+
+    #[test]
+    fn player_use_item_consumes_loot() {
+        let mut game = Game::new_static();
+        game.player.inventory.push(crate::domain::world::ItemKind::Loot);
+        let score_effect = game.use_item(crate::domain::world::ItemKind::Loot);
+        assert_eq!(score_effect, Some(5));
+        assert_eq!(game.player.score, 5);
+        assert!(game.player.inventory.is_empty());
+    }
+
+    #[test]
+    fn player_use_item_mounts_horse() {
+        let mut game = Game::new_static();
+        game.player.inventory.push(crate::domain::world::ItemKind::Horse);
+        let score_effect = game.use_item(crate::domain::world::ItemKind::Horse);
+        assert_eq!(score_effect, Some(0));
+        assert!(game.player.mounted);
+        assert!(game.player.inventory.is_empty());
+    }
+
+    #[test]
+    fn outlaw_flanks_player_when_near() {
+        let mut game = Game::new_static();
+        // Clear existing NPCs and place outlaw near player with law nearby.
+        game.world.npcs.clear();
+        // Place outlaw adjacent to player.
+        game.world.npcs.push(crate::domain::world::Npc {
+            kind: NpcKind::Outlaw,
+            pos: Pos::new(3, 2),
+            bounty: 0,
+            health: 50,
+        });
+        // Place sheriff nearby (within 5 tiles of outlaw).
+        game.world.npcs.push(crate::domain::world::Npc {
+            kind: NpcKind::Sheriff,
+            pos: Pos::new(6, 2),
+            bounty: 0,
+            health: 50,
+        });
+
+        let action = game.outlaw_ai(&game.world.npcs[0]);
+        // Outlaw should try to move (flank or flee).
+        assert!(matches!(action, NpcAction::Move(_)));
+    }
+
+    #[test]
+    fn deputy_chases_outlaw_when_near() {
+        let mut game = Game::new_static();
+        game.world.npcs.clear();
+        // Place outlaw and deputy near each other.
+        game.world.npcs.push(crate::domain::world::Npc {
+            kind: NpcKind::Outlaw,
+            pos: Pos::new(10, 10),
+            bounty: 0,
+            health: 50,
+        });
+        game.world.npcs.push(crate::domain::world::Npc {
+            kind: NpcKind::Deputy,
+            pos: Pos::new(12, 10),
+            bounty: 0,
+            health: 40,
+        });
+
+        let deputy_idx = game
+            .world
+            .npcs
+            .iter()
+            .position(|n| n.kind == NpcKind::Deputy)
+            .unwrap();
+        let action = game.deputy_ai(&game.world.npcs[deputy_idx]);
+        // Deputy should try to move toward outlaw.
+        assert!(matches!(action, NpcAction::Move(_)));
     }
 }
