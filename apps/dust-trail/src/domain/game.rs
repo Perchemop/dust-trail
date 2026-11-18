@@ -919,7 +919,10 @@ mod tests {
             .inventory
             .push(crate::domain::world::ItemKind::Loot);
         assert_eq!(game.player.inventory.len(), 1);
-        assert_eq!(game.player.inventory[0], crate::domain::world::ItemKind::Loot);
+        assert_eq!(
+            game.player.inventory[0],
+            crate::domain::world::ItemKind::Loot
+        );
     }
 
     #[test]
