@@ -1,5 +1,13 @@
 # Changelog - Dust Trail
 
+## v1.5.0 - 2026-11-18
+
+### Added
+- Smarter outlaw AI: flanking behavior when cornered by law, chase player when no law nearby
+- Deputy AI: chases outlaw, flanks to block escape routes
+- GUI toolbar inventory count
+* TUI: 'u' key uses first item from inventory
+
 ## v1.4.0 - 2026-11-18
 
 ### Added

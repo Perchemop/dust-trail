@@ -13,7 +13,10 @@ verification), per guide §6.2.
 | v0.4.0 — Wanted Level / Bounty mechanic | 2026-11 | 100% | Released |
 | v1.0.0 — Stable release | 2026-11 | 100% | Released |
 | v1.1.0 — Multi-save slots | 2026-11 | 100% | Released |
-| v1.2.0 — Combat System | TBD | 0% | Planned |
+| v1.2.0 — Combat System | 2026-11 | 100% | Released |
+| v1.3.0 — UI Polish & Item System | 2026-11 | 100% | Released |
+| v1.4.0 — Item System | 2026-11 | 100% | Released |
+| v1.5.0 — Smarter AI & Inventory UI | 2026-11 | 100% | Released |
 
 ## v0.1.0 (complete — superseded by v0.2.0)
 * Playable ASCII Western adventure (top-down TUI + GUI)
@@ -70,8 +73,8 @@ verification), per guide §6.2.
 * Installers published: .deb (arm64/x86_64), .dmg (arm64), .msi (x86_64), SHA256SUMS.txt
 
 ## v1.1.0 (complete — 2026-11-18)
-* Multiple named save slots — `Game::save_named_to(slot, path)` with arbitrary slot names
-* `Game::list_saves()` returns all available save slots
+* Multiple named save slots — Game::save_named_to(slot, path) with arbitrary slot names
+* Game::list_saves() returns all available save slots
 * GUI slot selection UI — selectable slot list in save/load dialogs
 * TUI slot selection — keyboard-navigable slot list (1-9 keys, Esc to cancel)
 * Save slot naming — user can name each save slot when saving
@@ -94,12 +97,12 @@ verification), per guide §6.2.
 * CI green: format, clippy, tests, multi-OS release builds
 
 ## v1.4.0 (complete — 2026-11-18)
-* Item system: inventory, use_item (consume loot for score, use horse to mount)
+* Item system: inventory, use_item (consume loot for score, toggle horse mount)
 * GUI toolbar inventory count
 * TUI: 'u' key uses first item from inventory
 * CI green: format, clippy, tests, multi-OS release builds
 
-## v1.5.0 (planned — Smarter AI & Inventory UI)
+## v1.5.0 (complete — 2026-11-18)
 * Smarter outlaw AI: flanking behavior, group coordination with deputies
 * Inventory UI panel in GUI with item tooltips on hover
 * CI green: format, clippy, tests, multi-OS release builds

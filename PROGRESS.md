@@ -1,8 +1,32 @@
 # Progress Log - Dust Trail
 
-## v1.4.0 — Item System
+## v1.5.0 — Smarter AI & Inventory UI
 
 ### Status: Released ✅
+
+**Tag:** `v1.5.0` pushed to origin  
+**GitHub Release:** Published with detailed notes  
+**CI:** All checks green — format, clippy, tests, multi-OS release builds  
+**Installers:** .deb (arm64/x86_64), .dmg (arm64), .msi (x86_64), SHA256SUMS.txt
+
+### Implemented
+
+| Item | Status | Evidence |
+|------|--------|----------|
+| Smarter outlaw AI: flanking behavior | Complete | `apps/dust-trail/src/domain/game.rs`, `outlaw_ai()` |
+| Deputy AI coordination: flank outlaw | Complete | `apps/dust-trail/src/domain/game.rs`, `deputy_ai()` |
+| Inventory UI panel | Complete | `apps/dust-trail/src/gui/mod.rs`, `render_inventory_panel()` |
+| TUI 'u' key uses first inventory item | Complete | `apps/dust-trail/src/tui/mod.rs` key binding |
+
+### CI Results (v1.5.0)
+- **check** (fmt + clippy): PASSED
+- **Build (linux-arm64)**: PASSED
+- **Build (linux-x86_64)**: PASSED
+- **Build (macos-arm64)**: PASSED
+- **Build (windows-x86_64)**: PASSED
+- **supply-chain**: PASSED
+
+## v1.4.0 — Item System
 
 **Tag:** `v1.4.0` pushed to origin  
 **GitHub Release:** Published with detailed notes  
