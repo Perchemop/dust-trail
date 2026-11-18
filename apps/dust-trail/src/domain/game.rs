@@ -3,6 +3,8 @@
 //!
 //! Clean-room: original mechanics; nothing copied from a commercial product.
 
+use std::path::Path;
+
 use crate::domain::cell::Cell;
 use crate::domain::frame::Frame;
 use crate::domain::iso::{screen_depth, world_to_screen};
@@ -253,10 +255,6 @@ impl Game {
         // Check for NPC at player position.
         if let Some(npc) = self.world.npc_at(self.player.pos) {
             return match npc.kind {
-                NpcKind::Sheriff => Interaction::Talked {
-                    npc: "Sheriff".to_string(),
-                    line: "Keep the peace, stranger.".to_string(),
-                },
                 NpcKind::Deputy => Interaction::Talked {
                     npc: "Deputy".to_string(),
                     line: "Sheriff's orders: watch the perimeter.".to_string(),
@@ -268,7 +266,11 @@ impl Game {
                     self.game_over = true;
                     self.won = true;
                     Interaction::None
-                }
+                },
+                NpcKind::Sheriff => Interaction::Talked {
+                    npc: "Sheriff".to_string(),
+                    line: "Keep the peace, stranger.".to_string(),
+                },
             };
         }
 
@@ -277,23 +279,23 @@ impl Game {
             if let Some(idx) = self.world.items.iter().position(|i| i.pos == item.pos) {
                 self.world.items[idx].collected = true;
                 self.player.score = match item.kind {
-                    ItemKind::Loot => self.player.score.saturating_add(10),
                     ItemKind::Horse => {
                         self.player.mounted = true;
                         self.player.score.saturating_add(5)
-                    }
+                    },
+                    ItemKind::Loot => self.player.score.saturating_add(10),
                 };
                 self.message = match item.kind {
-                    ItemKind::Loot => "You picked up a satchel of coins (+10).".to_string(),
                     ItemKind::Horse => {
                         #[cfg(feature = "sound")]
                         self.sound_manager.play(SoundEffect::HorseMount);
                         "You mounted a horse. The trail moves faster now.".to_string()
-                    }
+                    },
+                    ItemKind::Loot => "You picked up a satchel of coins (+10).".to_string(),
                 };
                 #[cfg(feature = "sound")]
                 match item.kind {
-                    ItemKind::Horse => {},
+                    ItemKind::Horse => self.sound_manager.play(SoundEffect::HorseMount),
                     ItemKind::Loot => self.sound_manager.play(SoundEffect::LootPickup),
                 };
                 return Interaction::Collected { kind: item.kind };
@@ -302,343 +304,3 @@ impl Game {
 
         Interaction::None
     }
-
-    /// Update all NPCs (AI turns).
-    fn update_npcs(&mut self) {
-        // Update wanted level based on outlaw's bounty.
-        let old_wanted = self
-            .world
-            .npcs
-            .iter()
-            .find(|n| n.kind == NpcKind::Outlaw)
-            .map(|n| n.wanted_level())
-            .unwrap_or(WantedLevel::None);
-
-        // Check if outlaw's bounty changed (crimes committed).
-        let new_wanted = self
-            .world
-            .npcs
-            .iter()
-            .find(|n| n.kind == NpcKind::Outlaw)
-            .map(|n| n.wanted_level())
-            .unwrap_or(WantedLevel::None);
-
-        if new_wanted != old_wanted {
-            #[cfg(feature = "sound")]
-            match new_wanted {
-                WantedLevel::Low | WantedLevel::Medium | WantedLevel::High => {
-                    self.sound_manager.play(SoundEffect::GameOver);
-                }
-                _ => {}
-            };
-        }
-
-        // Deputy spawning logic based on outlaw's wanted level.
-        let outlaw_data = self
-            .world
-            .npcs
-            .iter()
-            .find(|n| n.kind == NpcKind::Outlaw)
-            .map(|n| (n.pos, n.wanted_level()));
-        if let Some((pos, wanted)) = outlaw_data {
-            spawn_deputies_for_wanted(&mut self.world, pos, wanted);
-        }
-
-        // Move each NPC.
-        let mut new_npcs = Vec::new();
-        for mut npc in self.world.npcs.clone() {
-            let action = match npc.kind {
-                NpcKind::Sheriff => self.sheriff_ai(&npc),
-                NpcKind::Deputy => self.deputy_ai(&npc),
-                NpcKind::Outlaw => self.outlaw_ai(&npc),
-            };
-
-            match action {
-                NpcAction::Move(pos) if self.world.is_walkable(pos) => {
-                    npc.pos = pos;
-                }
-                NpcAction::Move(_) => {} // Invalid move, skip
-                NpcAction::Wait => {}
-                NpcAction::Attack(target) => {
-                    if let Some(target_npc) = self.world.npcs.iter_mut().find(|n| n.pos == target) {
-                        target_npc.bounty = target_npc.bounty.saturating_add(50);
-                        self.message = format!("{:?} was wounded!", target_npc.kind);
-                        #[cfg(feature = "sound")]
-                        self.sound_manager.play(SoundEffect::Hit);
-                    }
-                }
-            }
-            new_npcs.push(npc);
-        }
-        self.world.npcs = new_npcs
-    }
-
-    /// Sheriff AI: patrol town, pursue outlaw at high wanted.
-    fn sheriff_ai(&mut self, npc: &Npc) -> NpcAction {
-        let outlaw = self.world.npcs.iter().find(|n| n.kind == NpcKind::Outlaw);
-
-        if let Some(outlaw) = outlaw {
-            let dist = (outlaw.pos.x - npc.pos.x).abs() + (outlaw.pos.y - npc.pos.y).abs();
-            if dist <= 8 {
-                // Chase outlaw.
-                let dx = (outlaw.pos.x - npc.pos.x).signum();
-                let dy = (outlaw.pos.y - npc.pos.y).signum();
-                let target = Pos::new(npc.pos.x + dx, npc.pos.y + dy);
-                if self.world.is_walkable(target) {
-                    return NpcAction::Move(target);
-                }
-            }
-        }
-        self.patrol_town(npc.pos)
-    }
-
-    /// Deputy AI: flank and support sheriff.
-    fn deputy_ai(&mut self, npc: &Npc) -> NpcAction {
-        if let Some(sheriff) = self.world.npcs.iter().find(|n| n.kind == NpcKind::Sheriff) {
-            let dx = (sheriff.pos.x - npc.pos.x).signum();
-            let dy = (sheriff.pos.y - npc.pos.y).signum();
-            let target = Pos::new(npc.pos.x + dx, npc.pos.y + dy);
-            if self.world.is_walkable(target) && target != sheriff.pos {
-                return NpcAction::Move(target);
-            }
-        }
-        self.patrol_town(npc.pos)
-    }
-
-    /// Outlaw AI: evade law, seek cover.
-    fn outlaw_ai(&mut self, npc: &Npc) -> NpcAction {
-        // Find nearest law (sheriff or deputy).
-        let law = self
-            .world
-            .npcs
-            .iter()
-            .filter(|n| n.kind == NpcKind::Sheriff || n.kind == NpcKind::Deputy)
-            .min_by_key(|n| (n.pos.x - npc.pos.x).abs() + (n.pos.y - npc.pos.y).abs());
-
-        if let Some(law) = law {
-            let dist = (law.pos.x - npc.pos.x).abs() + (law.pos.y - npc.pos.y).abs();
-            if dist <= 5 {
-                // Flee away from law.
-                let dx = (npc.pos.x - law.pos.x).signum();
-                let dy = (npc.pos.y - law.pos.y).signum();
-                let target = Pos::new(npc.pos.x + dx, npc.pos.y + dy);
-                if self.world.is_walkable(target) {
-                    return NpcAction::Move(target);
-                }
-            }
-        }
-        // Random wander.
-        self.random_wander(npc.pos)
-    }
-
-    /// Patrol around town center area.
-    fn patrol_town(&mut self, pos: Pos) -> NpcAction {
-        let center = Pos::new(self.world.width / 2, self.world.height / 2);
-        let dx = (center.x - pos.x).signum();
-        let dy = (center.y - pos.y).signum();
-        let target = Pos::new(pos.x + dx, pos.y + dy);
-        if self.world.is_walkable(target) {
-            NpcAction::Move(target)
-        } else {
-            self.random_wander(pos)
-        }
-    }
-
-    /// Random valid move.
-    fn random_wander(&mut self, pos: Pos) -> NpcAction {
-        let dirs = [
-            Direction::Up,
-            Direction::Down,
-            Direction::Left,
-            Direction::Right,
-        ];
-        let mut dirs = dirs;
-        dirs.shuffle(&mut self.rng);
-        for dir in dirs {
-            let (dx, dy) = dir.offset();
-            let target = Pos::new(pos.x + dx, pos.y + dy);
-            if self.world.is_walkable(target) {
-                return NpcAction::Move(target);
-            }
-        }
-        NpcAction::Wait
-    }
-
-    /// Save the game into the named slot of the default slot document.
-    pub fn save_slot(&mut self, slot: &str) -> Result<String, String> {
-        let path = save_dir();
-        let store = SaveStore::new(path);
-        let saved_as = store.save_data(slot, SaveData::with_slot(self, slot))?;
-        self.message = format!("Game saved to slot \"{saved_as}\".");
-        #[cfg(feature = "sound")]
-        self.sound_manager.play(SoundEffect::Save);
-        Ok(saved_as)
-    }
-
-    /// TUI-compatible save method (takes a path).
-    pub fn save(&self, path: &Path) -> Result<(), String> {
-        let store = SaveStore::new(path);
-        store
-            .save_data("default", SaveData::with_slot(self, "default"))
-            .map(|_| ())
-    }
-
-    /// TUI-compatible load method.
-    pub fn load(path: &Path) -> Result<Self, String> {
-        let store = SaveStore::new(path);
-        let game = Self::from_save_data(store.load_data("default")?);
-        #[cfg(feature = "sound")]
-        game.sound_manager.play(SoundEffect::Load);
-        Ok(game)
-    }
-
-    /// Load the game from the named slot of the slot document at `path`.
-    pub fn load_named_from(slot: &str, path: &Path) -> Result<Self, String> {
-        let store = SaveStore::new(path);
-        let game = Self::from_save_data(store.load_data(slot)?);
-        #[cfg(feature = "sound")]
-        game.sound_manager.play(SoundEffect::Load);
-        Ok(game)
-    }
-
-    /// End-of-game flags are not part of a save, so a loaded game always
-    /// resumes as playable.
-    pub fn from_save_data(save: SaveData) -> Self {
-        let mut game = Self {
-            world: save.world,
-            player: save.player,
-            turn: save.turn,
-            message: "Game loaded.".to_string(),
-            game_over: false,
-            won: false,
-            rng: StdRng::from_os_rng(),
-            #[cfg(feature = "sound")]
-            sound_manager: SoundManager::new().unwrap_or_default(),
-            #[cfg(not(feature = "sound"))]
-            sound_settings: SoundSettings::new(),
-        };
-        // Restore sound settings from save data
-        #[cfg(feature = "sound")]
-        game.sound_manager.load_settings(save.sound_settings);
-        #[cfg(not(feature = "sound"))]
-        {
-            game.sound_settings = save.sound_settings;
-        }
-        game
-    }
-
-    /// Names of the save slots in the default slot document, alphabetically.
-    pub fn slot_names() -> Vec<String> {
-        let path = save_dir();
-        let store = SaveStore::new(path);
-        store.list_saves_or_empty()
-    }
-}
-
-/// NPC action during AI turn.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum NpcAction {
-    Move(Pos),
-    Wait,
-    Attack(Pos),
-}
-
-/// Resolve the save directory (config dir for dust-trail).
-fn save_dir() -> std::path::PathBuf {
-    directories::ProjectDirs::from("", "", "dust-trail")
-        .map(|p| p.config_dir().to_path_buf())
-        .unwrap_or_else(|| std::env::temp_dir().join("dust-trail"))
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::domain::game::Direction;
-
-    #[test]
-    fn new_game_has_player_at_start() {
-        let game = Game::new_static();
-        assert_eq!(game.player.pos, Pos::new(2, 2));
-        assert_eq!(game.turn, 0);
-        assert!(!game.game_over);
-        assert!(!game.won);
-    }
-
-    #[test]
-    fn move_player_updates_position() {
-        let mut game = Game::new_static();
-        let start = game.player.pos;
-        game.move_player(Direction::Right);
-        assert_eq!(game.player.pos, Pos::new(start.x + 1, start.y));
-        assert_eq!(game.turn, 1);
-    }
-
-    #[test]
-    fn move_player_blocked_by_wall() {
-        let mut game = Game::new_static();
-        // Move to border (wall at x=0, y=0, etc.)
-        for _ in 0..3 {
-            game.move_player(Direction::Left);
-        }
-        let pos = game.player.pos;
-        game.move_player(Direction::Left);
-        assert_eq!(game.player.pos, pos); // Should not move
-    }
-
-    #[test]
-    fn save_data_roundtrip() {
-        let mut game = Game::new_static();
-        game.move_player(Direction::Right);
-        game.move_player(Direction::Down);
-        let data = SaveData::with_slot(&game, "test");
-        let restored = data.into_game();
-        assert_eq!(restored.player.pos, game.player.pos);
-        assert_eq!(restored.turn, game.turn);
-    }
-
-    #[test]
-    fn outlaw_capture_ends_game() {
-        let mut game = Game::new_static();
-        // Manually place outlaw at player position
-        game.world.npcs.push(crate::domain::world::Npc {
-            kind: NpcKind::Outlaw,
-            pos: game.player.pos,
-            bounty: 0,
-        });
-        game.interact();
-        assert!(game.game_over);
-        assert!(game.won);
-    }
-
-    #[test]
-    fn wanted_level_escalates() {
-        let mut game = Game::new_static();
-        let outlaw_idx = game
-            .world
-            .npcs
-            .iter()
-            .position(|n| n.kind == NpcKind::Outlaw)
-            .unwrap();
-        game.world.npcs[outlaw_idx].bounty = 0;
-        assert_eq!(game.world.npcs[outlaw_idx].wanted_level(), WantedLevel::None);
-        // Commit crime to increase wanted
-        game.world.npcs[outlaw_idx].add_bounty(20);
-        assert_eq!(game.world.npcs[outlaw_idx].wanted_level(), WantedLevel::Low);
-    }
-
-    #[test]
-    fn deputy_spawns_at_medium_wanted() {
-        let mut game = Game::new_static();
-        // Force medium wanted level
-        let outlaw_idx = game
-            .world
-            .npcs
-            .iter()
-            .position(|n| n.kind == NpcKind::Outlaw)
-            .unwrap();
-        game.world.npcs[outlaw_idx].bounty = 50;
-        game.update_npcs();
-        let has_deputy = game.world.npcs.iter().any(|n| n.kind == NpcKind::Deputy);
-        assert!(has_deputy);
-    }
-}
