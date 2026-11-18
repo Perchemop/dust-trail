@@ -225,10 +225,10 @@ impl Tui {
             }
             KeyCode::Char('u') => {
                 // Use first usable item from inventory.
-                if self.player.inventory.is_empty() {
+                if self.game.player.inventory.is_empty() {
                     self.game.message = "Inventory empty.".to_string();
                 } else {
-                    let kind = self.player.inventory[0];
+                    let kind = self.game.player.inventory[0];
                     let result = self.game.use_item(kind);
                     match result {
                         Some(score) if score > 0 => {
