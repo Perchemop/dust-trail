@@ -134,7 +134,8 @@ impl SoundManager {
     }
 
     /// Load embedded sound files.
-    fn load_sound_files() -> Result<std::collections::HashMap<SoundEffect, Vec<u8>>, Box<dyn std::error::Error>> {
+    fn load_sound_files(
+    ) -> Result<std::collections::HashMap<SoundEffect, Vec<u8>>, Box<dyn std::error::Error>> {
         let mut sounds = std::collections::HashMap::new();
 
         // Embed sound files using include_bytes!
@@ -214,7 +215,9 @@ impl SoundManager {
             SoundEffect::Footstep => SoundCategory::Movement,
             SoundEffect::LootPickup | SoundEffect::HorseMount => SoundCategory::Collection,
             SoundEffect::Hit | SoundEffect::EnemyDeath => SoundCategory::Combat,
-            SoundEffect::Save | SoundEffect::Load | SoundEffect::GameOver
+            SoundEffect::Save
+            | SoundEffect::Load
+            | SoundEffect::GameOver
             | SoundEffect::Victory => SoundCategory::Ui,
             SoundEffect::Ambient => SoundCategory::Master,
         }

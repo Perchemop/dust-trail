@@ -6,9 +6,9 @@ mod renderer;
 use crate::domain::game::{Direction, Game, Interaction};
 use crate::tui::renderer::render_frame;
 use crossterm::{
+    ExecutableCommand,
     cursor::{Hide, Show},
     event::{self, Event, KeyCode, KeyEvent, KeyModifiers},
-    ExecutableCommand,
     terminal::{EnterAlternateScreen, LeaveAlternateScreen},
 };
 use directories::ProjectDirs;
