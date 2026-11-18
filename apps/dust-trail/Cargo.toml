@@ -62,3 +62,6 @@ assets = [
 assets = [
     { source = "target/release/dust-trail", dest = "/usr/bin/dust-trail", mode = "755" },
 ]
+
+[dev-dependencies]
+tempfile = "3"

@@ -12,7 +12,7 @@ verification), per guide §6.2.
 | v0.3.0 — Outlaw AI patrol | 2026-11 | 100% | Released |
 | v0.4.0 — Wanted Level / Bounty mechanic | 2026-11 | 100% | Released |
 | v1.0.0 — Stable release | 2026-11 | 100% | Released |
-| v1.1.0 — Next milestone | TBD | 0% | Planned |
+| v1.1.0 — Multi-save slots | TBD | 0% | Planned |
 
 ## v0.1.0 (complete — superseded by v0.2.0)
 * Playable ASCII Western adventure (top-down TUI + GUI)
@@ -67,6 +67,14 @@ verification), per guide §6.2.
 * Auto-update download + signature verification — SHA-256 + minisign, anti-loop marker
 * CI green: format, clippy, tests, multi-OS release builds (Linux arm64/x86_64, macOS arm64, Windows x86_64)
 * Installers published: .deb (arm64/x86_64), .dmg (arm64), .msi (x86_64), SHA256SUMS.txt
+
+## v1.1.0 (planned — Multi-save slots)
+* Multiple named save slots — `Game::save_named_to(slot, path)` with arbitrary slot names
+* `Game::list_saves()` returns all available save slots
+* GUI slot selection UI — selectable slot list in save/load dialogs
+* TUI slot selection — keyboard-navigable slot list
+* Save slot naming — user can name each save slot
+* CI green: format, clippy, tests, multi-OS release builds
 
 ## Out of scope
 * Multiplayer / networking

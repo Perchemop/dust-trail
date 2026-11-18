@@ -21,11 +21,18 @@ enum ControlFlow {
     Quit,
 }
 
+/// Pending action waiting for the user to select a save slot.
+enum PendingAction {
+    SaveSlot,
+    LoadSlot,
+}
+
 /// The TUI frontend.
 pub struct Tui {
     stdout: Stdout,
     game: Game,
     save_dir: PathBuf,
+    pending_action: Option<PendingAction>,
 }
 
 impl Tui {
@@ -44,6 +51,7 @@ impl Tui {
             stdout,
             game: Game::new(),
             save_dir,
+            pending_action: None,
         })
     }
 
@@ -61,6 +69,12 @@ impl Tui {
             let frame = self.game.frame();
             render_frame(&mut self.stdout, &frame)?;
 
+            // Render pending action prompt (slot selection).
+            if let Some(action) = &self.pending_action {
+                self.render_slot_prompt(action)?;
+                self.stdout.flush()?;
+            }
+
             // Poll briefly so the screen redraws (status/message updates) and
             // we stay responsive. 100 ms ≈ 10 fps; fine for a turn-based game.
             if event::poll(Duration::from_millis(100))? {
@@ -74,9 +88,81 @@ impl Tui {
         }
     }
 
+    /// Render the slot selection prompt for a pending save/load action.
+    fn render_slot_prompt(&mut self, action: &PendingAction) -> std::io::Result<()> {
+        use crossterm::style::{Print, SetForegroundColor};
+        use crossterm::{cursor::MoveTo, ExecutableCommand};
+
+        let slots = Game::list_saves().unwrap_or_default();
+        let action_word = match action {
+            PendingAction::SaveSlot => "save",
+            PendingAction::LoadSlot => "load",
+        };
+
+        self.stdout.execute(MoveTo(0, 0))?;
+        self.stdout.execute(SetForegroundColor(
+            crossterm::style::Color::Rgb {
+                r: 255,
+                g: 255,
+                b: 255,
+            },
+        ))?;
+        self.stdout.execute(Print(format!(
+            "Select slot to {} (1-9, Esc to cancel):\n",
+            action_word
+        )))?;
+        for (i, slot) in slots.iter().enumerate().take(9) {
+            self.stdout.execute(Print(format!("  {}. {}\n", i + 1, slot)))?;
+        }
+        if slots.is_empty() {
+            self.stdout.execute(Print("  (no saves yet)\n"))?;
+        }
+        Ok(())
+    }
+
     fn handle_key(&mut self, key: KeyEvent) -> std::io::Result<ControlFlow> {
         if key.modifiers.contains(KeyModifiers::CONTROL) && key.code == KeyCode::Char('c') {
             return Ok(ControlFlow::Quit);
+        }
+
+        // If waiting for slot selection, handle digit keys.
+        if let Some(action) = self.pending_action.take() {
+            if let KeyCode::Char(c) = key.code {
+                if c >= '1' && c <= '9' {
+                    let slot_idx = c.to_digit(10).unwrap() as usize - 1;
+                    let slots = Game::list_saves().unwrap_or_default();
+                    if slot_idx < slots.len() {
+                        let slot = &slots[slot_idx];
+                        match action {
+                            PendingAction::SaveSlot => {
+                                let path = self.save_dir.join("saves.json");
+                                match self.game.save_named_to(slot, &path) {
+                                    Ok(()) => {
+                                        self.game.message =
+                                            format!("Game saved to slot \"{slot}\".");
+                                    }
+                                    Err(e) => {
+                                        self.game.message = format!("Save failed: {e}");
+                                    }
+                                }
+                            }
+                            PendingAction::LoadSlot => {
+                                let path = self.save_dir.join("saves.json");
+                                match Game::load_named_from(slot, &path) {
+                                    Ok(loaded) => self.game = loaded,
+                                    Err(e) => {
+                                        self.game.message = format!("Load failed: {e}");
+                                    }
+                                }
+                            }
+                        }
+                        return Ok(ControlFlow::Continue);
+                    }
+                }
+            }
+            // Esc or any other key cancels.
+            self.game.message = "Save/load cancelled.".to_string();
+            return Ok(ControlFlow::Continue);
         }
 
         match key.code {
@@ -102,11 +188,30 @@ impl Tui {
                 Ok(ControlFlow::Continue)
             }
             KeyCode::Char('S') => {
-                self.save_game();
+                let slots = Game::list_saves().unwrap_or_default();
+                if slots.is_empty() {
+                    // No saves yet, save to slot "1".
+                    let path = self.save_dir.join("saves.json");
+                    match self.game.save_named_to("1", &path) {
+                        Ok(()) => {
+                            self.game.message = "Game saved to slot \"1\".".to_string();
+                        }
+                        Err(e) => {
+                            self.game.message = format!("Save failed: {e}");
+                        }
+                    }
+                } else {
+                    self.pending_action = Some(PendingAction::SaveSlot);
+                }
                 Ok(ControlFlow::Continue)
             }
             KeyCode::Char('l') => {
-                self.load_game();
+                let slots = Game::list_saves().unwrap_or_default();
+                if slots.is_empty() {
+                    self.game.message = "No saves to load.".to_string();
+                } else {
+                    self.pending_action = Some(PendingAction::LoadSlot);
+                }
                 Ok(ControlFlow::Continue)
             }
             KeyCode::Char('r') => {
@@ -144,25 +249,6 @@ impl Tui {
             Interaction::Talked { npc, line } => {
                 self.game.message = format!("{npc}: {line}");
             }
-        }
-    }
-
-    fn save_path(&self, name: &str) -> PathBuf {
-        self.save_dir.join(format!("{name}.json"))
-    }
-
-    fn save_game(&mut self) {
-        let path = self.save_path("savegame");
-        if let Err(e) = self.game.save(&path) {
-            self.game.message = format!("Save failed: {e}");
-        }
-    }
-
-    fn load_game(&mut self) {
-        let path = self.save_path("savegame");
-        match Game::load(&path) {
-            Ok(loaded) => self.game = loaded,
-            Err(e) => self.game.message = format!("Load failed: {e}"),
         }
     }
 

@@ -667,4 +667,33 @@ mod tests {
         let has_deputy = game.world.npcs.iter().any(|n| n.kind == NpcKind::Deputy);
         assert!(has_deputy);
     }
+
+    #[test]
+    fn save_named_to_load_named_from_roundtrip() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("saves.json");
+
+        let mut game = Game::new_static();
+        game.move_player(Direction::Right);
+        game.move_player(Direction::Down);
+
+        // Save to slot "alpha"
+        game.save_named_to("alpha", &path).unwrap();
+
+        // Save to slot "beta"
+        let mut game_beta = Game::new_static();
+        game_beta.move_player(Direction::Up);
+        game_beta.move_player(Direction::Left);
+        game_beta.save_named_to("beta", &path).unwrap();
+
+        // Load slot "alpha" and verify state
+        let loaded_alpha = Game::load_named_from("alpha", &path).unwrap();
+        assert_eq!(loaded_alpha.player.pos, Pos::new(3, 3)); // Right then Down from (2,2)
+        assert_eq!(loaded_alpha.turn, 2);
+
+        // Load slot "beta" and verify state
+        let loaded_beta = Game::load_named_from("beta", &path).unwrap();
+        assert_eq!(loaded_beta.player.pos, Pos::new(1, 1)); // Up then Left from (2,2)
+        assert_eq!(loaded_beta.turn, 2);
+    }
 }
