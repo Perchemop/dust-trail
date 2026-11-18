@@ -1,5 +1,31 @@
 # Progress Log - Dust Trail
 
+## v1.3.0 — UI Polish & Item System
+
+### Status: Released ✅
+
+**Tag:** `v1.3.0` pushed to origin  
+**GitHub Release:** Published with detailed notes  
+**CI:** All checks green — format, clippy, tests, multi-OS release builds  
+**Installers:** .deb (arm64/x86_64), .dmg (arm64), .msi (x86_64), SHA256SUMS.txt
+
+### Implemented
+
+| Item | Status | Evidence |
+|------|--------|----------|
+| GUI status bar: health bar, wanted level, mount status | Complete | `apps/dust-trail/src/gui/mod.rs` toolbar |
+| Mount/dismount toggle (M key) | Complete | `apps/dust-trail/src/domain/player.rs` `toggle_mount()`, TUI + GUI key binding |
+| Game over screen with restart/quit | Complete | `apps/dust-trail/src/gui/mod.rs` game over overlay |
+| Save format version migration | Complete | `apps/dust-trail/src/domain/save.rs` `migrate()` method |
+
+### CI Results (v1.3.0)
+- **check** (fmt + clippy): PASSED
+- **Build (linux-arm64)**: PASSED
+- **Build (linux-x86_64)**: PASSED
+- **Build (macos-arm64)**: PASSED
+- **Build (windows-x86_64)**: PASSED
+- **supply-chain**: PASSED
+
 ## v1.2.0 — Combat System
 
 ### Status: Released ✅

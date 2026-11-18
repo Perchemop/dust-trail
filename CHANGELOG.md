@@ -1,5 +1,22 @@
 # Changelog - Dust Trail
 
+## v1.3.0 - 2026-11-18
+
+### Added
+- GUI status bar: health bar (HP), wanted level indicator, mount status
+- Player mount/dismount toggle (M key in TUI/GUI)
+- Game over screen with restart/quit options
+- Save format version migration for older save files
+
+### Changed
+- GUI toolbar now displays wanted level (from outlaw bounty) with color coding
+- GUI toolbar now displays player health (HP/100)
+- TUI: 'M' key toggles mounted/dismounted status
+
+### CI & Release
+- CI green: format, clippy, tests, multi-OS release builds (Linux arm64/x86_64, macOS arm64, Windows x86_64)
+- Installers published: .deb (arm64/x86_64), .dmg (arm64), .msi (x86_64), SHA256SUMS.txt
+
 ## v1.2.0 - 2026-11-18
 
 ### Added

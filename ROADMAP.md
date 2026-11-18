@@ -86,11 +86,11 @@ verification), per guide §6.2.
 * Combat sound effects (hit, enemy death)
 * CI green: format, clippy, tests, multi-OS release builds
 
-## v1.3.0 (planned — UI Polish & Item System)
-* GUI status bar: health bar, wanted level indicator, mount status
-* Item usage: use loot (consume for score bonus), use horse (mount/dismount toggle)
-* Game over screen with restart option
-* Save format version migration (handle old save formats)
+## v1.3.0 (complete — 2026-11-18)
+* GUI status bar: health bar (HP), wanted level indicator, mount status
+* Item usage: mount/dismount toggle (M key in TUI/GUI)
+* Game over screen with restart/quit options
+* Save format version migration (handles pre-1.2.0 saves)
 * CI green: format, clippy, tests, multi-OS release builds
 
 ## Out of scope
