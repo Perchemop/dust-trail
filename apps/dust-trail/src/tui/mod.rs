@@ -100,19 +100,19 @@ impl Tui {
         };
 
         self.stdout.execute(MoveTo(0, 0))?;
-        self.stdout.execute(SetForegroundColor(
-            crossterm::style::Color::Rgb {
+        self.stdout
+            .execute(SetForegroundColor(crossterm::style::Color::Rgb {
                 r: 255,
                 g: 255,
                 b: 255,
-            },
-        ))?;
+            }))?;
         self.stdout.execute(Print(format!(
             "Select slot to {} (1-9, Esc to cancel):\n",
             action_word
         )))?;
         for (i, slot) in slots.iter().enumerate().take(9) {
-            self.stdout.execute(Print(format!("  {}. {}\n", i + 1, slot)))?;
+            self.stdout
+                .execute(Print(format!("  {}. {}\n", i + 1, slot)))?;
         }
         if slots.is_empty() {
             self.stdout.execute(Print("  (no saves yet)\n"))?;
