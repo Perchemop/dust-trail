@@ -5,7 +5,6 @@
 //! packaged binary, not only in a source checkout.
 
 use crate::gui::Gui;
-use crate::theme;
 
 use egui::{Align, Layout};
 
