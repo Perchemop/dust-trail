@@ -7,8 +7,8 @@ pub mod release_notes;
 
 use crate::domain::cell::Cell;
 use crate::domain::game::{Direction, Game, Interaction};
-use crate::domain::world::Pos;
-use crate::theme::{danger_color32, rgb_to_color32, Variant};
+use crate::domain::world::{ItemKind, Pos};
+use crate::theme::{danger_color32, rgb_to_color32, Role, Theme, Variant};
 use eframe::egui;
 
 /// The GUI frontend.
@@ -288,9 +288,7 @@ impl Gui {
                         ui.button(
                             egui::RichText::new(format!("{} {}", glyph, label))
                                 .monospace()
-                                .color(crate::theme::rgb_to_color32(
-                                    crate::domain::color::Rgb::new(255, 255, 255),
-                                )),
+                                .color(Theme::dark().color32(Role::TextPrimary)),
                         )
                         .on_hover_text(match kind {
                             ItemKind::Loot => "Consume for +5 score bonus.",
@@ -611,8 +609,6 @@ impl eframe::App for Gui {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     #[test]
     fn rgb_to_color32_roundtrip() {
         let _ = crate::theme::rgb_to_color32(crate::domain::color::Rgb::BLACK);
