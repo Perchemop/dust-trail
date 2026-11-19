@@ -2,7 +2,7 @@ name: Release
 
 # Builds and publishes installable release artefacts on version tags and on
 # manual dispatch. Every release MUST attach platform installers (not a zip of
-# source): Windows .msi, macOS .dmg, Linux .deb + .AppImage, plus SHA256SUMS.txt.
+# source): Windows .msi, macOS .dmg, Linux .deb, plus SHA256SUMS.txt.
 # See AGENTS.md (installable-builds directive).
 "on":
   push:
@@ -10,7 +10,7 @@ name: Release
   workflow_dispatch:
     inputs:
       release_tokens:
-        description: "Tokens consumed by this release (for docs/tokens.json)"
+        description: "Tokens consumed by this release (for docs/tokens.md)"
         required: false
         default: "0"
       tag_name:
@@ -20,7 +20,6 @@ name: Release
 
 permissions:
   contents: write
-  pull-requests: write
 
 jobs:
   build:
@@ -64,7 +63,7 @@ jobs:
         if: runner.os == 'macOS'
         run: brew install create-dmg
       - name: Build release (TUI + GUI)
-        run: cargo build --release --features gui --target ${{ matrix.target }}
+        run: cargo build --release --locked --features gui --target ${{ matrix.target }}
 
       # ----- Windows: .msi installer via cargo-wix -----
       - name: Windows MSI installer
@@ -73,7 +72,7 @@ jobs:
         run: |
           cargo install cargo-wix --locked
           cargo wix init --force -p dust-trail
-          cargo wix --nocapture -p dust-trail --target ${{ matrix.target }}
+          cargo wix --nocapture -p dust-trail --features gui --target ${{ matrix.target }}
           mkdir -p dist
           cp target/wix/*.msi "dist/${{ matrix.asset }}.msi"
 
@@ -81,7 +80,14 @@ jobs:
       - name: macOS DMG installer
         if: runner.os == 'macOS'
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
+          # Prefer an explicit tag input (manual dispatch); otherwise use the
+          # pushed tag. Strip any leading "v".
+          if [ -n "${{ inputs.tag_name }}" ]; then
+            VERSION="${{ inputs.tag_name }}"
+          else
+            VERSION="${GITHUB_REF_NAME}"
+          fi
+          VERSION="${VERSION#v}"
           APP="dist/Dust Trail.app"
           mkdir -p "$APP/Contents/MacOS"
           cp "target/${{ matrix.target }}/release/dust-trail" "$APP/Contents/MacOS/dust-trail"
@@ -94,8 +100,8 @@ jobs:
             --app-drop-link 425 120 \
             "dist/${{ matrix.asset }}.dmg" "$APP"
 
-      # ----- Linux: .deb via dpkg-deb + .AppImage via appimagetool -----
-      - name: Linux packages (.deb, .AppImage)
+      # ----- Linux: .deb via dpkg-deb -----
+      - name: Linux packages (.deb)
         if: runner.os == 'Linux'
         shell: bash
         run: |
@@ -103,13 +109,21 @@ jobs:
           mkdir -p dist
           TRIPLE="${{ matrix.target }}"
           ARCH="$(dpkg --print-architecture)"
+          # Prefer an explicit tag input (manual dispatch); otherwise use the
+          # pushed tag. Strip any leading "v".
+          if [ -n "${{ inputs.tag_name }}" ]; then
+            VERSION="${{ inputs.tag_name }}"
+          else
+            VERSION="${GITHUB_REF_NAME}"
+          fi
+          VERSION="${VERSION#v}"
           # .deb via dpkg-deb (manual, reliable).
-          DEBDIR="dist/dust-trail_0.1.0-1_${ARCH}"
+          DEBDIR="dist/dust-trail_${VERSION}-1_${ARCH}"
           rm -rf "$DEBDIR"
           mkdir -p "$DEBDIR/DEBIAN" "$DEBDIR/usr/bin" \
                    "$DEBDIR/usr/share/applications" \
                    "$DEBDIR/usr/share/icons/hicolor/256x256/apps"
-          printf 'Package: dust-trail\nVersion: 0.1.0-1\nSection: games\nPriority: optional\nArchitecture: __ARCH__\nMaintainer: Dust Trail Dev <dev@example.com>\nDescription: Original Western-themed ASCII adventure game (TUI + GUI)\n' > "$DEBDIR/DEBIAN/control"
+          printf 'Package: dust-trail\nVersion: %s-1\nSection: games\nPriority: optional\nArchitecture: __ARCH__\nMaintainer: Dust Trail Dev <dev@example.com>\nDescription: Original Western-themed ASCII adventure game (TUI + GUI)\n' "$VERSION" > "$DEBDIR/DEBIAN/control"
           sed -i "s/__ARCH__/${ARCH}/g" "$DEBDIR/DEBIAN/control"
           cp "target/${TRIPLE}/release/dust-trail" "$DEBDIR/usr/bin/dust-trail"
           cp packaging/linux/dust-trail.desktop "$DEBDIR/usr/share/applications/"
@@ -117,7 +131,6 @@ jobs:
             -fill '#e6c86e' -draw 'polygon 128,32 224,128 128,224 32,128' \
             "$DEBDIR/usr/share/icons/hicolor/256x256/apps/dust-trail.png"
           dpkg-deb --build "$DEBDIR" "dist/${{ matrix.asset }}.deb"
-          # .AppImage via appimagetool - disabled due to URL 404 issues; .deb is primary Linux format
 
       - name: List built installers
         shell: bash
@@ -137,34 +150,95 @@ jobs:
           path: |
             dist/*.dmg
             dist/*.deb
-            dist/*.AppImage
 
-  # Create a draft GitHub Release with installers + checksums; a maintainer publishes it.
+  # Publish a real (non-draft) GitHub Release with installers + checksums.
+  # Idempotent: re-running updates an existing release instead of failing.
   release:
     needs: build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Download all artefacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           path: dist/
           merge-multiple: true
       - name: Generate SHA256SUMS.txt
         run: |
           cd dist
-          find . -maxdepth 1 -type f -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS.txt
+          # Checksum only the installer files (.msi, .dmg, .deb), never this
+          # file itself, and use bare filenames (no "./" prefix) so
+          # `sha256sum -c SHA256SUMS.txt` works from the directory containing
+          # both the file and the installers.
+          find . -maxdepth 1 -type f \( -name '*.msi' -o -name '*.dmg' -o -name '*.deb' \) -printf '%f\n' \
+            | sort \
+            | while read -r f; do sha256sum "$f"; done > SHA256SUMS.txt
           cat SHA256SUMS.txt
-      - name: Create draft release
+      - name: Verify installer set complete
+        shell: bash
+        run: |
+          missing=0
+          for ext in msi dmg deb; do
+            if [ -z "$(ls dist/*.${ext} 2>/dev/null)" ]; then
+              echo "ERROR: missing installer *.${ext} in dist/" >&2
+              missing=1
+            fi
+          done
+          if [ ! -f dist/SHA256SUMS.txt ]; then
+            echo "ERROR: missing SHA256SUMS.txt" >&2
+            missing=1
+          fi
+          [ "$missing" -eq 0 ]
+      - name: Create or update release
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ github.event.inputs.tag_name || github.ref_name }}
         run: |
           TAG="${RELEASE_TAG}"
-          NOTES=$(awk "/## \[${TAG}\]/,/## \[/" CHANGELOG.md | head -60)
-          mapfile -t ASSETS < <(find dist -maxdepth 1 -type f)
-          gh release create "$TAG" --repo "$GITHUB_REPOSITORY" \
-            --title "Dust Trail $TAG" \
-            --notes "${NOTES:-See CHANGELOG.md}" \
-            --draft \
-            "${ASSETS[@]}"
+          # Extract the CHANGELOG section for this tag. Headings look like
+          # "## v1.5.0 - 2026-11-18" (no brackets).
+          NOTES=$(awk -v tag="$TAG" '
+            /^## / { if ($0 ~ "^## " tag " ") { found=1; print; next } else { exit } }
+            found { print }
+          ' CHANGELOG.md | head -60)
+          if [ -z "${NOTES}" ]; then
+            NOTES="See CHANGELOG.md for the full release notes."
+          fi
+          # Append token-usage metrics if a row exists for this version.
+          # The table cells are space-padded, so match the version column
+          # loosely rather than requiring exactly one space before the pipe.
+          TOKEN_LINE=$(grep "^| ${TAG}[[:space:]]*|" docs/tokens.md || true)
+          if [ -n "${TOKEN_LINE}" ]; then
+            NOTES="${NOTES}
+
+## Token usage metrics
+${TOKEN_LINE}"
+          fi
+          # Plain-language per-platform install instructions.
+          NOTES="${NOTES}
+
+## How to install
+
+- **Windows:** Download the `.msi` installer and double-click it to run the setup wizard.
+- **macOS:** Download the `.dmg` file, open it, and drag Dust Trail into your Applications folder.
+- **Linux:** Download the `.deb` file and double-click it in your package installer to install.
+
+All installers are listed with their SHA-256 checksums in \`SHA256SUMS.txt\`, which you can verify with \`sha256sum -c SHA256SUMS.txt\` after downloading the installers into the same directory."
+
+          ASSETS=(dist/*.msi dist/*.dmg dist/*.deb dist/SHA256SUMS.txt)
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            # Release already exists (possibly a draft from a previous run):
+            # upload/clobber assets, edit title+notes, and make sure it is
+            # published (not a draft).
+            gh release upload "$TAG" "${ASSETS[@]}" --clobber
+            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" \
+              --title "Dust Trail $TAG" \
+              --notes "${NOTES}" \
+              --draft=false
+          else
+            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" \
+              --title "Dust Trail $TAG" \
+              --notes "${NOTES}" \
+              "${ASSETS[@]}"
+          fi

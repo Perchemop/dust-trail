@@ -1,6 +1,6 @@
 [package]
 name = "dust-trail"
-version = "0.2.0"
+version = "1.5.1"
 edition = "2021"
 rust-version = "1.82"
 description = "Dust Trail — original Western-themed 3D isometric ASCII adventure game (GUI)."
@@ -38,7 +38,11 @@ optional = true
 
 
 [features]
-default = ["tui"]
+# The GUI is a default feature so that every build of the package — including
+# the ones produced by the release pipeline and by `cargo wix` — ships a
+# window-capable binary. The terminal interface stays available and is
+# selected with `--tui`, or automatically when a terminal is attached.
+default = ["tui", "gui"]
 tui = []
 gui = ["dep:eframe", "dep:egui"]
 sound = ["dep:rodio"]

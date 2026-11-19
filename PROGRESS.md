@@ -1,13 +1,73 @@
 # Progress Log - Dust Trail
 
+## v1.5.1 — Honest installers, measured token ledger, version fix
+
+### Status: In progress — CI running
+
+**Goal:** ship the first release of Dust Trail that actually carries
+installers, with version metadata that matches the published tag and token
+figures that come from real measurements rather than placeholders.
+
+### Root cause of the v1.5.0 zero-asset release
+
+Two independent failures, both confirmed from the workflow logs:
+
+1. **Release workflow run `44296170358`** (tag `v1.5.0`) failed in all four
+   `Build release (TUI + GUI)` jobs with the same compile error:
+   `error[E0433]: cannot find type ItemKind in this scope` (4 occurrences).
+   The `release` job was therefore skipped and the GitHub Release was created
+   with zero assets. Log excerpt kept at job id `134773644450`.
+2. **Duplicate workflow `.github/workflows/publish.yml`** run `44521528378`
+   failed on an unquoted `on:` YAML key, which YAML 1.1 parsers read as the
+   boolean `true`. The file duplicated `release.yml` and has been deleted.
+
+A third fact, verified from the API: the `v1.5.0` tag was cut from commit
+`f6ae559`, and the CI run for that commit (`44295856578`) was **red**. The
+tag was pushed regardless, which violates the rule that a tag may only be
+created after the required checks are green.
+
+### Fixes in this slice
+
+| Item | Change | Evidence |
+|------|--------|----------|
+| GUI compile error | Import `ItemKind`, replace the raw white colour with the theme token | PR #24, commit `0f68267`, CI run `44521541346` (green) |
+| Duplicate workflow | `.github/workflows/publish.yml` deleted | this slice |
+| Release job completeness | The job now fails if any of `.msi`, `.dmg`, `.deb` or `SHA256SUMS.txt` is missing | `.github/workflows/release.yml` |
+| Checksum file | Generated only from the installers, bare filenames, so `sha256sum -c SHA256SUMS.txt` works | `.github/workflows/release.yml` |
+| Version metadata | Manifest `0.2.0` → `1.5.1`; the lockfile, the `.deb` control file, the macOS bundle and the release notes all agree | `apps/dust-trail/Cargo.toml`, `Cargo.lock` |
+| GUI in shipped binaries | `gui` is now a default feature and both `cargo build` and `cargo wix` pass `--features gui`. Before this, the installers were terminal-only | `apps/dust-trail/Cargo.toml`, `.github/workflows/release.yml` |
+| Launch behaviour | The desktop window opens when no terminal is attached, which is what the app bundle and the Linux launcher do. `--gui` forces the window, `--tui` forces the terminal | `apps/dust-trail/src/main.rs` |
+| In-app release notes | The changelog parser now understands this changelog's `## v1.5.0 - date` heading form, so the popup shows releases instead of nothing | `apps/dust-trail/src/gui/release_notes.rs` |
+| In-app token figures | The ledger is a Markdown table but was parsed as JSON, so the cumulative figure always read zero. It now reads the real measured numbers | `apps/dust-trail/src/gui/release_notes.rs`, `docs/tokens.md` |
+| Prose headings | A `##` heading such as `## Known limitations` is no longer parsed as a release | `apps/dust-trail/src/gui/release_notes.rs` |
+| Action pinning | `actions/download-artifact` pinned to a full commit SHA; the workflow no longer requests pull request write permission it does not use | `.github/workflows/release.yml` |
+| CI coverage | The TUI-only configuration is now linted and tested as well, so the fallback path stays warning-free | `.github/workflows/ci.yml` |
+| Token ledger | Regenerated programmatically from the OpenCode session database | `docs/tokens.md`, `docs/tokens.json` |
+
+### Verification
+
+- PR #24 (GUI compile fix) merged to `main` as merge commit `e80b33e`.
+  CI run `44521541346` — all five checks green:
+  `check`, `Build (windows-x86_64)`, `Build (macos-arm64)`,
+  `Build (linux-arm64)`, `supply-chain`.
+- CI run for this slice: **recorded below after the run completes**.
+
+### CI Results (v1.5.1)
+
+_Pending — filled in from the actual run._
+
 ## v1.5.0 — Smarter AI & Inventory UI
 
-### Status: Released ✅
+### Status: Published, but with **no installers** — corrected
 
-**Tag:** `v1.5.0` pushed to origin  
-**GitHub Release:** Published with detailed notes  
-**CI:** All checks green — format, clippy, tests, multi-OS release builds  
-**Installers:** .deb (arm64/x86_64), .dmg (arm64), .msi (x86_64), SHA256SUMS.txt
+**Tag:** `v1.5.0` pushed to origin (commit `f6ae559`)
+**GitHub Release:** Published on 2026-11-18 with **zero assets**. The release
+workflow run `44296170358` failed in all four build jobs on the `ItemKind`
+compile error and the release job was skipped. The duplicate `publish.yml`
+workflow also failed. v1.5.1 fixes both.
+**CI:** **Red.** CI run `44295856578` for the tagged commit failed. The tag was
+pushed anyway, which should not have happened.
+**Installers:** none.
 
 ### Implemented
 
@@ -18,20 +78,15 @@
 | Inventory UI panel | Complete | `apps/dust-trail/src/gui/mod.rs`, `render_inventory_panel()` |
 | TUI 'u' key uses first inventory item | Complete | `apps/dust-trail/src/tui/mod.rs` key binding |
 
-### CI Results (v1.5.0)
-- **check** (fmt + clippy): PASSED
-- **Build (linux-arm64)**: PASSED
-- **Build (linux-x86_64)**: PASSED
-- **Build (macos-arm64)**: PASSED
-- **Build (windows-x86_64)**: PASSED
-- **supply-chain**: PASSED
-
 ## v1.4.0 — Item System
 
-**Tag:** `v1.4.0` pushed to origin  
-**GitHub Release:** Published with detailed notes  
-**CI:** All checks green — format, clippy, tests, multi-OS release builds  
-**Installers:** .deb (arm64/x86_64), .dmg (arm64), .msi (x86_64), SHA256SUMS.txt
+### Status: Released ✅
+
+**Tag:** `v1.4.0` pushed to origin
+**GitHub Release:** Published with detailed notes
+**CI:** All checks green — format, clippy, tests, multi-OS release builds
+**Installers:** `.deb` (arm64/x86_64), `.dmg` (arm64), `.msi` (x86_64),
+`SHA256SUMS.txt` — verified present on the release
 
 ### Implemented
 
@@ -45,20 +100,24 @@
 
 ### CI Results (v1.4.0)
 - **check** (fmt + clippy): PASSED
-- **Build (linux-arm64)**: PASSED
-- **Build (linux-x86_64)**: PASSED
-- **Build (macos-arm64)**: PASSED
 - **Build (windows-x86_64)**: PASSED
+- **Build (macos-arm64)**: PASSED
+- **Build (linux-arm64)**: PASSED
 - **supply-chain**: PASSED
+
+> The CI build matrix has three targets: Windows x86_64, macOS arm64 and Linux
+> arm64. Linux x86_64 is built by the release workflow, not by the CI matrix,
+> so it is not a CI check name.
 
 ## v1.3.0 — UI Polish & Item System
 
 ### Status: Released ✅
 
-**Tag:** `v1.3.0` pushed to origin  
-**GitHub Release:** Published with detailed notes  
-**CI:** All checks green — format, clippy, tests, multi-OS release builds  
-**Installers:** .deb (arm64/x86_64), .dmg (arm64), .msi (x86_64), SHA256SUMS.txt
+**Tag:** `v1.3.0` pushed to origin
+**GitHub Release:** Published with detailed notes
+**CI:** All checks green — format, clippy, tests, multi-OS release builds
+**Installers:** `.deb` (arm64/x86_64), `.dmg` (arm64), `.msi` (x86_64),
+`SHA256SUMS.txt` — verified present on the release
 
 ### Implemented
 
@@ -71,20 +130,20 @@
 
 ### CI Results (v1.3.0)
 - **check** (fmt + clippy): PASSED
-- **Build (linux-arm64)**: PASSED
-- **Build (linux-x86_64)**: PASSED
-- **Build (macos-arm64)**: PASSED
 - **Build (windows-x86_64)**: PASSED
+- **Build (macos-arm64)**: PASSED
+- **Build (linux-arm64)**: PASSED
 - **supply-chain**: PASSED
 
 ## v1.2.0 — Combat System
 
 ### Status: Released ✅
 
-**Tag:** `v1.2.0` pushed to origin  
-**GitHub Release:** Published with detailed notes  
-**CI:** All checks green — format, clippy, tests, multi-OS release builds  
-**Installers:** .deb (arm64/x86_64), .dmg (arm64), .msi (x86_64), SHA256SUMS.txt
+**Tag:** `v1.2.0` pushed to origin
+**GitHub Release:** Published with detailed notes
+**CI:** All checks green — format, clippy, tests, multi-OS release builds
+**Installers:** `.deb` (arm64/x86_64), `.dmg` (arm64), `.msi` (x86_64),
+`SHA256SUMS.txt` — verified present on the release
 
 ### Implemented
 
@@ -100,18 +159,20 @@
 
 ### CI Results (v1.2.0)
 - **check** (fmt + clippy): PASSED
-- **Build (linux-arm64)**: PASSED
-- **Build (linux-x86_64)**: PASSED
-- **Build (macos-arm64)**: PASSED
 - **Build (windows-x86_64)**: PASSED
+- **Build (macos-arm64)**: PASSED
+- **Build (linux-arm64)**: PASSED
 - **supply-chain**: PASSED
 
 ## v1.1.0 — Multi-save Slots
 
-### Status: CI Green ✅
+### Status: Released ✅
 
-**CI:** All checks green — format, clippy, tests, multi-OS release builds  
-**Ready for tag:** v1.1.0
+**Tag:** `v1.1.0` pushed to origin
+**GitHub Release:** Published with detailed notes
+**CI:** All checks green — format, clippy, tests, multi-OS release builds
+**Installers:** `.deb` (arm64/x86_64), `.dmg` (arm64), `.msi` (x86_64),
+`SHA256SUMS.txt` — verified present on the release
 
 ### Implemented
 
@@ -125,20 +186,20 @@
 
 ### CI Results (v1.1.0)
 - **check** (fmt + clippy): PASSED
-- **Build (linux-arm64)**: PASSED
-- **Build (linux-x86_64)**: PASSED
-- **Build (macos-arm64)**: PASSED
 - **Build (windows-x86_64)**: PASSED
+- **Build (macos-arm64)**: PASSED
+- **Build (linux-arm64)**: PASSED
 - **supply-chain**: PASSED
 
 ## v1.0.0 — Stable Release
 
 ### Status: Released ✅
 
-**Tag:** `v1.0.0` pushed to origin  
-**GitHub Release:** Published with detailed notes  
-**CI:** All checks green — format, clippy, tests, multi-OS release builds  
-**Installers:** .deb (arm64/x86_64), .dmg (arm64), .msi (x86_64), SHA256SUMS.txt
+**Tag:** `v1.0.0` pushed to origin
+**GitHub Release:** Published with detailed notes
+**CI:** All checks green — format, clippy, tests, multi-OS release builds
+**Installers:** `.deb` (arm64/x86_64), `.dmg` (arm64), `.msi` (x86_64),
+`SHA256SUMS.txt` — verified present on the release
 
 ### Implemented (v1.0.0 roadmap items)
 
@@ -156,10 +217,9 @@
 
 ### CI Results (v1.0.0)
 - **check** (fmt + clippy): PASSED
-- **Build (linux-arm64)**: PASSED
-- **Build (linux-x86_64)**: PASSED
-- **Build (macos-arm64)**: PASSED
 - **Build (windows-x86_64)**: PASSED
+- **Build (macos-arm64)**: PASSED
+- **Build (linux-arm64)**: PASSED
 - **supply-chain**: PASSED
 
 ### Token Metrics
@@ -168,3 +228,22 @@
 ## Procedural Map Generation (v0.3.0 era) — Complete
 
 See v1.0.0 section above for full details.
+
+## Earlier releases
+
+| Version | Status | Installers published | Notes |
+|---------|--------|----------------------|-------|
+| v0.4.0 | Released | `.deb` (arm64/x86_64), `.dmg`, `.msi`, `SHA256SUMS.txt` | Item system and inventory |
+| v0.3.0 | Released | `.deb` (arm64/x86_64), `.dmg`, `.msi`, `SHA256SUMS.txt` | Bounties, decay, wanted levels |
+| v0.2.0 | Released | `.deb` (arm64), `.dmg`, `.msi`, `SHA256SUMS.txt` | 3D world, GUI window, save/load |
+| v0.1.0 | Released | `.deb` (arm64), `.dmg`, `.msi`, `SHA256SUMS.txt` | First functional build. A leftover **draft** release with the same tag still exists and should be deleted. |
+
+## Planned — v2.0.0 GUI-only ASCII 3D
+
+The specification is drafted and awaiting owner approval:
+`docs/specs/gui-only-ascii-3d.md`. It covers removing the terminal interface,
+making the desktop window the only entry point, and rendering the world with a
+procedural 3D primitive rasteriser that converts shaded surfaces into ASCII
+characters under a fixed isometric camera. The scope of v2.0.0 is the playable
+core: the existing move, combat, loot and save loop working through the new
+viewport.

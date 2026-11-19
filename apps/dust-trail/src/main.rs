@@ -1,5 +1,12 @@
-//! Binary entry point. Defaults to the TUI; pass `--gui` (requires the `gui`
-//! feature) to launch the egui/eframe desktop window.
+//! Binary entry point.
+//!
+//! Frontend selection:
+//!   - `--gui` forces the egui/eframe desktop window.
+//!   - `--tui` forces the terminal user interface.
+//!   - Otherwise the terminal interface is used when a terminal is attached,
+//!     and the desktop window is used when there is none. That fallback is
+//!     what makes the macOS `.app` bundle (and any desktop launcher without
+//!     `Terminal=true`) open a real window instead of a dead terminal.
 //!
 //! Wires the shared suite crates: crash-report panic hook and update-check.
 
@@ -7,6 +14,12 @@
 use dust_trail::gui::Gui;
 use dust_trail::tui::Tui;
 use std::error::Error;
+use std::io::IsTerminal;
+
+/// Whether this process is attached to an interactive terminal.
+fn terminal_attached() -> bool {
+    std::io::stdout().is_terminal() && std::io::stdin().is_terminal()
+}
 
 fn run_tui() -> Result<(), Box<dyn Error>> {
     let tui = Tui::new().map_err(|e| format!("tui init failed: {e}"))?;
@@ -15,7 +28,8 @@ fn run_tui() -> Result<(), Box<dyn Error>> {
 
 fn main() -> Result<(), Box<dyn Error>> {
     let args: Vec<String> = std::env::args().collect();
-    let want_gui = args.contains(&"--gui".to_string());
+    let want_gui = args.iter().any(|a| a == "--gui");
+    let want_tui = args.iter().any(|a| a == "--tui");
 
     // Crash reporting (guide §7.1): capture a scrubbed report on panic and park
     // it for review on the next launch. Nothing is sent over the network
@@ -54,8 +68,13 @@ fn main() -> Result<(), Box<dyn Error>> {
         eprintln!("[update available] Dust Trail {current} → {latest} — {url}");
     }
 
+    // Choose the frontend. An explicit flag always wins; otherwise the
+    // terminal interface is used only when a terminal is attached, so that
+    // launching the app from a desktop environment opens the GUI window.
+    let use_gui = want_gui || (!want_tui && !terminal_attached());
+
     #[cfg(feature = "gui")]
-    if want_gui {
+    if use_gui {
         let options = eframe::NativeOptions {
             viewport: egui::ViewportBuilder::default()
                 .with_title("Dust Trail — ASCII Western Adventure")
@@ -73,9 +92,11 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
 
     #[cfg(not(feature = "gui"))]
-    if want_gui {
+    if use_gui {
         eprintln!(
-            "The `gui` feature is not enabled. Build with: cargo run --features gui -- --gui"
+            "No terminal is attached and this build has no GUI. \
+             Rebuild with the `gui` feature to get the desktop window, \
+             or run it from a terminal for the text interface."
         );
         std::process::exit(2);
     }

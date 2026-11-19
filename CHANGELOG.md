@@ -1,5 +1,27 @@
 # Changelog - Dust Trail
 
+## v1.5.1 - 2026-11-20
+
+### Fixed
+- Release pipeline: removed the duplicate `publish.yml` workflow. Its unquoted `on:` YAML key made the whole workflow invalid, and it was the reason the v1.5.0 release published with no installers at all.
+- Release pipeline: fixed the GUI compile error that failed every one of the four release build jobs for v1.5.0.
+- Release pipeline: the release job now fails if any installer is missing instead of publishing a partial release, and `SHA256SUMS.txt` is generated only from the installers, using bare filenames so `sha256sum -c SHA256SUMS.txt` works.
+- Application version: the manifest said `0.2.0` while the published tags said `v1.5.0`. The version is now `1.5.1` and the manifest, the lockfile, the installer package metadata and the release notes all agree.
+- Linux package metadata: the `.deb` version is derived from the release tag instead of a hardcoded `0.1.0`.
+- In-app release notes popup: the changelog parser only understood bracketed headings, so the popup showed no releases at all against this changelog's `## v1.5.0 - date` format.
+- In-app release notes popup: the token ledger is a Markdown table but was parsed as JSON, so the cumulative token figure always read zero. It now reads the real measured numbers.
+- Changelog parsing: a prose `##` heading such as `## Known limitations` is no longer mistaken for a release.
+
+### Changed
+- The GUI is now a default feature. Every build of the package, including the installers produced by the release pipeline, ships a window-capable binary.
+- Launch behaviour: the desktop window opens when the app is started without a terminal attached, which is what the macOS app bundle and the Linux launcher do. `--gui` forces the window and `--tui` forces the terminal interface.
+- Release workflow: the artifact download action is pinned to a full commit SHA, and the workflow no longer requests pull request write permission it does not use.
+- CI builds the TUI-only configuration as well as the default one, so the fallback path stays warning-free.
+
+### Known limitations
+- The terminal interface and the desktop window are both still present in this release. The terminal interface is removed in v2.0.0.
+- Release artefacts are not yet signed, and no SBOM is published yet.
+
 ## v1.5.0 - 2026-11-18
 
 ### Added
@@ -7,6 +29,9 @@
 - Deputy AI: chases outlaw, flanks to block escape routes
 - GUI toolbar inventory count
 * TUI: 'u' key uses first item from inventory
+
+### Known limitations
+- This release published with no installers. The release workflow failed on a GUI compile error and a duplicate, invalid workflow file. v1.5.1 fixes both.
 
 ## v1.4.0 - 2026-11-18
 
@@ -161,14 +186,18 @@
 
 ---
 
-v0.2.0 - 2026-11-16
+## v0.2.0 - 2026-11-15
+
+### Added
 - 3D isometric ASCII rendering with per-cell lighting/shading
 - 3D world with height (z) - raised plateau, river, buildings, trees
 - GUI-only desktop window (egui/eframe 0.37)
 - WASD movement, height-clamped stepping
 - Save/load (single slot, 3D state)
 
-v0.1.0 - 2026-11-16
+## v0.1.0 - 2026-11-15
+
+### Added
 - Playable ASCII Western adventure (top-down TUI + GUI)
 - Turn-based movement, NPC interaction, loot/horse collection
 - Save/load (single slot)

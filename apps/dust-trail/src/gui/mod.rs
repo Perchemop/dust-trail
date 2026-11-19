@@ -123,7 +123,7 @@ impl Gui {
             let color = rgb_to_color32(cell.fg);
             if Some(color) != cur_color {
                 if !cur.is_empty() {
-                    runs.push((cur.clone(), cur_color.unwrap_or(egui::Color32::WHITE)));
+                    runs.push((cur.clone(), cur_color.unwrap_or(Theme::dark().color32(Role::TextPrimary))));
                 }
                 cur = String::new();
                 cur_color = Some(color);
@@ -131,7 +131,7 @@ impl Gui {
             cur.push(cell.ch);
         }
         if !cur.is_empty() {
-            runs.push((cur, cur_color.unwrap_or(egui::Color32::WHITE)));
+            runs.push((cur, cur_color.unwrap_or(Theme::dark().color32(Role::TextPrimary))));
         }
 
         for (text, color) in runs {

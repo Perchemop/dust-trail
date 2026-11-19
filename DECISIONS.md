@@ -1,5 +1,26 @@
 # Decisions - Dust Trail
 
+## Version 1.5.1 — release-infrastructure slice (2026-11-20)
+- **Decision:** Ship the release-pipeline fix as `v1.5.1`, and reserve `v2.0.0` for the GUI-only ASCII-3D transformation.
+- **Rationale:** Removing the terminal interface is a breaking change and therefore a major version. Bundling it with the pipeline repair would have made an already-broken release harder to diagnose, and would have delayed the first release that actually carries installers.
+- **Implementation:** Manifest version moved from `0.2.0` to `1.5.1` (the lockfile, the `.deb` control file, the macOS bundle and the release notes all derive from the same value now). The release pipeline was repaired in the same slice so the next tag ships real artefacts.
+
+## Frontend selection (2026-11-20)
+- **Decision:** The app opens the desktop window when it is started without a terminal attached, and the terminal interface when a terminal is attached. `--gui` forces the window, `--tui` forces the terminal.
+- **Rationale:** The macOS app bundle and the Linux launcher both start the app with no terminal attached. Under the previous behaviour they opened a terminal interface inside a window with no terminal, which looked broken. The terminal interface remains reachable for anyone who wants it.
+- **Implementation:** `apps/dust-trail/src/main.rs`, using `std::io::IsTerminal` (stable since Rust 1.70; the crate floor is 1.82).
+
+## GUI is a default feature (2026-11-20)
+- **Decision:** `default = ["tui", "gui"]` in `apps/dust-trail/Cargo.toml`, and both `cargo build` and `cargo wix` pass `--features gui` explicitly.
+- **Rationale:** The release pipeline built the binary with `--features gui` but packaged it with `cargo wix` against the default feature set, so every shipped installer was terminal-only even though the pipeline appeared to build the GUI. Making the GUI a default feature removes the chance of the two diverging again, and the explicit flag keeps the intent visible.
+- **Constraint:** The terminal interface is still removed in `v2.0.0`, not before.
+
+## v2.0.0 renderer and camera (2026-11-20)
+- **Decision:** The v2.0.0 world renderer is a **procedural 3D primitive rasteriser**. Each object (tree, shrub, character, prop) is a set of 3D primitives rendered into a depth buffer and a luminance buffer, then converted to characters through a glyph ramp. The camera is a **fixed isometric** camera, matching the existing dimetric projection.
+- **Rationale:** The owner chose this over hand-authored sprite sheets and over a true perspective camera. The rasteriser produces objects that read as shaded 3D models and respond to light, stays deterministic and headless-testable, and reuses the projection the game already has.
+- **Constraint:** The v2.0.0 milestone is the **playable core**: terminal interface removed, desktop window the only entry point, the new renderer live for terrain, props and characters, and the existing move/combat/loot/save loop working through the new viewport. Full content re-authoring, day/night lighting, signed installers, an SBOM, the accessibility rendered-evidence pass and README screenshots are explicitly out of scope for v2.0.0.
+- **Specification:** `docs/specs/gui-only-ascii-3d.md` (draft, awaiting owner approval).
+
 ## Procedural Map Generation
 - **Decision:** Implement deterministic procedural generation from seed in `procgen.rs`
 - **Rationale:** Enables reproducible worlds for testing, demos, and saves; falls within v1.0.0 roadmap
