@@ -357,6 +357,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           RELEASE_TAG: ${{ github.event.inputs.tag_name || github.ref_name }}
         run: |
+          set -euo pipefail
           TAG="${RELEASE_TAG}"
           # Extract the CHANGELOG section for this tag. Headings look like
           # "## v1.5.0 - 2026-11-18" (no brackets).
@@ -368,50 +369,60 @@ jobs:
             NOTES="See CHANGELOG.md for the full release notes."
           fi
           # Append token-usage metrics if a row exists for this version.
-          # The table cells are space-padded, so match the version column
-          # loosely rather than requiring exactly one space before the pipe.
           TOKEN_LINE=$(grep "^| ${TAG}[[:space:]]*|" docs/tokens.md || true)
           if [ -n "${TOKEN_LINE}" ]; then
             NOTES="${NOTES}
 
-            ## Token usage metrics
-            ${TOKEN_LINE}"
+## Token usage metrics
+${TOKEN_LINE}"
           fi
           # Plain-language per-platform install instructions.
           NOTES="${NOTES}
 
-            ## How to install
+## How to install
 
-            - **Windows:** Download the `.msi` installer and double-click it to run the setup wizard.
-            - **macOS:** Download the `.dmg` file, open it, and drag Dust Trail into your Applications folder.
-            - **Linux:** Download the `.deb` file and double-click it in your package installer to install.
+- **Windows:** Download the \`.msi\` installer and double-click it to run the setup wizard.
+- **macOS:** Download the \`.dmg\` file, open it, and drag Dust Trail into your Applications folder.
+- **Linux:** Download the \`.deb\` file and double-click it in your package installer to install.
 
-            ## Integrity and supply-chain artefacts
+## Integrity and supply-chain artefacts
 
-            All four installers are listed with their SHA-256 checksums in \`SHA256SUMS.txt\`; verify with \`sha256sum -c SHA256SUMS.txt\` after downloading the installers into the same directory. \`SHA256SUMS.txt.asc\` is the GPG detached signature over that file — the signing public key, its pinned fingerprint and the verification steps are documented in \`docs/update-signing.md\`. \`dust-trail-sbom.cdx.json\` is a CycloneDX software bill of materials (JSON) for this release."
+All four installers are listed with their SHA-256 checksums in \`SHA256SUMS.txt\`; verify with \`sha256sum -c SHA256SUMS.txt\` after downloading the installers into the same directory. \`SHA256SUMS.txt.asc\` is the GPG detached signature over that file — the signing public key, its pinned fingerprint and the verification steps are documented in \`docs/update-signing.md\`. \`dust-trail-sbom.cdx.json\` is a CycloneDX software bill of materials (JSON) for this release."
+
+          # Write notes to a temp file to avoid shell escaping issues with multi-line content.
+          NOTES_FILE=$(mktemp)
+          printf '%s\n' "${NOTES}" > "${NOTES_FILE}"
 
           ASSETS=(
-            dist/dust-trail-windows-x86_64.msi
-            dist/dust-trail-macos-arm64.dmg
-            dist/dust-trail-linux-x86_64.deb
-            dist/dust-trail-linux-arm64.deb
-            dist/SHA256SUMS.txt
-            dist/SHA256SUMS.txt.asc
+            "dist/dust-trail-windows-x86_64.msi"
+            "dist/dust-trail-macos-arm64.dmg"
+            "dist/dust-trail-linux-x86_64.deb"
+            "dist/dust-trail-linux-arm64.deb"
+            "dist/SHA256SUMS.txt"
+            "dist/SHA256SUMS.txt.asc"
             "dist/${SBOM_ASSET}"
           )
 
-          if gh release view "$TAG" >/dev/null 2>&1; then
+          # Verify all assets exist before attempting release
+          for asset in "${ASSETS[@]}"; do
+            if [ ! -f "${asset}" ]; then
+              echo "ERROR: missing asset ${asset}" >&2
+              exit 1
+            fi
+          done
+
+          if gh release view "${TAG}" >/dev/null 2>&1; then
             # Release already exists (possibly a draft from a previous run):
             # upload/clobber assets, edit title+notes, and make sure it is
             # published (not a draft).
-            gh release upload "$TAG" "${ASSETS[@]}" --clobber
-            gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" \
-              --title "Dust Trail $TAG" \
-              --notes "${NOTES}" \
+            gh release upload "${TAG}" "${ASSETS[@]}" --clobber
+            gh release edit "${TAG}" --repo "${GITHUB_REPOSITORY}" \
+              --title "Dust Trail ${TAG}" \
+              --notes-file "${NOTES_FILE}" \
               --draft=false
           else
-            gh release create "$TAG" --repo "$GITHUB_REPOSITORY" \
-              --title "Dust Trail $TAG" \
-              --notes "${NOTES}" \
+            gh release create "${TAG}" --repo "${GITHUB_REPOSITORY}" \
+              --title "Dust Trail ${TAG}" \
+              --notes-file "${NOTES_FILE}" \
               "${ASSETS[@]}"
           fi
