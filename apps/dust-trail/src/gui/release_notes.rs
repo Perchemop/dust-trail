@@ -28,7 +28,11 @@ pub struct Release {
 /// headings produce the same form as the ledger's version column: starts with
 /// `v`, surrounding `[` `]` and whitespace stripped.
 pub fn normalise_version(version: &str) -> String {
-    let trimmed = version.trim().trim_start_matches('[').trim_end_matches(']').trim();
+    let trimmed = version
+        .trim()
+        .trim_start_matches('[')
+        .trim_end_matches(']')
+        .trim();
     if trimmed.starts_with('v') || trimmed.starts_with('V') {
         trimmed.to_string()
     } else {
@@ -66,10 +70,7 @@ pub fn parse_token_ledger(markdown: &str) -> TokenLedger {
             continue;
         }
 
-        let cells: Vec<&str> = trimmed
-            .split('|')
-            .map(str::trim)
-            .collect();
+        let cells: Vec<&str> = trimmed.split('|').map(str::trim).collect();
         // Drop the empty first and last cells produced by the outer pipes.
         if cells.len() < 2 {
             continue;
@@ -84,8 +85,10 @@ pub fn parse_token_ledger(markdown: &str) -> TokenLedger {
             continue;
         }
         // Skip separator row: only `-` and `:` characters.
-        if !inner.is_empty()
-            && inner.iter().all(|c| !c.is_empty() && c.chars().all(|ch| ch == '-' || ch == ':'))
+        if !inner
+            && inner
+                .iter()
+                .all(|c| !c.is_empty() && c.chars().all(|ch| ch == '-' || ch == ':'))
         {
             continue;
         }
@@ -94,14 +97,8 @@ pub fn parse_token_ledger(markdown: &str) -> TokenLedger {
             continue;
         }
         let version = normalise_version(inner[0]);
-        let tokens_this: Option<u64> = inner[2]
-            .replace('_', "")
-            .parse()
-            .ok();
-        let tokens_cumulative: Option<u64> = inner[3]
-            .replace('_', "")
-            .parse()
-            .ok();
+        let tokens_this: Option<u64> = inner[2].replace('_', "").parse().ok();
+        let tokens_cumulative: Option<u64> = inner[3].replace('_', "").parse().ok();
         let Some(tokens_this) = tokens_this else {
             continue;
         };
@@ -127,7 +124,10 @@ pub fn release_tokens(ledger: &TokenLedger, version: &str) -> Option<u64> {
 
 /// Cumulative tokens as of a release, looked up by normalised version.
 pub fn release_cumulative_tokens(ledger: &TokenLedger, version: &str) -> Option<u64> {
-    ledger.cumulative_by_version.get(&normalise_version(version)).copied()
+    ledger
+        .cumulative_by_version
+        .get(&normalise_version(version))
+        .copied()
 }
 
 /// Parse a Keep-a-Changelog style document into release entries.
@@ -397,14 +397,8 @@ mod tests {
         let ledger = parse_token_ledger(TOKENS_LEDGER);
         assert_eq!(ledger.total, 2_511_784_324);
         assert_eq!(ledger.by_version.get("v1.0.0"), Some(&160734746));
-        assert_eq!(
-            ledger.by_version.get("v1.5.1"),
-            Some(&2_511_784_324)
-        );
-        assert_eq!(
-            ledger.cumulative_by_version.get("v1.0.0"),
-            Some(&160734746)
-        );
+        assert_eq!(ledger.by_version.get("v1.5.1"), Some(&2_511_784_324));
+        assert_eq!(ledger.cumulative_by_version.get("v1.0.0"), Some(&160734746));
     }
 
     #[test]
