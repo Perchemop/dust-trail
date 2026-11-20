@@ -1,10 +1,11 @@
 //! Software rasteriser: project, fill, z-buffer, Lambertian shading.
 
 use crate::render::camera::Camera;
-use crate::render::model::{ObjectModel, Primitive, PrimitiveKind, Transform, Material};
+use crate::render::model::{ObjectModel, BoundingBox, DrawKey};
+use crate::render::primitive::{Primitive, PrimitiveKind, Transform, Material};
 use crate::render::sprite::Sprite;
 use crate::render::glyph::luminance_to_glyph;
-use crate::domain::world::Rgb;
+use crate::domain::color::Rgb;
 
 /// Software rasteriser for 3D primitive models.
 #[derive(Clone, Debug)]
@@ -210,7 +211,7 @@ impl Rasteriser {
         let max_x = screen_verts.iter().map(|v| v.0).max().unwrap_or(0);
         let min_y = screen_verts.iter().map(|v| v.1).min().unwrap_or(0);
         let max_y = screen_verts.iter().map(|v| v.1).max().unwrap_or(0);
-        let min_z = screen_verts.iter().map(|v| v.2).min().unwrap_or(0.0);
+        let min_z = screen_verts.iter().map(|v| v.2).min_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal)).unwrap_or(0.0);
 
         // Clamp to screen bounds
         let min_x = min_x.clamp(0, w as i32 - 1) as usize;

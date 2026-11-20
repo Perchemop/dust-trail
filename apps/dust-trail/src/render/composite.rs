@@ -3,7 +3,8 @@
 use crate::domain::frame::Frame;
 use crate::render::sprite::Sprite;
 use crate::domain::Cell;
-use crate::domain::world::Rgb;
+use crate::domain::color::Rgb;
+use crate::render::model::ModelKey;
 
 /// Composite a sprite into a frame with depth-aware occlusion.
 /// Draws back-to-front: caller must ensure sprites are passed in far-to-near order.
@@ -30,7 +31,7 @@ pub fn composite_sprite(frame: &mut Frame, sprite: &Sprite, screen_x: i32, scree
             if fx >= 0 && fy >= 0 {
                 let ux = fx as usize;
                 let uy = fy as usize;
-                if ux < frame.width() && uy < frame.height() {
+                if ux < frame.width && uy < frame.height {
                     let depth = sprite.depth[sy][sx];
                     let cell = Cell::new(*ch, *fg, *bg);
                     frame.set_at_depth(ux, uy, cell, depth);
@@ -64,7 +65,7 @@ pub fn composite_sprites_back_to_front(frame: &mut Frame, sprites: &[(Sprite, i3
 }
 
 /// Placeholder sprite for unknown models.
-pub fn placeholder_sprite(key: &str) -> Sprite {
+pub fn placeholder_sprite(key: ModelKey) -> Sprite {
     Sprite::placeholder(key)
 }
 

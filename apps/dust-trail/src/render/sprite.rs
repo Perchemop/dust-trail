@@ -1,6 +1,6 @@
 //! Sprite type: cached multi-cell ASCII sprite with depth and anchor.
 
-use crate::domain::world::Rgb;
+use crate::domain::color::Rgb;
 
 /// Cached multi-cell ASCII sprite with per-cell depth and footprint anchor.
 #[derive(Clone, Debug, PartialEq)]

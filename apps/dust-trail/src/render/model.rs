@@ -1,7 +1,7 @@
 //! ObjectModel and ModelRegistry: maps game entity kinds to 3D models.
 
 use crate::render::primitive::{Primitive, Transform, Material};
-use crate::domain::world::{ItemKind, NpcKind, Rgb};
+use crate::domain::color::Rgb;
 use std::collections::HashMap;
 
 /// Stable identifier for a model (e.g., "tree_oak", "player").

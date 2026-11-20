@@ -219,12 +219,10 @@ impl Game {
             }
         }
 
-        Frame {
-            width,
-            height,
-            cells,
-            message: self.message.clone(),
-        }
+        let mut frame = Frame::new(width, height);
+        frame.cells = cells;
+        frame.message = self.message.clone();
+        frame
     }
 
     /// Move the player one step in `dir`. Returns the interaction result.

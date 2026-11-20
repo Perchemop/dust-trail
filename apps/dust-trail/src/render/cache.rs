@@ -2,9 +2,8 @@
 
 use crate::render::model::ModelKey;
 use crate::render::sprite::Sprite;
-use std::collections::hash_map::DefaultHasher;
 use std::collections::{HashMap, VecDeque};
-use std::hash::{Hash, Hasher};
+use std::hash::Hash;
 
 /// Quantised light direction + intensity for cache keying.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
@@ -77,11 +76,13 @@ impl SpriteCache {
                 self.entries.remove(&lru_key);
             }
             // Insert new
-            self.order.push_front(key.clone());
+            let key_clone = key.clone();
+            self.order.push_front(key_clone);
             self.entries.insert(key, sprite);
         } else {
             // Insert new (not full)
-            self.order.push_front(key.clone());
+            let key_clone = key.clone();
+            self.order.push_front(key_clone);
             self.entries.insert(key, sprite);
         }
     }
