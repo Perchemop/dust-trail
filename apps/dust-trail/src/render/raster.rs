@@ -253,8 +253,8 @@ impl Rasteriser {
 
                     // Simple color from theme roles would go here; for now use white on black
                     char_buffer[sy][sx] = ch;
-                    fg_buffer[sy][sx] = Rgb(255, 255, 255);
-                    bg_buffer[sy][sx] = Rgb(0, 0, 0);
+                    fg_buffer[sy][sx] = Rgb { r: 255, g: 255, b: 255 };
+                    bg_buffer[sy][sx] = Rgb { r: 0, g: 0, b: 0 };
                 }
             }
         }
