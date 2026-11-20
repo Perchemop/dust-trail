@@ -1,12 +1,30 @@
 # Progress Log - Dust Trail
 
-## v1.5.1 — Honest installers, measured token ledger, version fix
+## v1.5.1 — Release infrastructure (pending publication)
 
-### Status: In progress — CI running
+### Status: **Pending** — awaiting next green CI run before release can be tagged and published
 
 **Goal:** ship the first release of Dust Trail that actually carries
 installers, with version metadata that matches the published tag and token
 figures that come from real measurements rather than placeholders.
+
+**Current state:** v1.5.1 changes are merged to `main`, but the release has NOT
+been tagged or published. The CI pipeline is configured for v1.5.1 releases,
+and the artifacts are ready to be attached when the tag is created.
+
+**Latest CI run:** 
+- Run ID `44701830027` is the most recent CI run for commit `0f68267` on branch `opencode/ci`
+- **Status: NOT green** — this CI run has failed and must be fixed before a release can proceed
+- **Previous green CI run** for verification: Run ID `44521541346` (all five checks: `check`, `Build (windows-x86_64)`, `Build (macos-arm64)`, `Build (linux-arm64)`, `supply-chain`)
+
+**PR state:**
+- PR #25 (release-infrastructure slice) is currently in state: open on branch `opencode/ci`, commit `0f68267`
+- The slice includes the v1.5.1 fix and is ready for merge once CI is green
+
+**Pending evidence for v1.5.1 publication:**
+- Next CI run ID: **unknown** (pending CI run after fixes)
+- Release tag: **not yet created**
+- GitHub Release: **not yet published**
 
 ### Root cause of the v1.5.0 zero-asset release
 
@@ -54,7 +72,10 @@ created after the required checks are green.
 
 ### CI Results (v1.5.1)
 
-_Pending — filled in from the actual run._
+**Latest CI run: 44701830027 — FAILED**
+- Status: RED (not yet green)
+- Required status checks must pass before release can be tagged and published
+- Previous verification CI run (green): `44521541346` (used for PR merge verification)
 
 ## v1.5.0 — Smarter AI & Inventory UI
 
@@ -213,7 +234,7 @@ pushed anyway, which should not have happened.
 | Stable save format with version migration | Complete | `SaveData` with `slot` field, version tracking |
 | Procedural map generation | Complete | `apps/dust-trail/src/domain/procgen.rs`, `World::generate(seed)` |
 | In-app release-notes popup + version display | Complete | `apps/dust-trail/src/gui/release_notes.rs`, CHANGELOG.md + docs/tokens.md embedded |
-| Auto-update download + signature verification | Complete | `crates/update-check`, SHA-256 + minisign, anti-loop marker |
+| Auto-update availability check | Partial | `crates/update-check` detects newer releases; installer download, signature verification, installation, and restart are not implemented |
 
 ### CI Results (v1.0.0)
 - **check** (fmt + clippy): PASSED

@@ -20,7 +20,8 @@
 
 ### Known limitations
 - The terminal interface and the desktop window are both still present in this release. The terminal interface is removed in v2.0.0.
-- Release artefacts are not yet signed, and no SBOM is published yet.
+- **Release artifacts not yet published.** The release pipeline is configured to attach the following assets when executed: `.msi` for Windows, `.dmg` for macOS, `.deb` for x86_64 and arm64 Linux, `SHA256SUMS.txt`, and a CycloneDX SBOM. These artifacts require a signed release tag to be generated automatically. The release has not yet been published to GitHub.
+- **No signature key provisioned.** GPG detached signatures require a signing key stored as a GitHub secret (`RELEASE_SIGNING_KEY`). The key is not currently configured; signature verification will work once the key is provisionated.
 
 ## v1.5.0 - 2026-11-18
 
@@ -107,7 +108,7 @@
 - Accessibility: contrast unit tests (4.5:1 body text, 3:1 UI boundaries, light + dark themes)
 - Keyboard focus and AccessKit labels for screen-reader semantics
 - In-app release-notes popup + version display (suite standard)
-- Auto-update download + signature verification — SHA-256 + minisign, anti-loop marker
+- Auto-update availability check against the GitHub Releases API. Installer download, signature verification, installation, and restart were not implemented in this release.
 - Procedural map generation — deterministic world generation from seed, connectivity guarantees
 - Stable save format with version migration
 

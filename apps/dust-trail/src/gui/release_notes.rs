@@ -85,7 +85,7 @@ pub fn parse_token_ledger(markdown: &str) -> TokenLedger {
             continue;
         }
         // Skip separator row: only `-` and `:` characters.
-        if !inner
+        if !inner.is_empty()
             && inner
                 .iter()
                 .all(|c| !c.is_empty() && c.chars().all(|ch| ch == '-' || ch == ':'))
@@ -201,7 +201,7 @@ pub fn parse_releases(changelog: &str) -> Vec<Release> {
 fn is_release_heading(heading: &str) -> bool {
     let text = heading.trim_start_matches('#').trim();
     let first = text.split_whitespace().next().unwrap_or("");
-    let token = first.trim_start_matches('[').trim_end_matches(']');
+    let token = first.trim_start_matches(['[']).trim_end_matches([']');
     let token = token
         .strip_prefix('v')
         .or_else(|| token.strip_prefix('V'))

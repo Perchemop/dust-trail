@@ -9,7 +9,6 @@ authors = ["Dust Trail Dev <dev@example.com>"]
 readme = "../../README.md"
 default-run = "dust-trail"
 repository = "https://github.com/Perchemop/dust-trail"
-homepage = "https://github.com/Perchemop/dust-trail"
 keywords = ["game", "ascii", "tui", "western", "adventure"]
 categories = ["games"]
 

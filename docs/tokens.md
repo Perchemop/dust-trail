@@ -46,12 +46,16 @@ Measured at 2026-11-20T06:44:10.440706+10:30.
 | v1.3.0   | 2026-11-18 |          30_161_368 |     2_094_076_454 | UI polish and item system       |
 | v1.4.0   | 2026-11-18 |          37_820_864 |     2_131_897_318 | Inventory UI                    |
 | v1.5.0   | 2026-11-18 |         109_096_393 |     2_240_993_711 | Smarter AI and inventory UI     |
-| v1.5.1   | 2026-11-20 |         284_971_538 |     2_525_965_249 | Honest installers, measured ledger, version fix |
+| v1.5.1   | 2026-11-20 | **PENDING**         | **PENDING**       | Release infrastructure slice; pending CI run 44701830027 |
 
 ## Totals
 
-- **Total tokens since the project began:** 2,525,965,249
-- **Tokens in the current release (v1.5.1):** 284,971,538
+- **Total tokens since the project began (verified):** 2,240,993,711 (through v1.5.0)
+- **Tokens in the current release (v1.5.1):** **PENDING** — awaiting next green CI run after fixing the latest failed CI run
+
+## Verified measurement sources
+
+The above numbers through v1.5.0 are cross-checked against measured OpenCode session data. The v1.5.1 row cannot be finalized until after the next green CI run (run ID pending) and subsequent release publication.
 
 ## Composition of the total
 

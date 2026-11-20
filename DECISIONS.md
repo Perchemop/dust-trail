@@ -5,6 +5,19 @@
 - **Rationale:** Removing the terminal interface is a breaking change and therefore a major version. Bundling it with the pipeline repair would have made an already-broken release harder to diagnose, and would have delayed the first release that actually carries installers.
 - **Implementation:** Manifest version moved from `0.2.0` to `1.5.1` (the lockfile, the `.deb` control file, the macOS bundle and the release notes all derive from the same value now). The release pipeline was repaired in the same slice so the next tag ships real artefacts.
 
+### v1.5.1 scope decision
+- **Assets:** `.msi` (Windows), `.dmg` (macOS), `.deb` for x86_64, `.deb` for arm64, `SHA256SUMS.txt`, CycloneDX SBOM
+- **No AppImage:** AppImage is not produced for Dust Trail. The project ships native platform packages only.
+- **Signature method:** GPG detached signatures (minisign-compatible format). The release workflow attaches a `.asc` signature over `SHA256SUMS.txt`.
+- **Key status:** **No key is currently provisioned.** The release signing key must be stored in the GitHub secret `RELEASE_SIGNING_KEY`. Signature verification is not functional until this secret is configured.
+- **Platform installation:**
+  - **Windows:** Download the `.msi` from the GitHub Release and run it with standard Windows installation privileges.
+  - **macOS:** Download the `.dmg`, open it, and drag Dust Trail to the Applications folder.
+  - **Linux (Debian):** Download the `.deb` and install with `sudo apt install ./dust-trail_*.deb`.
+
+### v2.0.0 exclusion
+- GUI-only ASCII-3D rendering and TUI removal are explicitly reserved for v2.0.0. These are not part of the v1.5.1 release-infrastructure slice.
+
 ## Frontend selection (2026-11-20)
 - **Decision:** The app opens the desktop window when it is started without a terminal attached, and the terminal interface when a terminal is attached. `--gui` forces the window, `--tui` forces the terminal.
 - **Rationale:** The macOS app bundle and the Linux launcher both start the app with no terminal attached. Under the previous behaviour they opened a terminal interface inside a window with no terminal, which looked broken. The terminal interface remains reachable for anyone who wants it.

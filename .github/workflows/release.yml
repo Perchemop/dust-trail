@@ -63,7 +63,7 @@ jobs:
         if: runner.os == 'macOS'
         run: brew install create-dmg
       - name: Build release (TUI + GUI)
-        run: cargo build --release --locked --features gui --target ${{ matrix.target }}
+        run: cargo build --release --features gui --target ${{ matrix.target }}
 
       # ----- Windows: .msi installer via cargo-wix -----
       - name: Windows MSI installer

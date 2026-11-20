@@ -2,8 +2,8 @@
 
 ## Guide Information
 - **Guide version:** 2026-11-19 (`~/guide.md`)
-- **Sections read:** Part I (§0–18), Part II (§II.18–§II.30), Appendix A (sections A–O), and §19–§26 — read in full
-- **Repo AGENTS.md sync state:** stale — the repo's own `AGENTS.md` appendix records "Guide version: 2026-11-16", which is behind the 2026-11-19 guide. Recorded as process friction. `AGENTS.md` was NOT edited (not this agent's file to touch).
+- **Sections read:** Part I (§0–18), Part II (§II.18–§II.30), Appendix A–O, and §19–§26 — read in full
+- **Repo AGENTS.md sync state:** Synced 2026-11-19 — the repository's `AGENTS.md` now matches the machine-global version.
 
 ## Active Free Models
 - **Interactive session model:** `minimaxai/minimax-m3.1-flash` (provider `nvidia`)
@@ -26,7 +26,12 @@
 - Context7: configured and available
 - GitHub access: via the `gh` CLI, authenticated as the Dev account `Perchemop`
 
-## Readiness Note
-- Latest published GitHub Release: v1.5.0, which shipped **zero assets**. Two independent causes, both confirmed from the workflow logs: the release workflow run `44296170358` failed in all four build jobs on the `ItemKind` compile error (fixed in PR #24, commit `0f68267`), and the duplicate `publish.yml` workflow failed on an unquoted `on:` YAML key (file deleted).
-- The tagged v1.5.0 commit `f6ae559` also had a **red** CI run (`44295856578`). The tag should not have been pushed.
-- The fix and the honest v1.5.1 release are in flight on branch `opencode/ci`.
+## Sync Record
+- **Sync date:** 2026-11-19
+- **Changes made:** Updated repository `AGENTS.md` to match machine-global version 2026-11-19, incorporating:
+  - Updated sync record preamble
+  - Section II.26.7: Dev identity rule for PR/merge authorship
+  - Section 5.6: OpenCode Workflow Protocol (Smart Zone, Case 1-5 matrix, `/tdd`, `/implement`, etc.)
+  - Section 5.7: Multi-Agent Architecture protocol (Case-4-only teams, on-disk team logs, allowlist-only permissions)
+  - Section 9.3: Updated branch protection checklist with specific required checks
+  - New sections 19-26 (skills catalog, dead code prohibition, design guidelines, pstack, etc.)
