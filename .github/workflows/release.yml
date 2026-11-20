@@ -371,27 +371,14 @@ jobs:
           # Append token-usage metrics if a row exists for this version.
           TOKEN_LINE=$(grep "^| ${TAG}[[:space:]]*|" docs/tokens.md || true)
           if [ -n "${TOKEN_LINE}" ]; then
-            NOTES="${NOTES}
-
-## Token usage metrics
-${TOKEN_LINE}"
+            NOTES="${NOTES}\n\n## Token usage metrics\n${TOKEN_LINE}"
           fi
           # Plain-language per-platform install instructions.
-          NOTES="${NOTES}
-
-## How to install
-
-- **Windows:** Download the \`.msi\` installer and double-click it to run the setup wizard.
-- **macOS:** Download the \`.dmg\` file, open it, and drag Dust Trail into your Applications folder.
-- **Linux:** Download the \`.deb\` file and double-click it in your package installer to install.
-
-## Integrity and supply-chain artefacts
-
-All four installers are listed with their SHA-256 checksums in \`SHA256SUMS.txt\`; verify with \`sha256sum -c SHA256SUMS.txt\` after downloading the installers into the same directory. \`SHA256SUMS.txt.asc\` is the GPG detached signature over that file — the signing public key, its pinned fingerprint and the verification steps are documented in \`docs/update-signing.md\`. \`dust-trail-sbom.cdx.json\` is a CycloneDX software bill of materials (JSON) for this release."
+          NOTES="${NOTES}\n\n## How to install\n\n- **Windows:** Download the \`.msi\` installer and double-click it to run the setup wizard.\n- **macOS:** Download the \`.dmg\` file, open it, and drag Dust Trail into your Applications folder.\n- **Linux:** Download the \`.deb\` file and double-click it in your package installer to install.\n\n## Integrity and supply-chain artefacts\n\nAll four installers are listed with their SHA-256 checksums in \`SHA256SUMS.txt\`; verify with \`sha256sum -c SHA256SUMS.txt\` after downloading the installers into the same directory. \`SHA256SUMS.txt.asc\` is the GPG detached signature over that file \u2014 the signing public key, its pinned fingerprint and the verification steps are documented in \`docs/update-signing.md\`. \`dust-trail-sbom.cdx.json\` is a CycloneDX software bill of materials (JSON) for this release."
 
           # Write notes to a temp file to avoid shell escaping issues with multi-line content.
           NOTES_FILE=$(mktemp)
-          printf '%s\n' "${NOTES}" > "${NOTES_FILE}"
+          printf '%b\n' "${NOTES}" > "${NOTES_FILE}"
 
           ASSETS=(
             "dist/dust-trail-windows-x86_64.msi"
