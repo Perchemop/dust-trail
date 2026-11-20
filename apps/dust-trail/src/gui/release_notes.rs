@@ -201,7 +201,7 @@ pub fn parse_releases(changelog: &str) -> Vec<Release> {
 fn is_release_heading(heading: &str) -> bool {
     let text = heading.trim_start_matches('#').trim();
     let first = text.split_whitespace().next().unwrap_or("");
-    let token = first.trim_start_matches(['[']).trim_end_matches([']');
+    let token = first.trim_start_matches('[').trim_end_matches(']');
     let token = token
         .strip_prefix('v')
         .or_else(|| token.strip_prefix('V'))
