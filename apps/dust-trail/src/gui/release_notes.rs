@@ -384,7 +384,8 @@ mod tests {
     fn parse_releases_prerelease_heading_keeps_full_version() {
         // `v1.5.1-rc.1` is a single version token; the dash inside it must not
         // be mistaken for the version/date separator.
-        let changelog = "# Changelog\n\n## v1.5.1-rc.1 - 2026-11-20\n\n### Fixed\n- Pipeline repair\n";
+        let changelog =
+            "# Changelog\n\n## v1.5.1-rc.1 - 2026-11-20\n\n### Fixed\n- Pipeline repair\n";
         let releases = parse_releases(changelog);
         assert_eq!(releases.len(), 1);
         assert_eq!(releases[0].version, "v1.5.1-rc.1");
@@ -471,7 +472,10 @@ mod tests {
         assert_eq!(release_tokens(&ledger, "1.0.0"), Some(160734746));
         assert_eq!(release_tokens(&ledger, "v9.9.9"), None);
         // Cumulative figures share the same normalisation.
-        assert_eq!(release_cumulative_tokens(&ledger, "v1.0.0"), Some(160734746));
+        assert_eq!(
+            release_cumulative_tokens(&ledger, "v1.0.0"),
+            Some(160734746)
+        );
         assert_eq!(
             release_cumulative_tokens(&ledger, "v1.5.1"),
             Some(2_511_784_324)
