@@ -60,7 +60,7 @@ Allowed on the maintainer's machine (matching guide §5.7.2 and the HARD BUILD R
 Forbidden: `cargo` and every `cargo` subcommand; `npm`/`pnpm`/`yarn` install and build commands; any other resource-intensive build or test toolchain. All Rust build, test, clippy and fmt work runs only in GitHub Actions through `ci.sh`.
 
 ## Known gaps (outstanding guide §11 / §9 / §11.19 items)
-- `docs/update-signing.md` — **exists** and documents the release signing configuration. Currently, no GPG key is provisioned; the required secret is `RELEASE_SIGNING_KEY`. Once provisioned, release builds will be signed and verification will be enforced in the update-check crate.
+- `docs/update-signing.md` — **exists** and documents the release signing configuration. Currently, no GPG key is provisioned; the required secrets are `GPG_PRIVATE_KEY` (ASCII-armored private key) and `GPG_PASSPHRASE`, with `GPG_KEY_FINGERPRINT` pinning the public key. The release workflow fails (never publishes unsigned) until these are provisioned.
 - `docs/resource-catalog.md` — planned. No entry from the §25 catalogs has been adopted yet.
 - `docs/design/brand.md` — planned. Brand marks not yet documented.
 - `docs/qc/shortcuts.md` — does not exist. The shortcut list is not written down.

@@ -21,7 +21,7 @@
 ### Known limitations
 - The terminal interface and the desktop window are both still present in this release. The terminal interface is removed in v2.0.0.
 - **Release artifacts not yet published.** The release pipeline is configured to attach the following assets when executed: `.msi` for Windows, `.dmg` for macOS, `.deb` for x86_64 and arm64 Linux, `SHA256SUMS.txt`, and a CycloneDX SBOM. These artifacts require a signed release tag to be generated automatically. The release has not yet been published to GitHub.
-- **No signature key provisioned.** GPG detached signatures require a signing key stored as a GitHub secret (`RELEASE_SIGNING_KEY`). The key is not currently configured; signature verification will work once the key is provisionated.
+- **No signature key provisioned.** GPG detached signatures require a signing key stored as GitHub secrets (`GPG_PRIVATE_KEY` for the ASCII-armored private key and `GPG_PASSPHRASE` for its passphrase). The signing step fails the release rather than publishing unsigned until these are configured.
 
 ## v1.5.0 - 2026-11-18
 

@@ -8,8 +8,8 @@
 ### v1.5.1 scope decision
 - **Assets:** `.msi` (Windows), `.dmg` (macOS), `.deb` for x86_64, `.deb` for arm64, `SHA256SUMS.txt`, CycloneDX SBOM
 - **No AppImage:** AppImage is not produced for Dust Trail. The project ships native platform packages only.
-- **Signature method:** GPG detached signatures (minisign-compatible format). The release workflow attaches a `.asc` signature over `SHA256SUMS.txt`.
-- **Key status:** **No key is currently provisioned.** The release signing key must be stored in the GitHub secret `RELEASE_SIGNING_KEY`. Signature verification is not functional until this secret is configured.
+- **Signature method:** GPG detached signatures. The release workflow attaches a `.asc` signature over `SHA256SUMS.txt`.
+- **Key status:** **No key is currently provisioned.** The release signing key must be stored in the GitHub secret `GPG_PRIVATE_KEY` (ASCII-armored private key) with its passphrase in `GPG_PASSPHRASE`; pin the public fingerprint in `GPG_KEY_FINGERPRINT`. The signing step fails the release (never publishes unsigned) until these secrets are configured. See `docs/update-signing.md`.
 - **Platform installation:**
   - **Windows:** Download the `.msi` from the GitHub Release and run it with standard Windows installation privileges.
   - **macOS:** Download the `.dmg`, open it, and drag Dust Trail to the Applications folder.
