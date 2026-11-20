@@ -46,17 +46,6 @@ jobs:
             exit 1
           fi
           echo "Cargo.lock in sync with manifests."
-      # Drift recovery: upload the freshly regenerated lockfile so the tree
-      # can be brought back in sync without running cargo locally (guide §4
-      # item 5). Temporary aid for this repair slice; removed once the tree
-      # matches again.
-      - name: Upload regenerated Cargo.lock (drift recovery)
-        if: always()
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
-        with:
-          name: Cargo.lock-regenerated
-          path: Cargo.lock
-          if-no-files-found: error
       - name: Tests (default features)
         run: cargo test --all --locked
       - name: Tests (TUI-only configuration)
