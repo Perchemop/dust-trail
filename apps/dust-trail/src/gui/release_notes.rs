@@ -231,10 +231,13 @@ fn parse_header(header: &str) -> (String, String) {
             (inner.to_string(), "")
         }
     } else {
-        // `## v1.5.0 - 2026-11-18` — version is the leading token.
+        // `## v1.5.0 - 2026-11-18` — version is the leading whitespace-delimited
+        // token. The dash is NOT a delimiter here: a prerelease heading such as
+        // `## v1.5.1-rc.1 - 2026-11-20` must keep its full version string
+        // (`is_release_heading` accepts `-` inside the version token).
         let mut version_end = inner.len();
         for (i, ch) in inner.char_indices() {
-            if ch.is_whitespace() || ch == '-' {
+            if ch.is_whitespace() {
                 version_end = i;
                 break;
             }
@@ -378,6 +381,17 @@ mod tests {
     }
 
     #[test]
+    fn parse_releases_prerelease_heading_keeps_full_version() {
+        // `v1.5.1-rc.1` is a single version token; the dash inside it must not
+        // be mistaken for the version/date separator.
+        let changelog = "# Changelog\n\n## v1.5.1-rc.1 - 2026-11-20\n\n### Fixed\n- Pipeline repair\n";
+        let releases = parse_releases(changelog);
+        assert_eq!(releases.len(), 1);
+        assert_eq!(releases[0].version, "v1.5.1-rc.1");
+        assert_eq!(releases[0].date, "2026-11-20");
+    }
+
+    #[test]
     fn parse_releases_bracket_heading_normalises() {
         let releases = parse_releases(VBRACKET_CHANGELOG);
         assert_eq!(releases.len(), 2);
@@ -456,5 +470,12 @@ mod tests {
         assert_eq!(release_tokens(&ledger, "[1.0.0]"), Some(160734746));
         assert_eq!(release_tokens(&ledger, "1.0.0"), Some(160734746));
         assert_eq!(release_tokens(&ledger, "v9.9.9"), None);
+        // Cumulative figures share the same normalisation.
+        assert_eq!(release_cumulative_tokens(&ledger, "v1.0.0"), Some(160734746));
+        assert_eq!(
+            release_cumulative_tokens(&ledger, "v1.5.1"),
+            Some(2_511_784_324)
+        );
+        assert_eq!(release_cumulative_tokens(&ledger, "v9.9.9"), None);
     }
 }

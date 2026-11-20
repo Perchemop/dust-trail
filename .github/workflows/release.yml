@@ -374,21 +374,21 @@ jobs:
           if [ -n "${TOKEN_LINE}" ]; then
             NOTES="${NOTES}
 
-## Token usage metrics
-${TOKEN_LINE}"
+            ## Token usage metrics
+            ${TOKEN_LINE}"
           fi
           # Plain-language per-platform install instructions.
           NOTES="${NOTES}
 
-## How to install
+            ## How to install
 
-- **Windows:** Download the `.msi` installer and double-click it to run the setup wizard.
-- **macOS:** Download the `.dmg` file, open it, and drag Dust Trail into your Applications folder.
-- **Linux:** Download the `.deb` file and double-click it in your package installer to install.
+            - **Windows:** Download the `.msi` installer and double-click it to run the setup wizard.
+            - **macOS:** Download the `.dmg` file, open it, and drag Dust Trail into your Applications folder.
+            - **Linux:** Download the `.deb` file and double-click it in your package installer to install.
 
-## Integrity and supply-chain artefacts
+            ## Integrity and supply-chain artefacts
 
-All four installers are listed with their SHA-256 checksums in \`SHA256SUMS.txt\`; verify with \`sha256sum -c SHA256SUMS.txt\` after downloading the installers into the same directory. \`SHA256SUMS.txt.asc\` is the GPG detached signature over that file — the signing public key, its pinned fingerprint and the verification steps are documented in \`docs/update-signing.md\`. \`dust-trail-sbom.cdx.json\` is a CycloneDX software bill of materials (JSON) for this release."
+            All four installers are listed with their SHA-256 checksums in \`SHA256SUMS.txt\`; verify with \`sha256sum -c SHA256SUMS.txt\` after downloading the installers into the same directory. \`SHA256SUMS.txt.asc\` is the GPG detached signature over that file — the signing public key, its pinned fingerprint and the verification steps are documented in \`docs/update-signing.md\`. \`dust-trail-sbom.cdx.json\` is a CycloneDX software bill of materials (JSON) for this release."
 
           ASSETS=(
             dist/dust-trail-windows-x86_64.msi

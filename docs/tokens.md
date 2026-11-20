@@ -26,9 +26,11 @@ claim.
   6,287,073 tokens, or 0.248%, which is the cost of records
   that carry a session total but no per-message token breakdown. The largest
   single-session difference was 5,874,604 tokens.
-- **A note on the newest row:** the `v1.5.1` row is a snapshot taken before the
-  release commit. Work that continued after the snapshot is not counted there,
-  so the figure is a lower bound for that release.
+- **A note on the newest row:** the `v1.5.1` row is pending finalisation at
+  release time. The interim measured snapshot lives in `docs/tokens.json`
+  (284,971,538 this release / 2,525,965,249 cumulative, measured
+  2026-11-20); work after that snapshot is not counted, so the interim
+  figure is a lower bound for that release.
 
 Measured at 2026-11-20T06:44:10.440706+10:30.
 
@@ -46,7 +48,7 @@ Measured at 2026-11-20T06:44:10.440706+10:30.
 | v1.3.0   | 2026-11-18 |          30_161_368 |     2_094_076_454 | UI polish and item system       |
 | v1.4.0   | 2026-11-18 |          37_820_864 |     2_131_897_318 | Inventory UI                    |
 | v1.5.0   | 2026-11-18 |         109_096_393 |     2_240_993_711 | Smarter AI and inventory UI     |
-| v1.5.1   | 2026-11-20 | **PENDING**         | **PENDING**       | Release infrastructure slice; pending CI run 44701830027 |
+| v1.5.1   | 2026-11-20 | **PENDING**         | **PENDING**       | Interim measured snapshot: 284,971,538 this release / 2,525,965,249 cumulative (`docs/tokens.json`); this row is finalised at release time |
 
 ## Totals
 

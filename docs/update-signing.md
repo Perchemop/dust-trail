@@ -150,5 +150,7 @@ Compromised (or suspected compromised) key:
 2. In-app updater verification of `SHA256SUMS.txt.asc` is not implemented in
    `crates/update-check` (tracked as future work; the release-side signature
    format above is the contract it will consume).
-3. `DECISIONS.md` still names the retired secret `RELEASE_SIGNING_KEY`;
-   update the record to the secret names above.
+3. ~~`DECISIONS.md` still names the retired secret `RELEASE_SIGNING_KEY`~~ —
+   resolved in this slice: `DECISIONS.md` now records the secret names above
+   (`GPG_PRIVATE_KEY`, `GPG_PASSPHRASE`, `GPG_KEY_FINGERPRINT`); the old name
+   survives only in the historical note below.

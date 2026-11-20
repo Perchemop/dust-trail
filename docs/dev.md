@@ -27,16 +27,14 @@ The `gh api repos/Perchemop/dust-trail/branches/main/protection` call could not 
 
 ## Required CI checks (from `.ci-required.txt`)
 
-Each name exactly as it appears in the file:
+Each name exactly as it appears in the file (5 entries; the secret/personal-data
+scans run inline inside `check`, and `cargo-deny` / `pr-author-is-dev` are
+deliberately not required yet — see the file's own comments):
 - `check`
 - `Build (windows-x86_64)`
 - `Build (macos-arm64)`
 - `Build (linux-arm64)`
-- `secret-scan`
-- `personal-data-scan`
-- `cargo-deny`
 - `supply-chain`
-- `pr-author-is-dev` (per II.26.7)
 
 Checks that actually ran on CI run `44521541346` (commit `0f68267`): `supply-chain`, `check`, `Build (linux-arm64)`, `Build (windows-x86_64)`, `Build (macos-arm64)` — all concluded `success`.
 
@@ -44,10 +42,10 @@ Checks that actually ran on CI run `44521541346` (commit `0f68267`): `supply-cha
 - Release workflow: `.github/workflows/release.yml`
 - v1.5.0 shipped zero assets for **two** independent reasons, both confirmed from the workflow logs:
   1. Release workflow run `44296170358` failed in all four `Build release (TUI + GUI)` jobs with `error[E0433]: cannot find type ItemKind in this scope` (4 occurrences). The `release` job was skipped. Fixed by PR #24 (commit `0f68267`), verified green in CI run `44521541346`.
-  2. The duplicate `.github/workflows/publish.yml` run `44291528378` failed on an unquoted `on:` YAML key, which YAML 1.1 parsers read as the boolean `true`. That file has been deleted.
+  2. The duplicate `.github/workflows/publish.yml` run `44521528378` failed on an unquoted `on:` YAML key, which YAML 1.1 parsers read as the boolean `true`. That file has been deleted.
 - The tagged v1.5.0 commit `f6ae559` also had a red CI run (`44295856578`). A tag must only be created after the required checks are green.
 - The release job must attach `.msi`, `.dmg`, `.deb` plus `SHA256SUMS.txt` or fail.
-- The GUI must be compiled into the shipped installers. `gui` is a default feature and both `cargo build` and `cargo wix` pass `--features gui`.
+- The GUI must be compiled into the shipped installers. `gui` is a default feature: `cargo build` passes `--features gui` explicitly, and `cargo wix` builds the default feature set, which includes `gui` (cargo-wix 0.3.9 supports neither `--features` nor `--target`).
 - Every release action must be performed from the `Perchemop` Dev credential.
 
 ## Pre-approved local commands (date recorded: 2026-11-20)

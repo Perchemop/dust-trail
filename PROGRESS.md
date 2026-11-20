@@ -22,8 +22,8 @@ and the artifacts are ready to be attached when the tag is created.
 - The slice includes the v1.5.1 fix and is ready for merge once CI is green
 
 **Pending evidence for v1.5.1 publication:**
-- Next CI run ID: **unknown** (pending CI run after fixes)
-- Release tag: **not yet created**
+- Interim measured v1.5.1 snapshot: 284,971,538 this release / 2,525,965,249 cumulative (`docs/tokens.json`); the `docs/tokens.md` v1.5.1 row is finalised at release time per its own measurement notes
+- Release tag: **not yet created** — blocked on provisioning the `GPG_PRIVATE_KEY`/`GPG_PASSPHRASE` signing secrets (the release workflow fails closed rather than publishing unsigned)
 - GitHub Release: **not yet published**
 
 ### Root cause of the v1.5.0 zero-asset release
@@ -56,7 +56,7 @@ created after the required checks are green.
 | Release-asset scan | Personal-path and secret patterns scanned in every release asset before publication; filenames only are reported | `.github/workflows/release.yml` |
 | Checksum file | Generated only from the four installers, bare filenames, sorted, so `sha256sum -c SHA256SUMS.txt` works | `.github/workflows/release.yml` |
 | Version metadata | Manifest `0.2.0` → `1.5.1`; the lockfile, the `.deb` control file, the macOS bundle and the release notes all agree | `apps/dust-trail/Cargo.toml`, `Cargo.lock` |
-| Lockfile integrity | The hand-edited `Cargo.lock` (header bumped to `version = 4`, stale package versions) was replaced by a cargo-generated lockfile recovered from CI, because cargo cannot run locally (guide §4 item 5). The CI validation step now also uploads the regenerated lockfile for drift recovery | `.github/workflows/ci.yml`, `Cargo.lock` |
+| Lockfile integrity | The hand-edited `Cargo.lock` (header bumped to `version = 4`, stale package versions, missing `tempfile`) was replaced by a cargo-generated lockfile recovered from CI, because cargo cannot run locally (guide §4 item 5). The CI validation step now asserts the committed lockfile satisfies the manifests via `cargo metadata --locked`, placed before any resolving cargo command (DECISIONS.md, 2026-11-21) | `.github/workflows/ci.yml`, `Cargo.lock` |
 | GUI in shipped binaries | `gui` is now a default feature, so `cargo build` and `cargo wix` ship the window-capable binary without extra flags (`cargo-wix 0.3.9` does not support `--features`/`--target`, so those flags were removed) | `apps/dust-trail/Cargo.toml`, `.github/workflows/ci.yml`, `.github/workflows/release.yml` |
 | Launch behaviour | The desktop window opens when no terminal is attached, which is what the app bundle and the Linux launcher do. `--gui` forces the window, `--tui` forces the terminal | `apps/dust-trail/src/main.rs` |
 | In-app release notes | The changelog parser now understands this changelog's `## v1.5.0 - date` heading form, so the popup shows releases instead of nothing | `apps/dust-trail/src/gui/release_notes.rs` |
