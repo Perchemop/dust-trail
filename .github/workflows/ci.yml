@@ -19,11 +19,27 @@ jobs:
           components: rustfmt, clippy
       - name: Check formatting
         run: cargo fmt --all -- --check
+      # Lockfile gate BEFORE any resolving cargo command: clippy below runs
+      # without --locked and would silently repair a drifted lockfile, making
+      # a later check meaningless. fmt does not resolve the lockfile.
+      - name: Cargo.lock validation (manifest drift)
+        run: |
+          # The lockfile must satisfy the manifests: --locked fails if any
+          # Cargo.toml dependency is absent from Cargo.lock (real manifest
+          # drift). A regenerate-and-byte-diff gate was tried first and
+          # rejected (DECISIONS.md "Lockfile gate: manifest drift, not
+          # registry movement"): it also failed whenever an upstream crate
+          # published a new version between CI runs (zcheapstr 1.3.0 ->
+          # 1.4.0 within hours), turning registry movement into red CI.
+          # Reproducible builds stay enforced by the --locked build and test
+          # steps below.
+          cargo metadata --locked --format-version 1 > /dev/null
+          echo "Cargo.lock satisfies the manifests."
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
-      - name: Generate lockfile (first commit has no committed Cargo.lock yet)
-        run: cargo generate-lockfile
       - name: Clippy (no warnings)
         run: cargo clippy --all-targets -- -D warnings
+      - name: Clippy (no warnings, TUI-only configuration)
+        run: cargo clippy -p dust-trail --all-targets --no-default-features --features tui -- -D warnings
       - name: Token discipline — no raw colours outside theme module
         run: |
           # guide II.30.6: no Color32::from_* outside src/theme/.
@@ -35,23 +51,24 @@ jobs:
           echo "Token gate clean."
       - name: Tests (default features)
         run: cargo test --all --locked
-      - name: Tests (gui feature)
-        run: cargo test -p dust-trail --features gui --locked
+      - name: Tests (TUI-only configuration)
+        run: cargo test -p dust-trail --no-default-features --features tui --locked
       - name: Build release (default features)
         run: cargo build --release --locked
-      - name: Build release (gui feature)
-        run: cargo build --release --locked -p dust-trail --features gui
+      - name: Build release (TUI-only configuration)
+        run: cargo build --release --locked -p dust-trail --no-default-features --features tui
       - name: Personal data and secret scan
         run: |
           set -e
           echo "Scanning working tree for personal data and secrets..."
           # Patterns that indicate a real leak (obviously synthetic values are
           # allowed: dev@example.com, example.com, Jane Doe, +1 555 0100).
-          # `/home/runner` (the CI runner account) is an allowed hit, and this
-          # workflow file is excluded because it contains the scan pattern itself.
+          # `/home/runner` (the CI runner account) is an allowed hit, and the
+          # workflow files are excluded because they contain the scan pattern
+          # themselves (ci.yml and release.yml both carry scan regexes).
           if git grep -n -I -i -E '/home/[^/[:space:]]+' -- . \
               ':(exclude)*.lock' ':(exclude)Cargo.lock' ':(exclude).github/workflows/ci.yml' \
-              ':(exclude)AGENTS.md' \
+              ':(exclude).github/workflows/release.yml' ':(exclude)AGENTS.md' \
               | grep -v '/home/runner'; then
             echo "::error::Personal /home/ path found in tree"
             exit 1
@@ -93,7 +110,23 @@ jobs:
           target: ${{ matrix.target }}
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
       - name: Build release
-        run: cargo build --release --target ${{ matrix.target }}
+        run: cargo build --release --target ${{ matrix.target }} -p dust-trail --features gui
+
+      # The application version. A tag push carries the release version; a
+      # pull request or a push to main falls back to the version declared in
+      # the manifest, so the packaging metadata is never wrong.
+      - name: Resolve application version
+        id: version
+        shell: bash
+        run: |
+          set -e
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          else
+            VERSION="$(sed -n 's/^version = "\(.*\)"/\1/p' apps/dust-trail/Cargo.toml | head -1)"
+          fi
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "Resolved version: ${VERSION}"
 
       # ----- Installer packaging per platform -----
       - name: Linux packages (.deb, .AppImage)
@@ -107,12 +140,12 @@ jobs:
           mkdir -p dist
           TRIPLE="${{ matrix.target }}"
           ARCH="$(dpkg --print-architecture)"
-          DEBDIR="dist/dust-trail_0.1.0-1_${ARCH}"
+          DEBDIR="dist/dust-trail_${{ steps.version.outputs.version }}-1_${ARCH}"
           rm -rf "$DEBDIR"
           mkdir -p "$DEBDIR/DEBIAN" "$DEBDIR/usr/bin" \
                    "$DEBDIR/usr/share/applications" \
                    "$DEBDIR/usr/share/icons/hicolor/256x256/apps"
-          printf 'Package: dust-trail\nVersion: 0.2.0-1\nSection: games\nPriority: optional\nArchitecture: %s\nMaintainer: Dust Trail Dev <dev@example.com>\nDescription: Original Western-themed ASCII adventure game (TUI + GUI)\n' "$ARCH" > "$DEBDIR/DEBIAN/control"
+          printf 'Package: dust-trail\nVersion: %s-1\nSection: games\nPriority: optional\nArchitecture: %s\nMaintainer: Dust Trail Dev <dev@example.com>\nDescription: Original Western-themed ASCII adventure game (TUI + GUI)\n' "${{ steps.version.outputs.version }}" "$ARCH" > "$DEBDIR/DEBIAN/control"
           cp "target/${TRIPLE}/release/dust-trail" "$DEBDIR/usr/bin/dust-trail"
           dpkg-deb --build "$DEBDIR" "dist/${{ matrix.asset }}.deb"
           APPDIR="dist/DustTrail.AppDir"
@@ -135,9 +168,12 @@ jobs:
         if: runner.os == 'Windows'
         shell: bash
         run: |
-          cargo install cargo-wix --locked
+          # Same pinned version as release.yml so CI validates the wix that ships.
+          cargo install cargo-wix --locked --version 0.3.9
           cargo wix init --force -p dust-trail
-          cargo wix --nocapture -p dust-trail --target ${{ matrix.target }}
+          # cargo-wix 0.3.9 supports neither --features nor --target; the GUI is a
+          # default feature, so a plain build ships the window-capable binary.
+          cargo wix --nocapture -p dust-trail
           mkdir -p dist
           cp target/wix/*.msi "dist/${{ matrix.asset }}.msi"
 
@@ -145,7 +181,7 @@ jobs:
         if: runner.os == 'macOS'
         run: |
           brew install create-dmg
-          VERSION="${GITHUB_REF_NAME#v}"
+          VERSION="${{ steps.version.outputs.version }}"
           APP="dist/Dust Trail.app"
           mkdir -p "$APP/Contents/MacOS"
           cp "target/${{ matrix.target }}/release/dust-trail" "$APP/Contents/MacOS/dust-trail"

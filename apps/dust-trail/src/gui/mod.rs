@@ -7,7 +7,7 @@ pub mod release_notes;
 
 use crate::domain::cell::Cell;
 use crate::domain::game::{Direction, Game, Interaction};
-use crate::domain::world::{ItemKind, Pos};
+use crate::domain::world::{ItemKind, NpcKind, Pos, WantedLevel};
 use crate::theme::{danger_color32, rgb_to_color32, Role, Theme, Variant};
 use eframe::egui;
 
@@ -50,42 +50,23 @@ impl Gui {
                     .world
                     .npcs
                     .iter()
-                    .find(|n| n.kind == crate::domain::world::NpcKind::Outlaw)
+                    .find(|n| n.kind == NpcKind::Outlaw)
                     .map(|n| n.wanted_level())
-                    .unwrap_or(crate::domain::world::WantedLevel::None);
+                    .unwrap_or(WantedLevel::None);
                 let wanted_label = match wanted {
-                    crate::domain::world::WantedLevel::None => "None".to_string(),
-                    crate::domain::world::WantedLevel::Low => "Low".to_string(),
-                    crate::domain::world::WantedLevel::Medium => "Medium".to_string(),
-                    crate::domain::world::WantedLevel::High => "High".to_string(),
+                    WantedLevel::None => "None".to_string(),
+                    WantedLevel::Low => "Low".to_string(),
+                    WantedLevel::Medium => "Medium".to_string(),
+                    WantedLevel::High => "High".to_string(),
                 };
-                let wanted_color = match wanted {
-                    crate::domain::world::WantedLevel::None => crate::theme::Role::Success,
-                    crate::domain::world::WantedLevel::Low => crate::theme::Role::Warning,
-                    crate::domain::world::WantedLevel::Medium => crate::theme::Role::Danger,
-                    crate::domain::world::WantedLevel::High => crate::theme::Role::Danger,
+                let wanted_color: Role = match wanted {
+                    WantedLevel::None => Role::Success,
+                    WantedLevel::Low => Role::Warning,
+                    WantedLevel::Medium => Role::Danger,
+                    WantedLevel::High => Role::Danger,
                 };
                 ui.colored_label(
-                    crate::theme::rgb_to_color32(crate::domain::color::Rgb::new(
-                        match wanted {
-                            crate::domain::world::WantedLevel::None => 80,
-                            crate::domain::world::WantedLevel::Low => 230,
-                            crate::domain::world::WantedLevel::Medium => 220,
-                            crate::domain::world::WantedLevel::High => 220,
-                        },
-                        match wanted {
-                            crate::domain::world::WantedLevel::None => 200,
-                            crate::domain::world::WantedLevel::Low => 170,
-                            crate::domain::world::WantedLevel::Medium => 60,
-                            crate::domain::world::WantedLevel::High => 60,
-                        },
-                        match wanted {
-                            crate::domain::world::WantedLevel::None => 80,
-                            crate::domain::world::WantedLevel::Low => 60,
-                            crate::domain::world::WantedLevel::Medium => 60,
-                            crate::domain::world::WantedLevel::High => 60,
-                        },
-                    )),
+                    Theme::dark().color32(wanted_color),
                     format!("Wanted: {}", wanted_label),
                 );
                 ui.separator();
@@ -123,7 +104,10 @@ impl Gui {
             let color = rgb_to_color32(cell.fg);
             if Some(color) != cur_color {
                 if !cur.is_empty() {
-                    runs.push((cur.clone(), cur_color.unwrap_or(egui::Color32::WHITE)));
+                    runs.push((
+                        cur.clone(),
+                        cur_color.unwrap_or(Theme::dark().color32(Role::TextPrimary)),
+                    ));
                 }
                 cur = String::new();
                 cur_color = Some(color);
@@ -131,7 +115,10 @@ impl Gui {
             cur.push(cell.ch);
         }
         if !cur.is_empty() {
-            runs.push((cur, cur_color.unwrap_or(egui::Color32::WHITE)));
+            runs.push((
+                cur,
+                cur_color.unwrap_or(Theme::dark().color32(Role::TextPrimary)),
+            ));
         }
 
         for (text, color) in runs {
@@ -297,42 +284,6 @@ impl Gui {
                     }
                 });
             });
-    }
-
-    fn save_game(&mut self) {
-        let path = save_dir().join("saves.json");
-        let slot = self.save_load.save_name_input.trim().to_string();
-        if slot.is_empty() {
-            self.game.message = "Save slot name cannot be empty.".to_string();
-            return;
-        }
-        if let Err(e) = self.game.save_named_to(&slot, &path) {
-            self.game.message = format!("Save failed: {e}");
-        } else {
-            let slot_clone = slot.clone();
-            self.save_load.last_saved_slot = Some(slot);
-            self.save_load.is_save_dialog_open = false;
-            self.save_load.save_name_input.clear();
-            self.game.message = format!("Game saved to slot \"{slot_clone}\".");
-        }
-    }
-
-    fn load_game(&mut self) {
-        let path = save_dir().join("saves.json");
-        if let Some(slot) = &self.save_load.selected_slot {
-            match Game::load_named_from(slot, &path) {
-                Ok(loaded) => {
-                    self.game = loaded;
-                    self.save_load.last_saved_slot = Some(slot.clone());
-                    self.save_load.is_load_dialog_open = false;
-                    self.save_load.selected_slot = None;
-                    self.game.message = "Game loaded.".to_string();
-                }
-                Err(e) => {
-                    self.save_load.error = Some(format!("Load failed: {e}"));
-                }
-            }
-        }
     }
 
     fn render_save_dialog(&mut self, ui: &mut egui::Ui) {

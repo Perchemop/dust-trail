@@ -1,5 +1,44 @@
 # Decisions - Dust Trail
 
+## Version 1.5.1 — release-infrastructure slice (2026-11-20)
+- **Decision:** Ship the release-pipeline fix as `v1.5.1`, and reserve `v2.0.0` for the GUI-only ASCII-3D transformation.
+- **Rationale:** Removing the terminal interface is a breaking change and therefore a major version. Bundling it with the pipeline repair would have made an already-broken release harder to diagnose, and would have delayed the first release that actually carries installers.
+- **Implementation:** Manifest version moved from `0.2.0` to `1.5.1` (the lockfile, the `.deb` control file, the macOS bundle and the release notes all derive from the same value now). The release pipeline was repaired in the same slice so the next tag ships real artefacts.
+
+### v1.5.1 scope decision
+- **Assets:** `.msi` (Windows), `.dmg` (macOS), `.deb` for x86_64, `.deb` for arm64, `SHA256SUMS.txt`, CycloneDX SBOM
+- **No AppImage:** AppImage is not produced for Dust Trail. The project ships native platform packages only.
+- **Signature method:** GPG detached signatures. The release workflow attaches a `.asc` signature over `SHA256SUMS.txt`.
+- **Key status:** **No key is currently provisioned.** The release signing key must be stored in the GitHub secret `GPG_PRIVATE_KEY` (ASCII-armored private key) with its passphrase in `GPG_PASSPHRASE`; pin the public fingerprint in `GPG_KEY_FINGERPRINT`. The signing step fails the release (never publishes unsigned) until these secrets are configured. See `docs/update-signing.md`.
+- **Platform installation:**
+  - **Windows:** Download the `.msi` from the GitHub Release and run it with standard Windows installation privileges.
+  - **macOS:** Download the `.dmg`, open it, and drag Dust Trail to the Applications folder.
+  - **Linux (Debian):** Download the `.deb` and install with `sudo apt install ./dust-trail_*.deb`.
+
+### v2.0.0 exclusion
+- GUI-only ASCII-3D rendering and TUI removal are explicitly reserved for v2.0.0. These are not part of the v1.5.1 release-infrastructure slice.
+
+## Frontend selection (2026-11-20)
+- **Decision:** The app opens the desktop window when it is started without a terminal attached, and the terminal interface when a terminal is attached. `--gui` forces the window, `--tui` forces the terminal.
+- **Rationale:** The macOS app bundle and the Linux launcher both start the app with no terminal attached. Under the previous behaviour they opened a terminal interface inside a window with no terminal, which looked broken. The terminal interface remains reachable for anyone who wants it.
+- **Implementation:** `apps/dust-trail/src/main.rs`, using `std::io::IsTerminal` (stable since Rust 1.70; the crate floor is 1.82).
+
+## GUI is a default feature (2026-11-20)
+- **Decision:** `default = ["tui", "gui"]` in `apps/dust-trail/Cargo.toml`. Builds and `cargo wix` run against the default feature set with no extra flags (`cargo-wix 0.3.9` does not support `--features`/`--target`).
+- **Rationale:** The release pipeline built the binary with `--features gui` but packaged it with `cargo wix` against the default feature set, so every shipped installer was terminal-only even though the pipeline appeared to build the GUI. Making the GUI a default feature removes the chance of the two diverging again.
+- **Constraint:** The terminal interface is still removed in `v2.0.0`, not before.
+
+## Lockfile gate: manifest drift, not registry movement (2026-11-21)
+- **Decision:** The CI `Cargo.lock` gate checks that the committed lockfile satisfies the manifests (`cargo metadata --locked`), not that it matches a fresh registry re-resolution byte-for-byte. The committed lockfile is cargo-generated (recovered from CI run `44734392220` after an earlier hand-edit was found); it is updated deliberately when manifests change, never hand-edited.
+- **Rationale:** The byte-for-byte regenerate-and-diff gate also failed whenever an upstream crate published a new version between CI runs — `zcheapstr` went 1.3.0 → 1.4.0 on crates.io within hours of the recovery, and the gate would keep turning upstream releases into red CI (a treadmill, and a flaky gate per the guide's flaky-test policy). Registry movement is not manifest drift. True reproducibility is enforced by the `--locked` build and test steps, which pass with the committed lockfile.
+- **Implementation:** `.github/workflows/ci.yml` "Cargo.lock validation (manifest drift)" step.
+
+## v2.0.0 renderer and camera (2026-11-20)
+- **Decision:** The v2.0.0 world renderer is a **procedural 3D primitive rasteriser**. Each object (tree, shrub, character, prop) is a set of 3D primitives rendered into a depth buffer and a luminance buffer, then converted to characters through a glyph ramp. The camera is a **fixed isometric** camera, matching the existing dimetric projection.
+- **Rationale:** The owner chose this over hand-authored sprite sheets and over a true perspective camera. The rasteriser produces objects that read as shaded 3D models and respond to light, stays deterministic and headless-testable, and reuses the projection the game already has.
+- **Constraint:** The v2.0.0 milestone is the **playable core**: terminal interface removed, desktop window the only entry point, the new renderer live for terrain, props and characters, and the existing move/combat/loot/save loop working through the new viewport. Full content re-authoring, day/night lighting, signed installers, an SBOM, the accessibility rendered-evidence pass and README screenshots are explicitly out of scope for v2.0.0.
+- **Specification:** `docs/specs/gui-only-ascii-3d.md` (draft, awaiting owner approval).
+
 ## Procedural Map Generation
 - **Decision:** Implement deterministic procedural generation from seed in `procgen.rs`
 - **Rationale:** Enables reproducible worlds for testing, demos, and saves; falls within v1.0.0 roadmap
