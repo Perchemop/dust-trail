@@ -33,19 +33,18 @@ jobs:
             exit 1
           fi
           echo "Token gate clean."
-      - name: Cargo.lock validation
+      - name: Cargo.lock validation (manifest drift)
         run: |
-          # Regenerate lockfile and compare byte-for-byte with committed version
-          # to catch any dependency drift from uncommitted Cargo.toml changes.
-          cp Cargo.lock /tmp/Cargo.lock.commit
-          cargo generate-lockfile
-          if ! diff -q Cargo.lock /tmp/Cargo.lock.commit; then
-            echo "::error::Cargo.lock is not in sync with Cargo.toml manifests"
-            echo "Run 'cargo generate-lockfile' locally and commit the updated Cargo.lock"
-            diff Cargo.lock /tmp/Cargo.lock.commit || true
-            exit 1
-          fi
-          echo "Cargo.lock in sync with manifests."
+          # The lockfile must satisfy the manifests: --locked fails if any
+          # Cargo.toml dependency is absent from Cargo.lock (real manifest
+          # drift). A regenerate-and-byte-diff gate was tried first and
+          # rejected (DECISIONS.md "Lockfile is cargo-generated"): it also
+          # failed whenever an upstream crate published a new version between
+          # CI runs (zcheapstr 1.3.0 -> 1.4.0 within hours), turning registry
+          # movement into red CI. Reproducible builds stay enforced by the
+          # --locked build and test steps below.
+          cargo metadata --locked --format-version 1 > /dev/null
+          echo "Cargo.lock satisfies the manifests."
       - name: Tests (default features)
         run: cargo test --all --locked
       - name: Tests (TUI-only configuration)
