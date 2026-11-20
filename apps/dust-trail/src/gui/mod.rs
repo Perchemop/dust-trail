@@ -286,42 +286,6 @@ impl Gui {
             });
     }
 
-    fn save_game(&mut self) {
-        let path = save_dir().join("saves.json");
-        let slot = self.save_load.save_name_input.trim().to_string();
-        if slot.is_empty() {
-            self.game.message = "Save slot name cannot be empty.".to_string();
-            return;
-        }
-        if let Err(e) = self.game.save_named_to(&slot, &path) {
-            self.game.message = format!("Save failed: {e}");
-        } else {
-            let slot_clone = slot.clone();
-            self.save_load.last_saved_slot = Some(slot);
-            self.save_load.is_save_dialog_open = false;
-            self.save_load.save_name_input.clear();
-            self.game.message = format!("Game saved to slot \"{slot_clone}\".");
-        }
-    }
-
-    fn load_game(&mut self) {
-        let path = save_dir().join("saves.json");
-        if let Some(slot) = &self.save_load.selected_slot {
-            match Game::load_named_from(slot, &path) {
-                Ok(loaded) => {
-                    self.game = loaded;
-                    self.save_load.last_saved_slot = Some(slot.clone());
-                    self.save_load.is_load_dialog_open = false;
-                    self.save_load.selected_slot = None;
-                    self.game.message = "Game loaded.".to_string();
-                }
-                Err(e) => {
-                    self.save_load.error = Some(format!("Load failed: {e}"));
-                }
-            }
-        }
-    }
-
     fn render_save_dialog(&mut self, ui: &mut egui::Ui) {
         if !self.save_load.is_save_dialog_open {
             return;
