@@ -68,7 +68,7 @@ impl SpriteCache {
         if self.entries.contains_key(&key) {
             // Update existing: move to front of LRU
             self.order.retain(|k| k != &key);
-            self.order.push_front(key);
+            self.order.push_front(key.clone());
             self.entries.insert(key, sprite);
         } else if self.entries.len() >= self.max_entries && self.max_entries > 0 {
             // Evict LRU
@@ -76,13 +76,11 @@ impl SpriteCache {
                 self.entries.remove(&lru_key);
             }
             // Insert new
-            let key_clone = key.clone();
-            self.order.push_front(key_clone);
+            self.order.push_front(key.clone());
             self.entries.insert(key, sprite);
         } else {
             // Insert new (not full)
-            let key_clone = key.clone();
-            self.order.push_front(key_clone);
+            self.order.push_front(key.clone());
             self.entries.insert(key, sprite);
         }
     }

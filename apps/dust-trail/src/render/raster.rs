@@ -1,7 +1,7 @@
 //! Software rasteriser: project, fill, z-buffer, Lambertian shading.
 
 use crate::render::camera::Camera;
-use crate::render::model::{ObjectModel, BoundingBox, DrawKey};
+use crate::render::model::ObjectModel;
 use crate::render::primitive::{Primitive, PrimitiveKind, Transform, Material};
 use crate::render::sprite::Sprite;
 use crate::render::glyph::luminance_to_glyph;
@@ -50,8 +50,8 @@ impl Rasteriser {
         // Per-pixel buffers
         let mut z_buffer = vec![vec![f32::INFINITY; w]; h];
         let mut char_buffer = vec![vec![' '; w]; h];
-        let mut fg_buffer = vec![vec![Rgb(255, 255, 255); w]; h];
-        let mut bg_buffer = vec![vec![Rgb(0, 0, 0); w]; h];
+        let mut fg_buffer = vec![vec![Rgb { r: 255, g: 255, b: 255 }; w]; h];
+        let mut bg_buffer = vec![vec![Rgb { r: 0, g: 0, b: 0 }; w]; h];
 
         // Rasterise each primitive
         for primitive in &model.primitives {
@@ -163,7 +163,7 @@ impl Rasteriser {
                     let x = (tx + angle.cos() * r as f32) as i32;
                     let y = (ty + angle.sin() * r as f32) as i32;
                     vertices.push((x, y, tz as i32));
-                    vertices.push((x, y, (tz + h) as i32));
+                    vertices.push((x, y, (tz as i32 + h) as i32));
                 }
             }
             PrimitiveKind::Capsule => {
@@ -182,7 +182,7 @@ impl Rasteriser {
                     let angle = (i as f32) * std::f32::consts::FRAC_PI_2;
                     let x = (tx + angle.cos() * r as f32) as i32;
                     let y = (ty + angle.sin() * r as f32) as i32;
-                    vertices.push((x, y, (tz + h) as i32));
+                    vertices.push((x, y, (tz as i32 + h) as i32));
                 }
             }
         }

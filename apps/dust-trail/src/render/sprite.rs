@@ -35,7 +35,7 @@ impl Sprite {
             key,
             width: 1,
             height: 1,
-            cells: vec![vec![('?', Rgb(255, 255, 255), Rgb(0, 0, 0))]],
+            cells: vec![vec![('?', Rgb { r: 255, g: 255, b: 255 }, Rgb { r: 0, g: 0, b: 0 })]],
             depth: vec![vec![0.0]],
             anchor: (0, 0),
         }

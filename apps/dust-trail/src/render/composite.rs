@@ -3,7 +3,6 @@
 use crate::domain::frame::Frame;
 use crate::render::sprite::Sprite;
 use crate::domain::Cell;
-use crate::domain::color::Rgb;
 use crate::render::model::ModelKey;
 
 /// Composite a sprite into a frame with depth-aware occlusion.
@@ -25,7 +24,7 @@ pub fn composite_sprite(frame: &mut Frame, sprite: &Sprite, screen_x: i32, scree
     for (sy, row) in sprite.cells.iter().enumerate() {
         for (sx, (ch, fg, bg)) in row.iter().enumerate() {
             let fx = start_x + sx as i32;
-            let fy = start_y + (sh - 1 - sy) as i32; // flip Y: sprite origin is bottom
+            let fy = start_y + (sh - 1 - sy as i32); // flip Y: sprite origin is bottom
 
             // Only write if in bounds
             if fx >= 0 && fy >= 0 {

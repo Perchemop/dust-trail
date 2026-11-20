@@ -1,7 +1,5 @@
 //! Primitive types: 3D primitives with transform and material.
 
-use crate::domain::color::Rgb;
-
 /// A single 3D primitive with a local transform and material.
 #[derive(Clone, Debug, PartialEq)]
 pub struct Primitive {
