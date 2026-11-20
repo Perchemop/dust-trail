@@ -60,11 +60,12 @@ jobs:
           echo "Scanning working tree for personal data and secrets..."
           # Patterns that indicate a real leak (obviously synthetic values are
           # allowed: dev@example.com, example.com, Jane Doe, +1 555 0100).
-          # `/home/runner` (the CI runner account) is an allowed hit, and this
-          # workflow file is excluded because it contains the scan pattern itself.
+          # `/home/runner` (the CI runner account) is an allowed hit, and the
+          # workflow files are excluded because they contain the scan pattern
+          # themselves (ci.yml and release.yml both carry scan regexes).
           if git grep -n -I -i -E '/home/[^/[:space:]]+' -- . \
               ':(exclude)*.lock' ':(exclude)Cargo.lock' ':(exclude).github/workflows/ci.yml' \
-              ':(exclude)AGENTS.md' \
+              ':(exclude).github/workflows/release.yml' ':(exclude)AGENTS.md' \
               | grep -v '/home/runner'; then
             echo "::error::Personal /home/ path found in tree"
             exit 1
