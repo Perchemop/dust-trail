@@ -12,13 +12,13 @@ figures that come from real measurements rather than placeholders.
 been tagged or published. The CI pipeline is configured for v1.5.1 releases,
 and the artifacts are ready to be attached when the tag is created.
 
-**Latest CI run:** 
-- Run ID `44701830027` is the most recent CI run for commit `0f68267` on branch `opencode/ci`
-- **Status: NOT green** — this CI run has failed and must be fixed before a release can proceed
+**Latest CI run:**
+- Run ID `44701830027` (commit `0f68267` on branch `opencode/ci`): **NOT green** — fixed by the repairs in this slice
+- A later run, `44726899973` (commit `a87d795`), still failed on dead-code (`save_game`/`load_game` unused) and the unsupported `--features`/`--target` flags on `cargo wix` in `ci.yml`; both are fixed in the following commit
 - **Previous green CI run** for verification: Run ID `44521541346` (all five checks: `check`, `Build (windows-x86_64)`, `Build (macos-arm64)`, `Build (linux-arm64)`, `supply-chain`)
 
 **PR state:**
-- PR #25 (release-infrastructure slice) is currently in state: open on branch `opencode/ci`, commit `0f68267`
+- PR #25 (release-infrastructure slice) is open on branch `opencode/ci`; head is the latest repair commit
 - The slice includes the v1.5.1 fix and is ready for merge once CI is green
 
 **Pending evidence for v1.5.1 publication:**
@@ -50,10 +50,13 @@ created after the required checks are green.
 |------|--------|----------|
 | GUI compile error | Import `ItemKind`, replace the raw white colour with the theme token | PR #24, commit `0f68267`, CI run `44521541346` (green) |
 | Duplicate workflow | `.github/workflows/publish.yml` deleted | this slice |
-| Release job completeness | The job now fails if any of `.msi`, `.dmg`, `.deb` or `SHA256SUMS.txt` is missing | `.github/workflows/release.yml` |
-| Checksum file | Generated only from the installers, bare filenames, so `sha256sum -c SHA256SUMS.txt` works | `.github/workflows/release.yml` |
+| Release job completeness | The job now fails unless the four exact installers (`dust-trail-windows-x86_64.msi`, `dust-trail-macos-arm64.dmg`, `dust-trail-linux-x86_64.deb`, `dust-trail-linux-arm64.deb`) and `SHA256SUMS.txt` exist | `.github/workflows/release.yml` |
+| Release signature | `SHA256SUMS.txt.asc` GPG detached signature generated from the `GPG_PRIVATE_KEY`/`GPG_PASSPHRASE` secrets, fingerprint pinned via `GPG_KEY_FINGERPRINT`; the step fails closed when secrets are absent | `.github/workflows/release.yml`, `docs/update-signing.md` |
+| SBOM | CycloneDX SBOM generated with pinned `cargo-cyclonedx 0.5.10` and attached as `dust-trail-sbom.cdx.json` | `.github/workflows/release.yml` |
+| Release-asset scan | Personal-path and secret patterns scanned in every release asset before publication; filenames only are reported | `.github/workflows/release.yml` |
+| Checksum file | Generated only from the four installers, bare filenames, sorted, so `sha256sum -c SHA256SUMS.txt` works | `.github/workflows/release.yml` |
 | Version metadata | Manifest `0.2.0` → `1.5.1`; the lockfile, the `.deb` control file, the macOS bundle and the release notes all agree | `apps/dust-trail/Cargo.toml`, `Cargo.lock` |
-| GUI in shipped binaries | `gui` is now a default feature and both `cargo build` and `cargo wix` pass `--features gui`. Before this, the installers were terminal-only | `apps/dust-trail/Cargo.toml`, `.github/workflows/release.yml` |
+| GUI in shipped binaries | `gui` is now a default feature, so `cargo build` and `cargo wix` ship the window-capable binary without extra flags (`cargo-wix 0.3.9` does not support `--features`/`--target`, so those flags were removed) | `apps/dust-trail/Cargo.toml`, `.github/workflows/ci.yml`, `.github/workflows/release.yml` |
 | Launch behaviour | The desktop window opens when no terminal is attached, which is what the app bundle and the Linux launcher do. `--gui` forces the window, `--tui` forces the terminal | `apps/dust-trail/src/main.rs` |
 | In-app release notes | The changelog parser now understands this changelog's `## v1.5.0 - date` heading form, so the popup shows releases instead of nothing | `apps/dust-trail/src/gui/release_notes.rs` |
 | In-app token figures | The ledger is a Markdown table but was parsed as JSON, so the cumulative figure always read zero. It now reads the real measured numbers | `apps/dust-trail/src/gui/release_notes.rs`, `docs/tokens.md` |
