@@ -122,7 +122,7 @@ mod tests {
         }
     }
 
-    fn make_sprite(key: &str) -> Sprite {
+    fn make_sprite(key: &'static str) -> Sprite {
         Sprite::placeholder(key)
     }
 
