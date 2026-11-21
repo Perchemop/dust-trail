@@ -20,6 +20,9 @@ use rand::rngs::StdRng;
 use rand::{seq::SliceRandom, SeedableRng};
 use std::path::Path;
 
+#[cfg(feature = "gui")]
+use crate::render::{Camera, EntityKind, ModelRegistry, Sprite, SpriteCache};
+
 /// A movement direction.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Direction {
@@ -68,11 +71,24 @@ pub struct Game {
     /// Sound settings for persistence (used when sound feature is disabled).
     #[cfg(not(feature = "sound"))]
     pub sound_settings: SoundSettings,
+    /// Sprite cache for 3D ASCII rendering (gui feature only).
+    #[cfg(feature = "gui")]
+    #[serde(skip, default = "default_sprite_cache")]
+    sprite_cache: SpriteCache,
+    /// Whether the sprite cache needs invalidation (world state changed).
+    #[cfg(feature = "gui")]
+    #[serde(skip, default)]
+    cache_dirty: bool,
 }
 
 #[cfg(feature = "sound")]
 fn default_sound_manager() -> SoundManager {
     SoundManager::new().unwrap_or_default()
+}
+
+#[cfg(feature = "gui")]
+fn default_sprite_cache() -> SpriteCache {
+    SpriteCache::new(256)
 }
 
 fn default_rng() -> StdRng {
@@ -103,6 +119,10 @@ impl Game {
             sound_manager: SoundManager::new().unwrap_or_default(),
             #[cfg(not(feature = "sound"))]
             sound_settings: SoundSettings::new_stub(),
+            #[cfg(feature = "gui")]
+            sprite_cache: SpriteCache::new(256),
+            #[cfg(feature = "gui")]
+            cache_dirty: false,
         }
     }
 
@@ -122,6 +142,10 @@ impl Game {
             sound_manager: SoundManager::new().unwrap_or_default(),
             #[cfg(not(feature = "sound"))]
             sound_settings: SoundSettings::new_stub(),
+            #[cfg(feature = "gui")]
+            sprite_cache: SpriteCache::new(256),
+            #[cfg(feature = "gui")]
+            cache_dirty: false,
         }
     }
 
@@ -141,11 +165,395 @@ impl Game {
             sound_manager: SoundManager::new().unwrap_or_default(),
             #[cfg(not(feature = "sound"))]
             sound_settings: SoundSettings::new_stub(),
+            #[cfg(feature = "gui")]
+            sprite_cache: SpriteCache::new(256),
+            #[cfg(feature = "gui")]
+            cache_dirty: false,
         }
     }
 
     /// Render the current state as a Frame for either frontend.
-    pub fn frame(&self) -> Frame {
+    pub fn frame(&mut self) -> Frame {
+        #[cfg(feature = "gui")]
+        {
+            self.frame_with_render()
+        }
+
+        #[cfg(not(feature = "gui"))]
+        {
+            // Fallback: original flat rendering for non-gui builds (headless tests)
+            self.frame_flat()
+        }
+    }
+
+    /// New render pipeline using 3D primitive sprites with depth-aware compositing.
+    #[cfg(feature = "gui")]
+    fn frame_with_render(&mut self) -> Frame {
+        use crate::render::{composite_sprite, EntityKind, Rasteriser};
+
+        // Build or reuse model registry
+        let registry = Self::build_model_registry();
+
+        // Create rasteriser with fixed camera
+        let camera = Camera::fixed_isometric();
+        let raster = Rasteriser::new(80, 50).with_light((0.0, 0.0, 1.0));
+
+        // Clear frame depth buffer
+        let mut frame = Frame::new(80, 50);
+        frame.clear_depth();
+
+        // Render terrain tiles as flat sprites (back-to-front by screen depth)
+        let mut tile_sprites: Vec<(Sprite, i32, i32)> = Vec::new();
+        for y in 0..self.world.height {
+            for x in 0..self.world.width {
+                let wx = x;
+                let wy = y;
+                let tile = self.world.tiles[wy as usize][wx as usize];
+                let sprite = tile.to_sprite(&camera);
+                let depth = camera.screen_depth(wx as i32, wy as i32, 0);
+                tile_sprites.push((sprite, wx as i32, wy as i32));
+            }
+        }
+        // Sort back-to-front by screen depth
+        tile_sprites.sort_by(|(_, wx, wy), (_, wx2, wy2)| {
+            let d1 = camera.screen_depth(*wx, *wy, 0);
+            let d2 = camera.screen_depth(*wx2, *wy2, 0);
+            d1.partial_cmp(&d2).unwrap_or(std::cmp::Ordering::Equal)
+        });
+
+        // Composite tile sprites
+        for (sprite, wx, wy) in tile_sprites {
+            let (sx, sy, _sz) = camera.project(wx, wy, 0);
+            composite_sprite(&mut frame, &sprite, sx, sy);
+        }
+
+        // Collect entity sprites with their screen positions and depths
+        let mut entity_sprites: Vec<(Sprite, i32, i32, f32)> = Vec::new();
+
+        // Collect item data first - use explicit for-loop to avoid borrow checker
+        // conflict with later self.get_or_render_sprite() calls.
+        // The for-loop borrows self.world items immutably within the loop body,
+        // which ends each iteration, allowing later mutable borrows of self.
+        let mut item_entries: Vec<(crate::domain::world::ItemKind, i32, i32)> = Vec::new();
+        for item in &self.world.items {
+            if !item.collected && self.world.in_bounds(item.pos) {
+                item_entries.push((item.kind, item.pos.x, item.pos.y));
+            }
+        }
+
+        // Map item kinds to EntityKind and compute screen depths
+        let item_data: Vec<(EntityKind, i32, i32, f32)> = item_entries
+            .iter()
+            .map(|(kind, x, y)| {
+                let entity_kind = match kind {
+                    crate::domain::world::ItemKind::Loot => EntityKind::Loot,
+                    crate::domain::world::ItemKind::Horse => EntityKind::Horse,
+                };
+                let depth = camera.screen_depth(*x, *y, 0);
+                (entity_kind, *x, *y, depth)
+            })
+            .collect();
+
+        // NPCs
+        let mut npc_entries: Vec<(crate::domain::world::NpcKind, i32, i32, i32)> = Vec::new();
+        for npc in &self.world.npcs {
+            if self.world.in_bounds(npc.pos) {
+                npc_entries.push((npc.kind, npc.pos.x, npc.pos.y, npc.pos.z));
+            }
+        }
+
+        // Map NPC kinds to EntityKind and compute screen depths
+        let npc_data: Vec<(EntityKind, i32, i32, f32)> = npc_entries
+            .iter()
+            .map(|(kind, x, y, z)| {
+                let entity_kind = match kind {
+                    crate::domain::world::NpcKind::Sheriff => EntityKind::Sheriff,
+                    crate::domain::world::NpcKind::Deputy => EntityKind::Deputy,
+                    crate::domain::world::NpcKind::Outlaw => EntityKind::Outlaw,
+                };
+                let depth = camera.screen_depth(*x, *y, *z);
+                (entity_kind, *x, *y, depth)
+            })
+            .collect();
+
+        // Items
+        for (kind, wx, wy, depth) in item_data {
+            let model = registry.model_for(kind);
+            let sprite = self.get_or_render_sprite(model, &raster, &camera);
+            entity_sprites.push((sprite, wx, wy, depth));
+        }
+
+        // NPCs
+        for (kind, wx, wy, depth) in npc_data {
+            let model = registry.model_for(kind);
+            let sprite = self.get_or_render_sprite(model, &raster, &camera);
+            entity_sprites.push((sprite, wx, wy, depth));
+        }
+
+        // Player
+        let player_model = registry.model_for(EntityKind::Player);
+        let player_sprite = self.get_or_render_sprite(player_model, &raster, &camera);
+        let player_depth = camera.screen_depth(self.player.pos.x as i32, self.player.pos.y as i32, self.player.pos.z);
+        entity_sprites.push((player_sprite, self.player.pos.x as i32, self.player.pos.y as i32, player_depth));
+
+        // Sort entities back-to-front by screen depth
+        entity_sprites.sort_by(|a, b| a.3.partial_cmp(&b.3).unwrap_or(std::cmp::Ordering::Equal));
+
+        // Composite entity sprites with depth-aware occlusion
+        for (sprite, wx, wy, _depth) in entity_sprites {
+            let (sx, sy, _sz) = camera.project(wx, wy, 0); // height handled in sprite
+            composite_sprite(&mut frame, &sprite, sx, sy);
+        }
+
+        // Add message to frame
+        frame.message = self.message.clone();
+        frame
+    }
+
+    #[cfg(feature = "gui")]
+    fn get_or_render_sprite(&mut self, model: &crate::render::ObjectModel, raster: &crate::render::Rasteriser, camera: &crate::render::Camera) -> crate::render::Sprite {
+        let light_state = crate::render::LightState::from_light((0.0, 0.0, 1.0), 1.0);
+        let cache_key = crate::render::CacheKey {
+            model_key: model.key,
+            light_state,
+            size: (80, 50),
+            orientation: crate::render::Orientation::Isometric,
+        };
+
+        if let Some(sprite) = self.sprite_cache.get(&cache_key) {
+            return sprite.clone();
+        }
+
+        // Cache miss: render and store
+        let sprite = raster.render(model, camera);
+        self.sprite_cache.insert(cache_key, sprite.clone());
+        sprite
+    }
+
+    /// Build the model registry with all entity kinds.
+    #[cfg(feature = "gui")]
+    fn build_model_registry() -> crate::render::ModelRegistry {
+        use crate::render::{EntityKind, Material, ModelRegistry, ObjectModel, Primitive, PrimitiveKind, Transform, DrawKey, BoundingBox};
+
+        let mut registry = ModelRegistry::new();
+
+        // Tree: trunk (Cone) + canopy (Ellipsoid)
+        let tree = ObjectModel {
+            key: "tree_oak",
+            name: "Oak Tree".to_string(),
+            primitives: vec![
+                Primitive {
+                    kind: PrimitiveKind::Cone,
+                    transform: Transform { translation: (0.0, 0.0, 0.0), rotation: (0.0, 0.0, 0.0), scale: (2.0, 2.0, 4.0) },
+                    material: Material { albedo: 0.4, shade_side: true },
+                },
+                Primitive {
+                    kind: PrimitiveKind::Ellipsoid,
+                    transform: Transform { translation: (0.0, 0.0, 4.0), rotation: (0.0, 0.0, 0.0), scale: (3.0, 3.0, 2.0) },
+                    material: Material { albedo: 0.7, shade_side: true },
+                },
+            ],
+            bounding_box: BoundingBox::default(),
+            draw_key: DrawKey(10),
+        };
+        registry.register(EntityKind::Tree, tree).unwrap();
+
+        // Shrub: small Ellipsoid
+        let shrub = ObjectModel {
+            key: "shrub",
+            name: "Shrub".to_string(),
+            primitives: vec![Primitive {
+                kind: PrimitiveKind::Ellipsoid,
+                transform: Transform { translation: (0.0, 0.0, 0.0), rotation: (0.0, 0.0, 0.0), scale: (1.5, 1.5, 1.0) },
+                material: Material { albedo: 0.6, shade_side: true },
+            }],
+            bounding_box: BoundingBox::default(),
+            draw_key: DrawKey(5),
+        };
+        registry.register(EntityKind::Shrub, shrub).unwrap();
+
+        // Cactus: tall Box
+        let cactus = ObjectModel {
+            key: "cactus",
+            name: "Cactus".to_string(),
+            primitives: vec![Primitive {
+                kind: PrimitiveKind::Box,
+                transform: Transform { translation: (0.0, 0.0, 0.0), rotation: (0.0, 0.0, 0.0), scale: (1.0, 1.0, 3.0) },
+                material: Material { albedo: 0.5, shade_side: true },
+            }],
+            bounding_box: BoundingBox::default(),
+            draw_key: DrawKey(5),
+        };
+        registry.register(EntityKind::Cactus, cactus).unwrap();
+
+        // Rock: small Box
+        let rock = ObjectModel {
+            key: "rock",
+            name: "Rock".to_string(),
+            primitives: vec![Primitive {
+                kind: PrimitiveKind::Box,
+                transform: Transform { translation: (0.0, 0.0, 0.0), rotation: (0.0, 0.0, 0.0), scale: (1.0, 1.0, 0.5) },
+                material: Material { albedo: 0.4, shade_side: true },
+            }],
+            bounding_box: BoundingBox::default(),
+            draw_key: DrawKey(2),
+        };
+        registry.register(EntityKind::Rock, rock).unwrap();
+
+        // Water: flat Ellipsoid
+        let water = ObjectModel {
+            key: "water",
+            name: "Water".to_string(),
+            primitives: vec![Primitive {
+                kind: PrimitiveKind::Ellipsoid,
+                transform: Transform { translation: (0.0, 0.0, 0.0), rotation: (0.0, 0.0, 0.0), scale: (2.0, 2.0, 0.2) },
+                material: Material { albedo: 0.8, shade_side: false },
+            }],
+            bounding_box: BoundingBox::default(),
+            draw_key: DrawKey(1),
+        };
+        registry.register(EntityKind::Water, water).unwrap();
+
+        // Barn: Box building
+        let barn = ObjectModel {
+            key: "barn",
+            name: "Barn".to_string(),
+            primitives: vec![Primitive {
+                kind: PrimitiveKind::Box,
+                transform: Transform { translation: (0.0, 0.0, 0.0), rotation: (0.0, 0.0, 0.0), scale: (4.0, 3.0, 3.0) },
+                material: Material { albedo: 0.5, shade_side: true },
+            }],
+            bounding_box: BoundingBox::default(),
+            draw_key: DrawKey(15),
+        };
+        registry.register(EntityKind::Barn, barn).unwrap();
+
+        // Player: Box torso + Cylinder hat
+        let player = ObjectModel {
+            key: "player",
+            name: "Player".to_string(),
+            primitives: vec![
+                Primitive {
+                    kind: PrimitiveKind::Box,
+                    transform: Transform { translation: (0.0, 0.0, 0.0), rotation: (0.0, 0.0, 0.0), scale: (1.0, 0.8, 1.5) },
+                    material: Material { albedo: 0.9, shade_side: true },
+                },
+                Primitive {
+                    kind: PrimitiveKind::Cylinder,
+                    transform: Transform { translation: (0.0, 0.0, 1.5), rotation: (0.0, 0.0, 0.0), scale: (0.8, 0.8, 0.3) },
+                    material: Material { albedo: 0.6, shade_side: true },
+                },
+            ],
+            bounding_box: BoundingBox::default(),
+            draw_key: DrawKey(20),
+        };
+        registry.register(EntityKind::Player, player).unwrap();
+
+        // Sheriff
+        let sheriff = ObjectModel {
+            key: "sheriff",
+            name: "Sheriff".to_string(),
+            primitives: vec![
+                Primitive {
+                    kind: PrimitiveKind::Box,
+                    transform: Transform { translation: (0.0, 0.0, 0.0), rotation: (0.0, 0.0, 0.0), scale: (1.0, 0.8, 1.5) },
+                    material: Material { albedo: 0.7, shade_side: true },
+                },
+                Primitive {
+                    kind: PrimitiveKind::Cylinder,
+                    transform: Transform { translation: (0.0, 0.0, 1.5), rotation: (0.0, 0.0, 0.0), scale: (0.8, 0.8, 0.3) },
+                    material: Material { albedo: 0.8, shade_side: true },
+                },
+            ],
+            bounding_box: BoundingBox::default(),
+            draw_key: DrawKey(20),
+        };
+        registry.register(EntityKind::Sheriff, sheriff).unwrap();
+
+        // Deputy
+        let deputy = ObjectModel {
+            key: "deputy",
+            name: "Deputy".to_string(),
+            primitives: vec![Primitive {
+                kind: PrimitiveKind::Box,
+                transform: Transform { translation: (0.0, 0.0, 0.0), rotation: (0.0, 0.0, 0.0), scale: (1.0, 0.8, 1.5) },
+                material: Material { albedo: 0.6, shade_side: true },
+            }],
+            bounding_box: BoundingBox::default(),
+            draw_key: DrawKey(20),
+        };
+        registry.register(EntityKind::Deputy, deputy).unwrap();
+
+        // Outlaw
+        let outlaw = ObjectModel {
+            key: "outlaw",
+            name: "Outlaw".to_string(),
+            primitives: vec![Primitive {
+                kind: PrimitiveKind::Box,
+                transform: Transform { translation: (0.0, 0.0, 0.0), rotation: (0.0, 0.0, 0.0), scale: (1.0, 0.8, 1.5) },
+                material: Material { albedo: 0.5, shade_side: true },
+            }],
+            bounding_box: BoundingBox::default(),
+            draw_key: DrawKey(20),
+        };
+        registry.register(EntityKind::Outlaw, outlaw).unwrap();
+
+        // Loot: Cylinder (coin bag)
+        let loot = ObjectModel {
+            key: "loot",
+            name: "Loot".to_string(),
+            primitives: vec![Primitive {
+                kind: PrimitiveKind::Cylinder,
+                transform: Transform { translation: (0.0, 0.0, 0.0), rotation: (0.0, 0.0, 0.0), scale: (0.8, 0.8, 0.5) },
+                material: Material { albedo: 1.0, shade_side: true },
+            }],
+            bounding_box: BoundingBox::default(),
+            draw_key: DrawKey(5),
+        };
+        registry.register(EntityKind::Loot, loot).unwrap();
+
+        // Horse: Box body + Cylinder legs
+        let horse = ObjectModel {
+            key: "horse",
+            name: "Horse".to_string(),
+            primitives: vec![
+                Primitive {
+                    kind: PrimitiveKind::Box,
+                    transform: Transform { translation: (0.0, 0.0, 0.0), rotation: (0.0, 0.0, 0.0), scale: (2.0, 1.0, 1.2) },
+                    material: Material { albedo: 0.6, shade_side: true },
+                },
+                Primitive {
+                    kind: PrimitiveKind::Cylinder,
+                    transform: Transform { translation: (-0.8, -0.4, 0.0), rotation: (0.0, 0.0, 0.0), scale: (0.3, 0.3, 1.0) },
+                    material: Material { albedo: 0.4, shade_side: true },
+                },
+                Primitive {
+                    kind: PrimitiveKind::Cylinder,
+                    transform: Transform { translation: (0.8, -0.4, 0.0), rotation: (0.0, 0.0, 0.0), scale: (0.3, 0.3, 1.0) },
+                    material: Material { albedo: 0.4, shade_side: true },
+                },
+                Primitive {
+                    kind: PrimitiveKind::Cylinder,
+                    transform: Transform { translation: (-0.8, 0.4, 0.0), rotation: (0.0, 0.0, 0.0), scale: (0.3, 0.3, 1.0) },
+                    material: Material { albedo: 0.4, shade_side: true },
+                },
+                Primitive {
+                    kind: PrimitiveKind::Cylinder,
+                    transform: Transform { translation: (0.8, 0.4, 0.0), rotation: (0.0, 0.0, 0.0), scale: (0.3, 0.3, 1.0) },
+                    material: Material { albedo: 0.4, shade_side: true },
+                },
+            ],
+            bounding_box: BoundingBox::default(),
+            draw_key: DrawKey(15),
+        };
+        registry.register(EntityKind::Horse, horse).unwrap();
+
+        registry
+    }
+
+    /// Flat rendering fallback for non-gui builds (headless tests).
+    #[allow(dead_code)]
+    fn frame_flat(&self) -> Frame {
         // --- Isometric layout ---
         // World (x, y) -> screen (sx, sy): sx = (x-y)*2, sy = x+y.
         // Nearer tiles (larger screen depth) are drawn last so they overlap
@@ -219,12 +627,10 @@ impl Game {
             }
         }
 
-        Frame {
-            width,
-            height,
-            cells,
-            message: self.message.clone(),
-        }
+        let mut frame = Frame::new(width, height);
+        frame.cells = cells;
+        frame.message = self.message.clone();
+        frame
     }
 
     /// Move the player one step in `dir`. Returns the interaction result.
@@ -240,6 +646,8 @@ impl Game {
 
         self.player.pos = new_pos;
         self.turn = self.turn.saturating_add(1);
+        #[cfg(feature = "gui")]
+        self.mark_cache_dirty();
         self.update_npcs();
         self.message = "You move along the dusty trail.".to_string();
         // Play footstep sound
@@ -252,6 +660,8 @@ impl Game {
     pub fn interact(&mut self) -> Interaction {
         // Check for NPC at player position.
         if let Some(npc) = self.world.npc_at(self.player.pos) {
+            #[cfg(feature = "gui")]
+            self.mark_cache_dirty();
             return match npc.kind {
                 NpcKind::Deputy => Interaction::Talked {
                     npc: "Deputy".to_string(),
@@ -277,6 +687,8 @@ impl Game {
             if let Some(idx) = self.world.items.iter().position(|i| i.pos == item.pos) {
                 self.world.items[idx].collected = true;
                 self.player.inventory.push(item.kind);
+                #[cfg(feature = "gui")]
+                self.mark_cache_dirty();
                 self.message = match item.kind {
                     ItemKind::Horse => {
                         #[cfg(feature = "sound")]
@@ -305,6 +717,8 @@ impl Game {
                 ItemKind::Loot => "You consumed a satchel of coins (+5).".to_string(),
                 ItemKind::Horse => "You mounted your horse.".to_string(),
             };
+            #[cfg(feature = "gui")]
+            self.mark_cache_dirty();
             #[cfg(feature = "sound")]
             match kind {
                 ItemKind::Loot => self.sound_manager.play(SoundEffect::LootPickup),
@@ -331,6 +745,9 @@ impl Game {
             self.world.npcs[idx].health = self.world.npcs[idx].health.saturating_sub(damage);
             let dead = self.world.npcs[idx].health == 0;
 
+            #[cfg(feature = "gui")]
+            self.mark_cache_dirty();
+
             if dead {
                 self.message = format!("You killed the {:?}.", npc_kind);
                 #[cfg(feature = "sound")]
@@ -352,6 +769,9 @@ impl Game {
 
     /// Update all NPCs (AI turns).
     fn update_npcs(&mut self) {
+        #[cfg(feature = "gui")]
+        self.mark_cache_dirty();
+
         // Update wanted level based on outlaw's bounty.
         let old_wanted = self
             .world
@@ -600,6 +1020,8 @@ impl Game {
         let store = SaveStore::new(path);
         let saved_as = store.save_data(slot, SaveData::with_slot(self, slot))?;
         self.message = format!("Game saved to slot \"{saved_as}\".");
+        #[cfg(feature = "gui")]
+        self.mark_cache_dirty();
         #[cfg(feature = "sound")]
         self.sound_manager.play(SoundEffect::Save);
         Ok(saved_as)
@@ -629,12 +1051,12 @@ impl Game {
     /// Load the game from the named slot of the slot document at `path`.
     pub fn load_named_from(slot: &str, path: &Path) -> Result<Self, String> {
         let store = SaveStore::new(path);
-        let game = Self::from_save_data(store.load_data(slot)?);
+        let mut game = Self::from_save_data(store.load_data(slot)?);
+        #[cfg(feature = "gui")]
+        game.mark_cache_dirty();
         #[cfg(feature = "sound")]
         {
-            let mut game = game;
             game.sound_manager.play(SoundEffect::Load);
-            return Ok(game);
         }
         Ok(game)
     }
@@ -654,6 +1076,10 @@ impl Game {
             sound_manager: SoundManager::new().unwrap_or_default(),
             #[cfg(not(feature = "sound"))]
             sound_settings: SoundSettings::new(),
+            #[cfg(feature = "gui")]
+            sprite_cache: SpriteCache::new(256),
+            #[cfg(feature = "gui")]
+            cache_dirty: false,
         };
         // Restore sound settings from save data
         #[cfg(feature = "sound")]
@@ -684,6 +1110,13 @@ impl Game {
         let path = save_dir();
         let store = SaveStore::new(&path);
         store.list_saves()
+    }
+
+    /// Mark the sprite cache as dirty (needs re-render on next frame).
+    #[cfg(feature = "gui")]
+    fn mark_cache_dirty(&mut self) {
+        self.cache_dirty = true;
+        self.sprite_cache.clear();
     }
 }
 
