@@ -21,7 +21,7 @@ use rand::{seq::SliceRandom, SeedableRng};
 use std::path::Path;
 
 #[cfg(feature = "gui")]
-use crate::render::{Camera, EntityKind, ModelRegistry, Rasteriser, SpriteCache};
+use crate::render::{Camera, EntityKind, ModelRegistry, Rasteriser, SpriteCache, Sprite};
 
 /// A movement direction.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -119,6 +119,10 @@ impl Game {
             sound_manager: SoundManager::new().unwrap_or_default(),
             #[cfg(not(feature = "sound"))]
             sound_settings: SoundSettings::new_stub(),
+            #[cfg(feature = "gui")]
+            sprite_cache: SpriteCache::new(256),
+            #[cfg(feature = "gui")]
+            cache_dirty: false,
         }
     }
 
@@ -138,6 +142,10 @@ impl Game {
             sound_manager: SoundManager::new().unwrap_or_default(),
             #[cfg(not(feature = "sound"))]
             sound_settings: SoundSettings::new_stub(),
+            #[cfg(feature = "gui")]
+            sprite_cache: SpriteCache::new(256),
+            #[cfg(feature = "gui")]
+            cache_dirty: false,
         }
     }
 
@@ -157,6 +165,10 @@ impl Game {
             sound_manager: SoundManager::new().unwrap_or_default(),
             #[cfg(not(feature = "sound"))]
             sound_settings: SoundSettings::new_stub(),
+            #[cfg(feature = "gui")]
+            sprite_cache: SpriteCache::new(256),
+            #[cfg(feature = "gui")]
+            cache_dirty: false,
         }
     }
 
@@ -1028,6 +1040,10 @@ impl Game {
             sound_manager: SoundManager::new().unwrap_or_default(),
             #[cfg(not(feature = "sound"))]
             sound_settings: SoundSettings::new(),
+            #[cfg(feature = "gui")]
+            sprite_cache: SpriteCache::new(256),
+            #[cfg(feature = "gui")]
+            cache_dirty: false,
         };
         // Restore sound settings from save data
         #[cfg(feature = "sound")]

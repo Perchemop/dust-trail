@@ -15,7 +15,7 @@ pub mod camera;
 
 // Re-export key types for convenience
 pub use primitive::{Primitive, PrimitiveKind, Transform, Material};
-pub use model::{ObjectModel, ModelKey, BoundingBox, ModelRegistry, EntityKind};
+pub use model::{ObjectModel, ModelKey, BoundingBox, ModelRegistry, EntityKind, DrawKey};
 pub use raster::Rasteriser;
 pub use glyph::luminance_to_glyph;
 pub use sprite::Sprite;

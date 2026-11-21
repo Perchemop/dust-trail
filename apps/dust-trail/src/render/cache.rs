@@ -42,7 +42,7 @@ pub struct CacheKey {
 }
 
 /// Bounded LRU cache of rendered sprites.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SpriteCache {
     entries: HashMap<CacheKey, Sprite>,
     order: VecDeque<CacheKey>, // LRU order: front = most recent, back = least recent
