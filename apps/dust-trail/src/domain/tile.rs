@@ -59,4 +59,31 @@ impl TileType {
             TileType::Ground | TileType::Door | TileType::Loot | TileType::Horse
         )
     }
+
+    /// Create a flat sprite for this tile (gui feature only).
+    #[cfg(feature = "gui")]
+    pub fn to_sprite(&self, camera: &crate::render::Camera) -> crate::render::Sprite {
+        use crate::render::Sprite;
+        use crate::domain::color::Rgb;
+
+        let (ch, fg, bg) = match self {
+            TileType::Ground => ('.', Rgb::GRAY, Rgb::BLACK),
+            TileType::Wall => ('#', Rgb::DARK_GRAY, Rgb::BLACK),
+            TileType::Water => ('~', Rgb::BLUE, Rgb::new(30, 60, 100)),
+            TileType::Tree => ('T', Rgb::GREEN, Rgb::BLACK),
+            TileType::Building => ('B', Rgb::BROWN, Rgb::BLACK),
+            TileType::Door => ('+', Rgb::ORANGE, Rgb::BLACK),
+            TileType::Loot => ('$', Rgb::CYAN, Rgb::BLACK),
+            TileType::Horse => ('&', Rgb::BROWN, Rgb::BLACK),
+        };
+
+        Sprite {
+            key: "tile",
+            width: 1,
+            height: 1,
+            cells: vec![vec![(ch, fg, bg)]],
+            depth: vec![vec![0.0]],
+            anchor: (0, 0),
+        }
+    }
 }
