@@ -584,9 +584,6 @@ impl Game {
         frame.message = self.message.clone();
         frame
     }
-        frame.message = self.message.clone();
-        frame
-    }
 
     /// Move the player one step in `dir`. Returns the interaction result.
     pub fn move_player(&mut self, dir: Direction) -> Interaction {
@@ -1062,6 +1059,13 @@ impl Game {
         let store = SaveStore::new(&path);
         store.list_saves()
     }
+
+    /// Mark the sprite cache as dirty (needs re-render on next frame).
+    #[cfg(feature = "gui")]
+    fn mark_cache_dirty(&mut self) {
+        self.cache_dirty = true;
+        self.sprite_cache.clear();
+    }
 }
 
 /// NPC action during AI turns.
@@ -1078,13 +1082,6 @@ fn save_dir() -> std::path::PathBuf {
     directories::ProjectDirs::from("", "", "dust-trail")
         .map(|p| p.config_dir().to_path_buf())
         .unwrap_or_else(|| std::env::temp_dir().join("dust-trail"))
-}
-
-/// Mark the sprite cache as dirty (needs re-render on next frame).
-#[cfg(feature = "gui")]
-fn mark_cache_dirty(&mut self) {
-    self.cache_dirty = true;
-    self.sprite_cache.clear();
 }
 
 #[cfg(test)]
