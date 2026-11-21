@@ -226,32 +226,49 @@ impl Game {
         // Collect entity sprites with their screen positions and depths
         let mut entity_sprites: Vec<(Sprite, i32, i32, f32)> = Vec::new();
 
-        // Collect item data first to avoid borrow issues
-        let item_data: Vec<(EntityKind, i32, i32, f32)> = self.world.items
+        // Collect item data first - use explicit for-loop to avoid borrow checker
+        // conflict with later self.get_or_render_sprite() calls.
+        // The for-loop borrows self.world items immutably within the loop body,
+        // which ends each iteration, allowing later mutable borrows of self.
+        let mut item_entries: Vec<(crate::domain::world::ItemKind, i32, i32)> = Vec::new();
+        for item in &self.world.items {
+            if !item.collected && self.world.in_bounds(item.pos) {
+                item_entries.push((item.kind, item.pos.x, item.pos.y));
+            }
+        }
+
+        // Map item kinds to EntityKind and compute screen depths
+        let item_data: Vec<(EntityKind, i32, i32, f32)> = item_entries
             .iter()
-            .filter(|item| !item.collected && self.world.in_bounds(item.pos))
-            .map(|item| {
-                let kind = match item.kind {
+            .map(|(kind, x, y)| {
+                let entity_kind = match kind {
                     crate::domain::world::ItemKind::Loot => EntityKind::Loot,
                     crate::domain::world::ItemKind::Horse => EntityKind::Horse,
                 };
-                let depth = camera.screen_depth(item.pos.x as i32, item.pos.y as i32, 0);
-                (kind, item.pos.x as i32, item.pos.y as i32, depth)
+                let depth = camera.screen_depth(*x, *y, 0);
+                (entity_kind, *x, *y, depth)
             })
             .collect();
 
         // NPCs
-        let npc_data: Vec<(EntityKind, i32, i32, f32)> = self.world.npcs
+        let mut npc_entries: Vec<(crate::domain::world::NpcKind, i32, i32, i32)> = Vec::new();
+        for npc in &self.world.npcs {
+            if self.world.in_bounds(npc.pos) {
+                npc_entries.push((npc.kind, npc.pos.x, npc.pos.y, npc.pos.z));
+            }
+        }
+
+        // Map NPC kinds to EntityKind and compute screen depths
+        let npc_data: Vec<(EntityKind, i32, i32, f32)> = npc_entries
             .iter()
-            .filter(|npc| self.world.in_bounds(npc.pos))
-            .map(|npc| {
-                let kind = match npc.kind {
+            .map(|(kind, x, y, z)| {
+                let entity_kind = match kind {
                     crate::domain::world::NpcKind::Sheriff => EntityKind::Sheriff,
                     crate::domain::world::NpcKind::Deputy => EntityKind::Deputy,
                     crate::domain::world::NpcKind::Outlaw => EntityKind::Outlaw,
                 };
-                let depth = camera.screen_depth(npc.pos.x as i32, npc.pos.y as i32, npc.pos.z);
-                (kind, npc.pos.x as i32, npc.pos.y as i32, depth)
+                let depth = camera.screen_depth(*x, *y, *z);
+                (entity_kind, *x, *y, depth)
             })
             .collect();
 
