@@ -2,7 +2,7 @@
 
 ## Guide Information
 - **Guide version:** 2026-11-19 (`~/guide.md`)
-- **Sections read:** Part I (§0–18), Part II (§II.18–§II.30), Appendix A–O, and §19–§26 — read in full
+- **Sections read:** Part I (§0–18), Part II (§II.18–§II.30), Appendix A–O, and §19–§25 — read in full
 - **Repo AGENTS.md sync state:** Synced 2026-11-19 — the repository's `AGENTS.md` now matches the machine-global version.
 
 ## Active Free Models
@@ -34,4 +34,7 @@
   - Section 5.6: OpenCode Workflow Protocol (Smart Zone, Case 1-5 matrix, `/tdd`, `/implement`, etc.)
   - Section 5.7: Multi-Agent Architecture protocol (Case-4-only teams, on-disk team logs, allowlist-only permissions)
   - Section 9.3: Updated branch protection checklist with specific required checks
-  - New sections 19-26 (skills catalog, dead code prohibition, design guidelines, pstack, etc.)
+  - New sections 19-25 (skills catalog, dead code prohibition, design guidelines, pstack, etc.)
+  - Section 12: Suite-wide Standards and Parallel Agents protocol
+  - Sections II.26-II.30: Dev identity, personal data/secrets, Rust GUI/UX, supply chain, token metrics
+  - Addendum A-O: Merged client mode, MCP, phases 0-8, etc.

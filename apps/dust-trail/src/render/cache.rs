@@ -113,7 +113,7 @@ impl Default for SpriteCache {
 mod tests {
     use super::*;
 
-    fn make_key(model: &str) -> CacheKey {
+    fn make_key(model: &'static str) -> CacheKey {
         CacheKey {
             model_key: model,
             light_state: LightState { dir_x: 0, dir_y: 0, dir_z: 127, intensity: 255 },
@@ -160,10 +160,16 @@ mod tests {
     #[test]
     fn cache_bounded_never_grows_beyond_max() {
         let mut cache = SpriteCache::new(3);
-        for i in 0..10 {
-            cache.insert(make_key(&format!("obj{}", i)), make_sprite(&format!("obj{}", i)));
-            assert!(cache.len() <= 3);
-        }
+        // Use static strings since ModelKey is &'static str
+        cache.insert(make_key("obj0"), make_sprite("obj0"));
+        cache.insert(make_key("obj1"), make_sprite("obj1"));
+        cache.insert(make_key("obj2"), make_sprite("obj2"));
+        assert_eq!(cache.len(), 3);
+        // Insert fourth → should not increase length (evicts LRU)
+        cache.insert(make_key("obj3"), make_sprite("obj3"));
+        assert_eq!(cache.len(), 3);
+        // All old entries still present (just evicted LRU)
+        assert!(cache.get(&make_key("obj0")).is_some() || cache.get(&make_key("obj1")).is_some() || cache.get(&make_key("obj2")).is_some());
     }
 
     #[test]

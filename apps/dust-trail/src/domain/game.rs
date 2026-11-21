@@ -21,7 +21,7 @@ use rand::{seq::SliceRandom, SeedableRng};
 use std::path::Path;
 
 #[cfg(feature = "gui")]
-use crate::render::{Camera, EntityKind, ModelRegistry, Sprite, SpriteCache};
+use crate::render::{Camera, Sprite, SpriteCache};
 
 /// A movement direction.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -210,8 +210,8 @@ impl Game {
                 let wy = y;
                 let tile = self.world.tiles[wy as usize][wx as usize];
                 let sprite = tile.to_sprite(&camera);
-                let depth = camera.screen_depth(wx as i32, wy as i32, 0);
-                tile_sprites.push((sprite, wx as i32, wy as i32));
+                let _depth = camera.screen_depth(wx, wy, 0);
+                tile_sprites.push((sprite, wx, wy));
             }
         }
         // Sort back-to-front by screen depth
@@ -249,8 +249,8 @@ impl Game {
                     crate::domain::world::ItemKind::Loot => EntityKind::Loot,
                     crate::domain::world::ItemKind::Horse => EntityKind::Horse,
                 };
-                let depth = camera.screen_depth(*x, *y, 0);
-                (entity_kind, *x, *y, depth)
+                let _depth = camera.screen_depth(*x, *y, 0);
+                (entity_kind, *x, *y, _depth)
             })
             .collect();
 
@@ -271,8 +271,8 @@ impl Game {
                     crate::domain::world::NpcKind::Deputy => EntityKind::Deputy,
                     crate::domain::world::NpcKind::Outlaw => EntityKind::Outlaw,
                 };
-                let depth = camera.screen_depth(*x, *y, *z);
-                (entity_kind, *x, *y, depth)
+                let _depth = camera.screen_depth(*x, *y, *z);
+                (entity_kind, *x, *y, _depth)
             })
             .collect();
 
@@ -293,8 +293,8 @@ impl Game {
         // Player
         let player_model = registry.model_for(EntityKind::Player);
         let player_sprite = self.get_or_render_sprite(player_model, &raster, &camera);
-        let player_depth = camera.screen_depth(self.player.pos.x as i32, self.player.pos.y as i32, self.player.pos.z);
-        entity_sprites.push((player_sprite, self.player.pos.x as i32, self.player.pos.y as i32, player_depth));
+        let player_depth = camera.screen_depth(self.player.pos.x, self.player.pos.y, self.player.pos.z);
+        entity_sprites.push((player_sprite, self.player.pos.x, self.player.pos.y, player_depth));
 
         // Sort entities back-to-front by screen depth
         entity_sprites.sort_by(|a, b| a.3.partial_cmp(&b.3).unwrap_or(std::cmp::Ordering::Equal));

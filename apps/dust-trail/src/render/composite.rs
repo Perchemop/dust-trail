@@ -1,8 +1,8 @@
 //! Depth-aware compositing: sprite → Frame with z-compare.
 
+use crate::domain::cell::Cell;
 use crate::domain::frame::Frame;
 use crate::render::sprite::Sprite;
-use crate::domain::Cell;
 use crate::render::model::ModelKey;
 
 /// Composite a sprite into a frame with depth-aware occlusion.
@@ -71,8 +71,6 @@ pub fn placeholder_sprite(key: ModelKey) -> Sprite {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::domain::frame::Frame;
-    use crate::domain::Cell;
     use crate::domain::color::Rgb;
     use crate::render::sprite::Sprite;
 
@@ -83,7 +81,7 @@ mod tests {
 
         // Far sprite at depth 10.0
         let mut far_sprite = Sprite::placeholder("far");
-        far_sprite.cells = vec![vec![('A', Rgb(255, 0, 0), Rgb(0, 0, 0))]];
+        far_sprite.cells = vec![vec![('A', Rgb { r: 255, g: 0, b: 0 }, Rgb { r: 0, g: 0, b: 0 })]];
         far_sprite.depth = vec![vec![10.0]];
         far_sprite.width = 1;
         far_sprite.height = 1;
@@ -91,7 +89,7 @@ mod tests {
 
         // Near sprite at depth 5.0
         let mut near_sprite = Sprite::placeholder("near");
-        near_sprite.cells = vec![vec![('B', Rgb(0, 255, 0), Rgb(0, 0, 0))]];
+        near_sprite.cells = vec![vec![('B', Rgb { r: 0, g: 255, b: 0 }, Rgb { r: 0, g: 0, b: 0 })]];
         near_sprite.depth = vec![vec![5.0]];
         near_sprite.width = 1;
         near_sprite.height = 1;
@@ -118,7 +116,7 @@ mod tests {
 
         // Near sprite first
         let mut near_sprite = Sprite::placeholder("near");
-        near_sprite.cells = vec![vec![('A', Rgb(255, 0, 0), Rgb(0, 0, 0))]];
+        near_sprite.cells = vec![vec![('A', Rgb { r: 255, g: 0, b: 0 }, Rgb { r: 0, g: 0, b: 0 })]];
         near_sprite.depth = vec![vec![5.0]];
         near_sprite.width = 1;
         near_sprite.height = 1;
@@ -126,7 +124,7 @@ mod tests {
 
         // Farther sprite later
         let mut far_sprite = Sprite::placeholder("far");
-        far_sprite.cells = vec![vec![('B', Rgb(0, 255, 0), Rgb(0, 0, 0))]];
+        far_sprite.cells = vec![vec![('B', Rgb { r: 0, g: 255, b: 0 }, Rgb { r: 0, g: 0, b: 0 })]];
         far_sprite.depth = vec![vec![10.0]];
         far_sprite.width = 1;
         far_sprite.height = 1;
@@ -188,14 +186,14 @@ mod tests {
         frame.clear_depth();
 
         let mut near = Sprite::placeholder("near");
-        near.cells = vec![vec![('N', Rgb(255, 255, 255), Rgb(0, 0, 0))]];
+        near.cells = vec![vec![('N', Rgb { r: 255, g: 255, b: 255 }, Rgb { r: 0, g: 0, b: 0 })]];
         near.depth = vec![vec![2.0]];
         near.width = 1;
         near.height = 1;
         near.anchor = (0, 0);
 
         let mut far = Sprite::placeholder("far");
-        far.cells = vec![vec![('F', Rgb(255, 255, 255), Rgb(0, 0, 0))]];
+        far.cells = vec![vec![('F', Rgb { r: 255, g: 255, b: 255 }, Rgb { r: 0, g: 0, b: 0 })]];
         far.depth = vec![vec![10.0]];
         far.width = 1;
         far.height = 1;

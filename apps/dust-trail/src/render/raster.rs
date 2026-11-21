@@ -2,7 +2,7 @@
 
 use crate::render::camera::Camera;
 use crate::render::model::ObjectModel;
-use crate::render::primitive::{Primitive, PrimitiveKind, Transform, Material};
+use crate::render::primitive::{Primitive, PrimitiveKind, Transform};
 use crate::render::sprite::Sprite;
 use crate::render::glyph::luminance_to_glyph;
 use crate::domain::color::Rgb;
@@ -163,7 +163,7 @@ impl Rasteriser {
                     let x = (tx + angle.cos() * r as f32) as i32;
                     let y = (ty + angle.sin() * r as f32) as i32;
                     vertices.push((x, y, tz as i32));
-                    vertices.push((x, y, (tz as i32 + h) as i32));
+                    vertices.push((x, y, tz as i32 + h));
                 }
             }
             PrimitiveKind::Capsule => {
@@ -182,7 +182,7 @@ impl Rasteriser {
                     let angle = (i as f32) * std::f32::consts::FRAC_PI_2;
                     let x = (tx + angle.cos() * r as f32) as i32;
                     let y = (ty + angle.sin() * r as f32) as i32;
-                    vertices.push((x, y, (tz as i32 + h) as i32));
+                    vertices.push((x, y, tz as i32 + h));
                 }
             }
         }

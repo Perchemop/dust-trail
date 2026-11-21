@@ -176,7 +176,7 @@ mod tests {
             bounding_box: BoundingBox::default(),
             draw_key: DrawKey(10),
         };
-        assert!(reg.register(EntityKind::Tree, model).is_ok());
-        assert!(reg.register(EntityKind::Tree, model.clone()).is_err()); // duplicate
+        assert!(reg.register(EntityKind::Tree, model.clone()).is_ok());
+        assert!(reg.register(EntityKind::Tree, model).is_err()); // duplicate
     }
 }
