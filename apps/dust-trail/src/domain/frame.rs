@@ -41,11 +41,9 @@ impl Frame {
     /// Depth-aware write: overwrites only if `depth` is nearer than the stored depth
     /// at (x, y); updates the depth buffer. No-op out of bounds.
     pub fn set_at_depth(&mut self, x: usize, y: usize, cell: Cell, depth: f32) {
-        if y < self.height && x < self.width {
-            if depth < self.depth[y][x] {
-                self.cells[y][x] = cell;
-                self.depth[y][x] = depth;
-            }
+        if y < self.height && x < self.width && depth < self.depth[y][x] {
+            self.cells[y][x] = cell;
+            self.depth[y][x] = depth;
         }
     }
 
@@ -61,9 +59,7 @@ impl Frame {
     /// Reset the depth buffer to infinity (called at the start of each frame build).
     pub fn clear_depth(&mut self) {
         for row in &mut self.depth {
-            for d in row {
-                *d = f32::INFINITY;
-            }
+            row.fill(f32::INFINITY);
         }
     }
 

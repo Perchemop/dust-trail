@@ -62,7 +62,7 @@ impl TileType {
 
     /// Create a flat sprite for this tile (gui feature only).
     #[cfg(feature = "gui")]
-    pub fn to_sprite(&self, camera: &crate::render::Camera) -> crate::render::Sprite {
+    pub fn to_sprite(&self, _camera: &crate::render::Camera) -> crate::render::Sprite {
         use crate::render::Sprite;
         use crate::domain::color::Rgb;
 

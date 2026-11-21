@@ -110,7 +110,7 @@ impl Rasteriser {
     fn generate_primitive_vertices(&self, primitive: &Primitive) -> Vec<(i32, i32, i32)> {
         let Transform { translation, rotation, scale } = primitive.transform;
         let (tx, ty, tz) = translation;
-        let (rx, _ry, _rz) = rotation;
+        let (_rx, _ry, _rz) = rotation;
         let (sx, sy, sz) = scale;
 
         let mut vertices = Vec::new();
@@ -265,7 +265,8 @@ impl Rasteriser {
 mod tests {
     use super::*;
     use crate::render::camera::Camera;
-    use crate::render::model::{ObjectModel, BoundingBox, DrawKey, Primitive, Transform, Material, PrimitiveKind};
+    use crate::render::model::{ObjectModel, BoundingBox, DrawKey};
+    use crate::render::primitive::{Primitive, Transform, Material, PrimitiveKind};
 
     fn make_rasteriser() -> Rasteriser {
         Rasteriser::new(32, 32).with_light((0.0, 0.0, 1.0))

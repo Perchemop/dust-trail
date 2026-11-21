@@ -13,7 +13,7 @@ pub fn composite_sprite(frame: &mut Frame, sprite: &Sprite, screen_x: i32, scree
         return;
     }
 
-    let sw = sprite.width as i32;
+    let _sw = sprite.width as i32;
     let sh = sprite.height as i32;
 
     // Sprite anchor is bottom-center of the sprite's footprint
@@ -73,7 +73,7 @@ mod tests {
     use super::*;
     use crate::domain::frame::Frame;
     use crate::domain::Cell;
-    use crate::domain::world::Rgb;
+    use crate::domain::color::Rgb;
     use crate::render::sprite::Sprite;
 
     #[test]

@@ -21,7 +21,7 @@ use rand::{seq::SliceRandom, SeedableRng};
 use std::path::Path;
 
 #[cfg(feature = "gui")]
-use crate::render::{Camera, EntityKind, ModelRegistry, Rasteriser, SpriteCache, Sprite};
+use crate::render::{Camera, EntityKind, ModelRegistry, Sprite, SpriteCache};
 
 /// A movement direction.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -176,7 +176,7 @@ impl Game {
     pub fn frame(&mut self) -> Frame {
         #[cfg(feature = "gui")]
         {
-            return self.frame_with_render();
+            self.frame_with_render()
         }
 
         #[cfg(not(feature = "gui"))]
@@ -215,7 +215,11 @@ impl Game {
             }
         }
         // Sort back-to-front by screen depth
-        tile_sprites.sort_by_key(|(_, wx, wy)| camera.screen_depth(*wx, *wy, 0) as i32);
+        tile_sprites.sort_by(|(_, wx, wy), (_, wx2, wy2)| {
+            let d1 = camera.screen_depth(*wx, *wy, 0);
+            let d2 = camera.screen_depth(*wx2, *wy2, 0);
+            d1.partial_cmp(&d2).unwrap_or(std::cmp::Ordering::Equal)
+        });
 
         // Composite tile sprites
         for (sprite, wx, wy) in tile_sprites {
@@ -548,6 +552,7 @@ impl Game {
     }
 
     /// Flat rendering fallback for non-gui builds (headless tests).
+    #[allow(dead_code)]
     fn frame_flat(&self) -> Frame {
         // --- Isometric layout ---
         // World (x, y) -> screen (sx, sy): sx = (x-y)*2, sy = x+y.
