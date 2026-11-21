@@ -226,33 +226,47 @@ impl Game {
         // Collect entity sprites with their screen positions and depths
         let mut entity_sprites: Vec<(Sprite, i32, i32, f32)> = Vec::new();
 
-        // Items
-        for item in &self.world.items {
-            if !item.collected && self.world.in_bounds(item.pos) {
+        // Collect item data first to avoid borrow issues
+        let item_data: Vec<(EntityKind, i32, i32, f32)> = self.world.items
+            .iter()
+            .filter(|item| !item.collected && self.world.in_bounds(item.pos))
+            .map(|item| {
                 let kind = match item.kind {
                     crate::domain::world::ItemKind::Loot => EntityKind::Loot,
                     crate::domain::world::ItemKind::Horse => EntityKind::Horse,
                 };
-                let model = registry.model_for(kind);
-                let sprite = self.get_or_render_sprite(model, &raster, &camera);
                 let depth = camera.screen_depth(item.pos.x as i32, item.pos.y as i32, 0);
-                entity_sprites.push((sprite, item.pos.x as i32, item.pos.y as i32, depth));
-            }
-        }
+                (kind, item.pos.x as i32, item.pos.y as i32, depth)
+            })
+            .collect();
 
         // NPCs
-        for npc in &self.world.npcs {
-            if self.world.in_bounds(npc.pos) {
+        let npc_data: Vec<(EntityKind, i32, i32, f32)> = self.world.npcs
+            .iter()
+            .filter(|npc| self.world.in_bounds(npc.pos))
+            .map(|npc| {
                 let kind = match npc.kind {
                     crate::domain::world::NpcKind::Sheriff => EntityKind::Sheriff,
                     crate::domain::world::NpcKind::Deputy => EntityKind::Deputy,
                     crate::domain::world::NpcKind::Outlaw => EntityKind::Outlaw,
                 };
-                let model = registry.model_for(kind);
-                let sprite = self.get_or_render_sprite(model, &raster, &camera);
                 let depth = camera.screen_depth(npc.pos.x as i32, npc.pos.y as i32, npc.pos.z);
-                entity_sprites.push((sprite, npc.pos.x as i32, npc.pos.y as i32, depth));
-            }
+                (kind, npc.pos.x as i32, npc.pos.y as i32, depth)
+            })
+            .collect();
+
+        // Items
+        for (kind, wx, wy, depth) in item_data {
+            let model = registry.model_for(kind);
+            let sprite = self.get_or_render_sprite(model, &raster, &camera);
+            entity_sprites.push((sprite, wx, wy, depth));
+        }
+
+        // NPCs
+        for (kind, wx, wy, depth) in npc_data {
+            let model = registry.model_for(kind);
+            let sprite = self.get_or_render_sprite(model, &raster, &camera);
+            entity_sprites.push((sprite, wx, wy, depth));
         }
 
         // Player
