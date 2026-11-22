@@ -3,6 +3,10 @@
 ## v1.5.1 - 2026-11-20
 
 ### Fixed
+- Build: 19 compile errors in the library test target fixed — `Rgb` struct literals in render tests, `&'static str` model-key lifetimes in the sprite-cache tests, a clone-after-move in the model-registry test, unused imports, and redundant integer casts. CI run `44965810348` is the first fully green run of this branch.
+- Build: the sprite-cache test helpers now take `&'static str` keys, matching the `ModelKey` type.
+- Render tests: the Lambertian shading test now exercises two separated primitives with different fixed normals (side-facing box, top-facing ellipsoid), matching the documented per-primitive-kind shading model. The previous fixture required per-pixel normals, which the rasteriser does not implement yet.
+- Agent ruleset: `AGENTS.md` re-synced with build guide 2026-11-22 — runtime renamed to DeepSeek Harness (DSH), the DSH workflow protocol (§5.6), multi-agent protocol (§5.7), Dev-identity, personal-data scan, Rust GUI/UX, skills, and catalog sections added.
 - Release pipeline: removed the duplicate `publish.yml` workflow. Its unquoted `on:` YAML key made the whole workflow invalid, and it was the reason the v1.5.0 release published with no installers at all.
 - Release pipeline: fixed the GUI compile error that failed every one of the four release build jobs for v1.5.0.
 - Release pipeline: the release job now fails if any installer is missing instead of publishing a partial release, and `SHA256SUMS.txt` is generated only from the installers, using bare filenames so `sha256sum -c SHA256SUMS.txt` works.

@@ -12,14 +12,16 @@ figures that come from real measurements rather than placeholders.
 been tagged or published. The CI pipeline is configured for v1.5.1 releases,
 and the artifacts are ready to be attached when the tag is created.
 
-**Latest CI run:**
-- Run ID `44701830027` (commit `0f68267` on branch `opencode/ci`): **NOT green** — fixed by the repairs in this slice
-- A later run, `44726899973` (commit `a87d795`), still failed on dead-code (`save_game`/`load_game` unused) and the unsupported `--features`/`--target` flags on `cargo wix` in `ci.yml`; both are fixed in the following commit
-- **Previous green CI run** for verification: Run ID `44521541346` (all five checks: `check`, `Build (windows-x86_64)`, `Build (macos-arm64)`, `Build (linux-arm64)`, `supply-chain`)
+**Latest CI run (green):**
+- Run ID `44965810348` (commit `fec2013` on branch `opencode/ci`): **GREEN** — all five required checks passed: `check`, `Build (windows-x86_64)`, `Build (macos-arm64)`, `Build (linux-arm64)`, `supply-chain`
+- PR #27 merged to `main` from the Dev account at 2026-11-22T00:22:42Z (merge commit `1efc65c`)
+- Intermediate runs on this branch: `44963917267` (41fd126), `44964271900` (bb2b11c), `44964785349` (58013b1) — each surfaced the next compile defect; all fixed in-session
 
-**PR state:**
-- PR #25 (release-infrastructure slice) is open on branch `opencode/ci`; head is the latest repair commit
-- The slice includes the v1.5.1 fix and is ready for merge once CI is green
+**This slice fixed (guide §8.2 evidence):**
+- 19 lib-test compile errors: `Rgb` tuple-struct construction (12), `ModelKey` `&'static str` lifetimes in `render/cache.rs` tests, clone-after-move in `render/model.rs` test, unused imports (`game.rs`, `raster.rs`, `composite.rs`), redundant `as i32` casts
+- One feature-conditional `unused_mut` in `Game::load_named_from` (bare TUI build never mutates the loaded game; scoped `#[allow]` with reason)
+- One latent test failure (`rasteriser_lambertian_shading_monotonic`): the fixture asserted per-pixel normal shading that the documented per-primitive-kind normal model (raster.rs `fill_primitive_footprint`) never provided; fixture rebuilt as two screen-separated primitives with different fixed normals — assertion unchanged
+- `AGENTS.md` re-synced line-for-line with guide 2026-11-22 (939 → 1,975 lines; runtime OpenCode → DSH; §5.6/§5.7, II.26–II.30, §19–§25 added); `docs/current-model-map.md` corrected (§19–§26 → §19–§25)
 
 **Pending evidence for v1.5.1 publication:**
 - Interim measured v1.5.1 snapshot: 284,971,538 this release / 2,525,965,249 cumulative (`docs/tokens.json`); the `docs/tokens.md` v1.5.1 row is finalised at release time per its own measurement notes
