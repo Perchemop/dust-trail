@@ -1,0 +1,50 @@
+# Lockfile updates are a CI operation (guide §4 item 5: cargo runs only in
+# GitHub Actions). Dispatch this workflow after editing a manifest version on
+# a feature branch; it regenerates Cargo.lock for the named package and
+# commits the result to that branch, so the PR re-runs against a consistent
+# tree. Never run cargo update on a developer machine.
+name: lockfile-update
+
+on:
+  workflow_dispatch:
+    inputs:
+      package:
+        description: "Package name to update (Cargo.lock -p argument)"
+        required: true
+      version:
+        description: "Exact version to pin (--precise), e.g. 0.10.4"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  update-lockfile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
+      - name: Update lockfile entry (resolution only, no compilation)
+        env:
+          PACKAGE: ${{ github.event.inputs.package }}
+          VERSION: ${{ github.event.inputs.version }}
+        run: |
+          set -euo pipefail
+          cargo update -p "$PACKAGE" --precise "$VERSION"
+          git diff --stat Cargo.lock
+      - name: Commit and push to the dispatching branch
+        env:
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          git config user.name "Dust Trail Dev"
+          git config user.email "dev@example.com"
+          git add Cargo.lock
+          if git diff --cached --quiet; then
+            echo "No lockfile change — the requested version may already be pinned."
+            exit 1
+          fi
+          git commit -m "ci: update ${{ github.event.inputs.package }} lockfile entry to ${{ github.event.inputs.version }}"
+          git push origin "HEAD:$BRANCH"
