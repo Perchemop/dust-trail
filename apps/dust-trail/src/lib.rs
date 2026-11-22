@@ -1,15 +1,18 @@
 //! Dust Trail — original Western-themed ASCII adventure game.
 //!
-//! Domain-first: `domain` is pure Rust, headless and testable. `tui` and
-//! `gui` are frontends that render the same `Frame` produced by the domain.
+//! Domain-first: `domain` is pure Rust, headless and testable. `gui` is the
+//! frontend that renders the `Frame` produced by the domain. The TUI frontend
+//! was removed in v2.0.0.
 //!
 //! Clean-room: original mechanics, art style, and assets.
 
 pub mod domain;
-pub mod tui;
 
 #[cfg(feature = "gui")]
 pub mod gui;
+
+#[cfg(feature = "gui")]
+pub mod render;
 
 #[cfg(feature = "gui")]
 pub mod theme;

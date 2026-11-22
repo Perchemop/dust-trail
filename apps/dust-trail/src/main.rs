@@ -2,17 +2,15 @@
 //!
 //! Frontend selection:
 //!   - `--gui` forces the egui/eframe desktop window.
-//!   - `--tui` forces the terminal user interface.
-//!   - Otherwise the terminal interface is used when a terminal is attached,
-//!     and the desktop window is used when there is none. That fallback is
-//!     what makes the macOS `.app` bundle (and any desktop launcher without
-//!     `Terminal=true`) open a real window instead of a dead terminal.
+//!   - `--tui` is not supported (TUI removed in v2.0.0).
+//!   - Otherwise the desktop window is used when there is no terminal attached,
+//!     so that the macOS `.app` bundle (and any desktop launcher without
+//!     `Terminal=true`) opens a real window.
 //!
 //! Wires the shared suite crates: crash-report panic hook and update-check.
 
 #[cfg(feature = "gui")]
 use dust_trail::gui::Gui;
-use dust_trail::tui::Tui;
 use std::error::Error;
 use std::io::IsTerminal;
 
@@ -21,15 +19,15 @@ fn terminal_attached() -> bool {
     std::io::stdout().is_terminal() && std::io::stdin().is_terminal()
 }
 
-fn run_tui() -> Result<(), Box<dyn Error>> {
-    let tui = Tui::new().map_err(|e| format!("tui init failed: {e}"))?;
-    tui.run().map_err(|e| format!("tui run failed: {e}").into())
-}
-
 fn main() -> Result<(), Box<dyn Error>> {
     let args: Vec<String> = std::env::args().collect();
     let want_gui = args.iter().any(|a| a == "--gui");
     let want_tui = args.iter().any(|a| a == "--tui");
+
+    if want_tui {
+        eprintln!("TUI is not supported in v2.0.0. Use --gui to launch the desktop window.");
+        std::process::exit(2);
+    }
 
     // Crash reporting (guide §7.1): capture a scrubbed report on panic and park
     // it for review on the next launch. Nothing is sent over the network
@@ -68,10 +66,10 @@ fn main() -> Result<(), Box<dyn Error>> {
         eprintln!("[update available] Dust Trail {current} → {latest} — {url}");
     }
 
-    // Choose the frontend. An explicit flag always wins; otherwise the
-    // terminal interface is used only when a terminal is attached, so that
+    // Choose the frontend. An explicit --gui flag always wins; otherwise
+    // the desktop window is used only when no terminal is attached, so that
     // launching the app from a desktop environment opens the GUI window.
-    let use_gui = want_gui || (!want_tui && !terminal_attached());
+    let use_gui = want_gui || !terminal_attached();
 
     #[cfg(feature = "gui")]
     if use_gui {
@@ -95,12 +93,13 @@ fn main() -> Result<(), Box<dyn Error>> {
     if use_gui {
         eprintln!(
             "No terminal is attached and this build has no GUI. \
-             Rebuild with the `gui` feature to get the desktop window, \
-             or run it from a terminal for the text interface."
+             Rebuild with the `gui` feature to get the desktop window."
         );
         std::process::exit(2);
     }
 
-    // Default: terminal TUI.
-    run_tui()
+    // No GUI feature and no terminal attached but we're in a terminal.
+    // This shouldn't happen with the logic above, but handle it gracefully.
+    eprintln!("No frontend available. Rebuild with the `gui` feature.");
+    std::process::exit(2);
 }
