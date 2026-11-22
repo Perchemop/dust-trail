@@ -27,3 +27,14 @@ Suggested change: make `ci.sh` print its supported subcommands when it receives 
 Severity: slows-work
 Workaround I used: merged PR #24 with `gh pr merge 24 --merge --delete-branch=false`, which matches the repository's established merge-commit history (all prior merges are GitHub-authored merge commits through the `Perchemop` Dev credential)
 Confirm: did NOT violate clean-room / v0.1.0 gate / no-secrets / CI-before-client-try / no meta-guide push
+---
+
+PROCESS FEEDBACK
+Date / session: 2026-11-22 (Dust Trail, guide 2026-11-22 review + ruleset sync session)
+What I was trying to do: delegate the CI compile-error fixes to a subagent, and later spawn any pinned-NVIDIA subagent, while running the legacy ci.sh verification loop.
+Block or friction: (1) two subagent launches failed before doing any work ("failed before it finished... no closing message") with no diagnostic surfaced to the parent; (2) explicit pinned-NVIDIA routes (nvidia/nemotron-3.5-super-vl-120b-a12b) were refused with "child LLM route ... is not allowed for this Session", so subagent delegation was unavailable for the whole session; (3) the guide's documented `ci.sh merge` subcommand does not exist in the legacy shim on this machine (commands: run, status, logs, diff, open), so the PR merge had to go through `gh pr merge` directly.
+Why the current guide/addendum caused it (or did not cover it): guide §5.7/§5.6 assume sub-agent dispatch and `ci.sh merge` are available; the runtime in this session allows neither, and the guide has no documented fallback for "delegation unavailable" or "shim lacks subcommand".
+Suggested change (one concrete edit): add to §5.6.4 (or a short §5.6.8) a fallback rule — "if sub-agent dispatch is refused by the runtime, the Orchestrator executes the ticket in-session under the same verification mandate; if the local ci.sh lacks a documented subcommand, use the equivalent gh/git command from the Dev identity and record the substitution in PROGRESS.md."
+Severity: slows-work
+Workaround I used (if any): performed the compile fixes in-session; merged PR #27 with `gh pr merge 27 --merge` from the Dev account (`gh api user` = Perchemop) after `=== CI RESULT: SUCCESS ===`.
+Confirm: did NOT violate clean-room / v0.1.0 gate / no-secrets / CI-before-client-try / no meta-guide push
