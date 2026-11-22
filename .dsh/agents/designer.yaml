@@ -1,0 +1,5 @@
+# Designer — design vision, capability inventory, parity review (guide §5.3, II.27).
+role: designer
+permissions:
+  edit: allow   # design docs + UI source realisation, per file ownership
+  bash: deny

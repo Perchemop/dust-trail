@@ -14,3 +14,7 @@ dist-static/
 **/target/
 /dust-trail-*.tar.gz
 /dust-trail-*.zip
+
+# Local-only files (guide §11, §5.7.2)
+docs/devlog.md
+.dsh/settings.local.json

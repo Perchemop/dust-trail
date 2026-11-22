@@ -1,4 +1,4 @@
-# Authoritative status checks for `ci.sh` (guide II.20.4 / II.25).
+# Authoritative status checks for `ci.sh` (guide II.20.4 / II.25 / II.26.7 / II.29.3).
 # One exact check name per line; blank lines and `#` comments are ignored.
 # Only these decide ci.sh's verdict; other checks are still reported.
 #
@@ -10,8 +10,12 @@ Build (windows-x86_64)
 Build (macos-arm64)
 Build (linux-arm64)
 supply-chain
-# Deliberately NOT required (planned for v0.2.0):
-# - Secret scan / Personal data scan: run as an inline step inside `check`
+pr-author-is-dev
+personal-data-scan
+secret-scan
+# Deliberately NOT required (planned):
 # - Cargo deny (licences, advisories): planned
 # - SBOM (SPDX + CycloneDX): planned
 # - Dependency review / packaging-plan: planned
+# Note (guide §23): the guide's example names (ci, pr-author-is-dev, ...) are
+# illustrative; these are this repo's real GitHub job names, as §4 requires.

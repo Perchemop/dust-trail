@@ -1,0 +1,5 @@
+# Explorer/Researcher — gather public context (guide §5.3).
+role: explorer
+permissions:
+  edit: deny
+  bash: allow   # read-only only

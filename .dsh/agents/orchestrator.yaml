@@ -1,0 +1,7 @@
+# Orchestrator — plan and research only; no implementation (guide §5.3).
+# May manage a sub-agent dispatch (§5.6.3 /implement-spec) or an agent team (§5.7).
+role: orchestrator
+permissions:
+  edit: deny
+  bash: allow   # read-only inspection + git status/diff/log + gh api user
+  notes: Sole pusher/merger/tagger via ci.sh; sole user of the question tool for human gates.

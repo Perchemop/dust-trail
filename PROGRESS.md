@@ -22,6 +22,7 @@ and the artifacts are ready to be attached when the tag is created.
 - One feature-conditional `unused_mut` in `Game::load_named_from` (bare TUI build never mutates the loaded game; scoped `#[allow]` with reason)
 - One latent test failure (`rasteriser_lambertian_shading_monotonic`): the fixture asserted per-pixel normal shading that the documented per-primitive-kind normal model (raster.rs `fill_primitive_footprint`) never provided; fixture rebuilt as two screen-separated primitives with different fixed normals — assertion unchanged
 - `AGENTS.md` re-synced line-for-line with guide 2026-11-22 (939 → 1,975 lines; runtime OpenCode → DSH; §5.6/§5.7, II.26–II.30, §19–§25 added); `docs/current-model-map.md` corrected (§19–§26 → §19–§25)
+- Guide-mandated gates closed the same day: `main` branch protection enabled and verified per §9.3 (settings + date in `docs/dev.md`); named required checks `pr-author-is-dev` (II.26.7), `personal-data-scan` and `secret-scan` (II.29.3) added to `ci.yml` + `.ci-required.txt`; §12 scaffolding created (`.dsh/` commands+agents, `.gitleaks.toml`, `contributors/people.toml`, `docs/team-log/`, `docs/reference/`, `docs/design/brand.md`); stale `.opencode/` tree removed; `docs/gaps.md` worklist opened and partly closed
 
 **Pending evidence for v1.5.1 publication:**
 - Interim measured v1.5.1 snapshot: 284,971,538 this release / 2,525,965,249 cumulative (`docs/tokens.json`); the `docs/tokens.md` v1.5.1 row is finalised at release time per its own measurement notes

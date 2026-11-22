@@ -1,0 +1,6 @@
+# Reviewer — PR vs acceptance criteria + clean-room rules (guide §5.3).
+# May serve as the plan-approval gate (§5.7.4) or the /code-review executor (§5.6.3).
+role: reviewer
+permissions:
+  edit: deny
+  bash: deny

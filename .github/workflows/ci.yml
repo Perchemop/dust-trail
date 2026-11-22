@@ -59,31 +59,6 @@ jobs:
         run: cargo build --release --locked
       - name: Build release (TUI-only configuration)
         run: cargo build --release --locked -p dust-trail --no-default-features --features tui
-      - name: Personal data and secret scan
-        run: |
-          set -e
-          echo "Scanning working tree for personal data and secrets..."
-          # Patterns that indicate a real leak (obviously synthetic values are
-          # allowed: dev@example.com, example.com, Jane Doe, +1 555 0100).
-          # `/home/runner` (the CI runner account) is an allowed hit, and the
-          # workflow files are excluded because they contain the scan pattern
-          # themselves (ci.yml and release.yml both carry scan regexes).
-          if git grep -n -I -i -E '/home/[^/[:space:]]+' -- . \
-              ':(exclude)*.lock' ':(exclude)Cargo.lock' ':(exclude).github/workflows/ci.yml' \
-              ':(exclude).github/workflows/release.yml' ':(exclude)AGENTS.md' \
-              | grep -v '/home/runner'; then
-            echo "::error::Personal /home/ path found in tree"
-            exit 1
-          fi
-          if git grep -n -I -E '[A-Za-z0-9._%+-]+@(gmail|outlook|hotmail|yahoo|proton)\.' -- .; then
-            echo "::error::Personal email address found in tree"
-            exit 1
-          fi
-          if git grep -n -I -E '(ghp_[A-Za-z0-9]{36,}|sk-[A-Za-z0-9]{20,}|AIza[0-9A-Za-z\\-_]{35,})' -- .; then
-            echo "::error::Possible token/secret found in tree"
-            exit 1
-          fi
-          echo "Scan clean."
 
   # Multi-OS release builds (mirrors release.yml targets).
   build:
@@ -227,3 +202,80 @@ jobs:
         run: |
           test -s dist-workspace.toml || { echo "::error::dist-workspace.toml missing or empty"; exit 1; }
           grep -q '\[workspace\]' dist-workspace.toml || { echo "::error::dist-workspace.toml missing [workspace]"; exit 1; }
+
+  # Required status check (guide II.26.7): every PR is opened by the Dev
+  # account. Runs on pull_request events only; skipped (and green) on pushes.
+  pr-author-is-dev:
+    name: pr-author-is-dev
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Verify PR author is the Dev account
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          LOGIN=$(gh api "repos/${{ github.repository }}/pulls/${{ github.event.number }}" --jq '.user.login')
+          echo "PR author: $LOGIN"
+          if [ "$LOGIN" != "Perchemop" ]; then
+            echo "::error::PR opened by '$LOGIN'; required author is the Dev account 'Perchemop' (guide II.26.7). Re-open from the Dev account and close this one; note it in docs/process-feedback.md."
+            exit 1
+          fi
+          echo "PR author is the Dev account."
+
+  # Required status check (guide II.29.3): personal-data pattern scan over the
+  # working tree (II.29.2 surface 1). Obviously synthetic values are allowed
+  # (dev@example.com, example.com, Jane Doe, +1 555 0100); /home/runner is the
+  # CI account and allowed. Workflow files are excluded: they carry the scan
+  # patterns themselves; AGENTS.md mirrors the guide, which quotes them too.
+  personal-data-scan:
+    name: personal-data-scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Personal-data pattern scan (II.29.2)
+        run: |
+          set -e
+          echo "Scanning working tree for personal data (guide II.29)..."
+          if git grep -n -I -i -E '/home/[^/[:space:]]+' -- . \
+              ':(exclude)*.lock' ':(exclude)Cargo.lock' ':(exclude).github/workflows/*' \
+              ':(exclude)AGENTS.md' \
+              | grep -v '/home/runner'; then
+            echo "::error::Personal /home/ path found in tree"
+            exit 1
+          fi
+          if git grep -n -I -i -E 'C:\\Users\\[A-Za-z0-9_.-]+' -- . \
+              ':(exclude).github/workflows/*' ':(exclude)AGENTS.md'; then
+            echo "::error::Personal Windows profile path found in tree"
+            exit 1
+          fi
+          if git grep -n -I -E '[A-Za-z0-9._%+-]+@(gmail|outlook|hotmail|yahoo|proton)\.' -- .; then
+            echo "::error::Personal email address found in tree"
+            exit 1
+          fi
+          echo "Personal-data scan clean."
+
+  # Required status check (guide II.29.3): secret-pattern scan over the
+  # working tree. gitleaks runs in the release pipeline against artefacts
+  # (II.29.6); this gate covers every PR at zero setup cost.
+  secret-scan:
+    name: secret-scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Secret pattern scan (II.29.1)
+        run: |
+          set -e
+          echo "Scanning working tree for secret patterns (guide II.29.1)..."
+          if git grep -n -I -E '(ghp_[A-Za-z0-9]{36,}|gho_[A-Za-z0-9]{36,}|sk-[A-Za-z0-9]{20,}|AIza[0-9A-Za-z\\-_]{35,}|xox[bap]-[A-Za-z0-9-]{10,}|-----BEGIN [A-Z ]*PRIVATE KEY-----)' -- . \
+              ':(exclude).github/workflows/*' ':(exclude)AGENTS.md'; then
+            echo "::error::Possible token/secret found in tree"
+            exit 1
+          fi
+          if git grep -n -I -i -E '(api[_-]?key|secret|token|password|passwd|bearer)[[:space:]]*[:=][[:space:]]*['"'"'"][^'"'"'"]{8,}' -- . \
+              ':(exclude).github/workflows/*' ':(exclude)AGENTS.md' ':(exclude)docs/' \
+              | grep -v -i -E 'placeholder|example|YOUR_|<|\$\{|env\.'; then
+            echo "::error::Secret-shaped assignment found in tree"
+            exit 1
+          fi
+          echo "Secret scan clean."

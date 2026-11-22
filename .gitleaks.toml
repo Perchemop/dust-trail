@@ -1,0 +1,11 @@
+title = "dust-trail gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Research notes carry summaries + URLs only; lockfiles are generated"
+paths = [
+  '''docs/research/.*''',
+  '''Cargo.lock''',
+]

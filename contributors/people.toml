@@ -1,0 +1,15 @@
+# Consent-verified human credits (guide §24.2).
+# One [[person]] entry per human contributor. AI agents and models are
+# credited under About ▸ Models, never here (guide §9.4).
+# The About ▸ Contributors screen renders only entries with a non-empty
+# `consented` date. By adding yourself in a pull request you consent to your
+# `display` name and `url` being shown in the app's About screen and in the
+# public repository (guide §24.2 wording).
+#
+# Example of the exact schema (an obviously synthetic placeholder — never a
+# real person until they consent in their own PR):
+# [[person]]
+# name = "Jane Doe"
+# display = "Jane D."
+# url = "https://github.com/janedoe"
+# consented = 2026-11-01
