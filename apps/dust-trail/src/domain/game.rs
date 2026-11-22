@@ -1051,6 +1051,9 @@ impl Game {
     /// Load the game from the named slot of the slot document at `path`.
     pub fn load_named_from(slot: &str, path: &Path) -> Result<Self, String> {
         let store = SaveStore::new(path);
+        // `mut` is consumed only by the gui/sound-gated calls below; a bare
+        // TUI build never mutates the loaded game, so the lint is expected there.
+        #[allow(unused_mut)]
         let mut game = Self::from_save_data(store.load_data(slot)?);
         #[cfg(feature = "gui")]
         game.mark_cache_dirty();
