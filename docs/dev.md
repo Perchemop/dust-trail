@@ -9,19 +9,29 @@
 
 ## Branch protection (§9.3 checklist)
 
-The `gh api repos/Perchemop/dust-trail/branches/main/protection` call could not be executed (shell access is not available in this environment), so no protection setting is verifiable. Every item below is recorded as **unknown — not verifiable with the current token**. No settings were guessed or invented.
+**Verified and enabled 2026-11-22** via `gh api` (the Dev credential holds
+admin: `permissions.admin: true`), applied with `PUT
+/repos/Perchemop/dust-trail/branches/main/protection` per §9.3. Signed
+commits: skipped (`required_signatures.enabled: false`) — the CI signing path
+is the GPG release-signing secrets, not commit signing; reason recorded here
+per §9.3. Restrict who can push: not set (free plan) — enforced instead by the
+required `pr-author-is-dev` check (II.26.7), as §9.3 allows.
 
-| §9.3 item | State |
+| §9.3 item | State (verified 2026-11-22) |
 |---|---|
-| Require a pull request before merging | unknown — not verifiable with the current token |
-| Required status checks (from `.ci-required.txt`) | unknown — not verifiable with the current token |
-| Require linear history | unknown — not verifiable with the current token |
-| Do not allow force-pushes | unknown — not verifiable with the current token |
-| Do not allow branch deletions | unknown — not verifiable with the current token |
-| `enforce_admins: true` | unknown — not verifiable with the current token |
-| Restrict who can push | unknown — not verifiable with the current token |
-| Require signed commits (`require_signed_commits`) | unknown — not verifiable with the current token |
-| Require conversation resolution before merging | unknown — not verifiable with the current token |
+| Require a pull request before merging | **on** (`required_pull_request_reviews` with 0 required approvals) |
+| Required status checks (from `.ci-required.txt`) | **on** — `check`, `Build (windows-x86_64)`, `Build (macos-arm64)`, `Build (linux-arm64)`, `supply-chain` |
+| Require linear history | **on** |
+| Do not allow force-pushes | **on** (disabled) |
+| Do not allow branch deletions | **on** (disabled) |
+| `enforce_admins: true` | **on** |
+| Restrict who can push | not set — free plan; enforced by `pr-author-is-dev` (II.26.7) |
+| Require signed commits | **off** — reason recorded above |
+| Require conversation resolution before merging | **on** |
+
+The `pr-author-is-dev`, `personal-data-scan` and `secret-scan` jobs (added
+to `.ci-required.txt` per II.26.7 / II.29.3) are appended to the required
+contexts once their first run has reported on the introducing PR.
 
 **Merge-method fact (from history):** every prior merge on `main` is a GitHub-authored merge commit (`Merge pull request #N from Perchemop/opencode/ci`) created using the `Perchemop` credential. The repo allows merge commits; squash/rebase merges are not the established practice.
 

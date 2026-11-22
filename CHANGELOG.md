@@ -17,6 +17,9 @@
 - Changelog parsing: a prose `##` heading such as `## Known limitations` is no longer mistaken for a release.
 
 ### Changed
+- CI: the personal-data/secret scan moved out of the `check` job into two named required checks — `personal-data-scan` (guide II.29.2 patterns incl. Windows profile paths) and `secret-scan` (token/secret patterns) — and a `pr-author-is-dev` check verifies every PR is opened by the Dev account (guide II.26.7). All three are in `.ci-required.txt`.
+- Repository: guide-mandated scaffolding added — `.dsh/` layout (7 command files, 5 agent definitions, `skill/`), `.gitleaks.toml`, `contributors/people.toml` (schema only, no real names), `docs/team-log/`, `docs/reference/index.md`, `docs/design/brand.md`; the stale `.opencode/` tree removed (guide: DSH is the only supported runtime).
+- Repository: `main` branch protection enabled per guide §9.3 and verified via API — required status checks, PR-only merging, linear history, no force-pushes or deletions, admin enforcement, conversation resolution; settings and date recorded in `docs/dev.md`.
 - The GUI is now a default feature. Every build of the package, including the installers produced by the release pipeline, ships a window-capable binary.
 - Launch behaviour: the desktop window opens when the app is started without a terminal attached, which is what the macOS app bundle and the Linux launcher do. `--gui` forces the window and `--tui` forces the terminal interface.
 - Release workflow: the artifact download action is pinned to a full commit SHA, and the workflow no longer requests pull request write permission it does not use.

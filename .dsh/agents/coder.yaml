@@ -1,0 +1,5 @@
+# Coder — execute one Task (guide §5.3).
+role: coder
+permissions:
+  edit: allow   # files it owns per §5.7.3 file-ownership boundaries
+  bash: deny    # HARD BUILD RULE §4 item 5: all verification via ci.sh
