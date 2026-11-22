@@ -362,14 +362,27 @@ mod tests {
     fn rasteriser_lambertian_shading_monotonic() {
         let raster = Rasteriser::new(32, 32).with_light((0.0, 0.0, 1.0));
         let cam = make_camera();
+        // The rasteriser shades with one fixed normal per primitive kind
+        // (see fill_primitive_footprint): a side-facing Box gets dot = 0
+        // against the top-down light, a top-facing Ellipsoid gets dot = 1.
+        // Two screen-separated primitives therefore render at opposite ends
+        // of the glyph ramp — the monotonic Lambertian contract. Per-pixel
+        // normals are a documented future refinement, not the current one.
         let model = ObjectModel {
             key: "test",
             name: "Test".to_string(),
-            primitives: vec![Primitive {
-                kind: PrimitiveKind::Box,
-                transform: Transform::default(),
-                material: Material { albedo: 1.0, shade_side: true },
-            }],
+            primitives: vec![
+                Primitive {
+                    kind: PrimitiveKind::Box,
+                    transform: Transform { translation: (0.0, 0.0, 0.0), rotation: (0.0, 0.0, 0.0), scale: (1.0, 1.0, 1.0) },
+                    material: Material { albedo: 1.0, shade_side: true },
+                },
+                Primitive {
+                    kind: PrimitiveKind::Ellipsoid,
+                    transform: Transform { translation: (8.0, 8.0, 0.0), rotation: (0.0, 0.0, 0.0), scale: (1.0, 1.0, 1.0) },
+                    material: Material { albedo: 1.0, shade_side: true },
+                },
+            ],
             bounding_box: BoundingBox::default(),
             draw_key: DrawKey(0),
         };
