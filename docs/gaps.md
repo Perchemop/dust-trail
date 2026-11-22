@@ -15,6 +15,9 @@ never a silent one (§5.5 item 11).
 | ~~7~~ | ~~Branch protection unverified~~ — **closed 2026-11-22**: protection enabled and verified per §9.3 (enforce_admins, linear history, no force-push/deletions, conversation resolution, PR-only); exact settings + date in `docs/dev.md` | §9.3 | — | Done |
 | 8 | Guide cross-reference nit carried into AGENTS.md §9.4: "(II.7.2)" should be "(§7.2)"; §25.7 heading says "all six" for seven rules | guide §9.4, §25.7 | Cosmetic drift mirrored from the guide | Fix upstream in the private guide maintenance repo; repo follows |
 
+| 2 | `rand` 0.9 → 0.10 is a breaking API migration (dependabot PR #29 failed to compile: `check` + all three platform builds; closed from the Dev account 2026-11-22 per II.26.7) | §5.6.2, II.30.3 | Dependency bump cannot be adopted blind — needs code changes verified by CI | Own ticketed slice: TDD red/green via `ci.sh` for the API migration, then adopt |
+| 1 | `rodio` 0.19 → 0.23 adoption in progress (dependabot PR #28 was green on its old base; rebase requested, to be re-authored from the Dev account per II.26.7) | II.26.7, §23 | Dependency bump pending rebase | Re-author from Dev once dependabot rebases onto current `main` |
+
 **Closed this cycle (2026-11-22):** 19 lib-test compile errors fixed; latent
 `rasteriser_lambertian_shading_monotonic` fixture corrected to the documented
 per-primitive-kind shading contract; `AGENTS.md` synced with guide 2026-11-22
