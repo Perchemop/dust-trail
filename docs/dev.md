@@ -39,6 +39,14 @@ Merges now use **rebase merge** from the Dev account (`gh pr merge --rebase`),
 which keeps each PR's individual commits and yields a linear `main`. First
 linear merge under the new gate: PR #32, 2026-11-22T01:24:03Z.
 
+## Verification shim (§4)
+
+`~/.config/dsh/scripts/ci.sh` exists since 2026-11-22 (relative symlink to the
+legacy `~/.config/opencode/scripts/ci.sh` — single source, no behavioural
+change; `DECISIONS.md` records it). The shim's subcommands remain `run`,
+`status`, `logs`, `diff`, `open` — **no `merge` subcommand**; merges go
+through `gh pr merge --rebase` from the Dev account (`DECISIONS.md`).
+
 ## Required CI checks (from `.ci-required.txt`)
 
 Each name exactly as it appears in the file (5 entries; the secret/personal-data

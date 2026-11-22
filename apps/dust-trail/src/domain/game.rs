@@ -53,7 +53,9 @@ pub enum Interaction {
 }
 
 /// The game state machine.
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+/// `Clone` was dropped in the rand 0.10 migration: `StdRng` no longer
+/// implements it (rand #1677), and no caller clones a whole `Game`.
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct Game {
     pub world: World,
     pub player: Player,
@@ -92,7 +94,7 @@ fn default_sprite_cache() -> SpriteCache {
 }
 
 fn default_rng() -> StdRng {
-    StdRng::from_os_rng()
+    rand::make_rng()
 }
 
 impl Default for Game {
@@ -114,7 +116,7 @@ impl Game {
             message: "Welcome to Dust Trail. Use WASD to move, E to interact, S to save, L to load, Q to quit.".to_string(),
             game_over: false,
             won: false,
-            rng: StdRng::from_os_rng(),
+            rng: rand::make_rng(),
             #[cfg(feature = "sound")]
             sound_manager: SoundManager::new().unwrap_or_default(),
             #[cfg(not(feature = "sound"))]
@@ -160,7 +162,7 @@ impl Game {
             message: "Welcome to Dust Trail. Use WASD to move, E to interact, S to save, L to load, Q to quit.".to_string(),
             game_over: false,
             won: false,
-            rng: StdRng::from_os_rng(),
+            rng: rand::make_rng(),
             #[cfg(feature = "sound")]
             sound_manager: SoundManager::new().unwrap_or_default(),
             #[cfg(not(feature = "sound"))]
@@ -1074,7 +1076,7 @@ impl Game {
             message: "Game loaded.".to_string(),
             game_over: false,
             won: false,
-            rng: StdRng::from_os_rng(),
+            rng: rand::make_rng(),
             #[cfg(feature = "sound")]
             sound_manager: SoundManager::new().unwrap_or_default(),
             #[cfg(not(feature = "sound"))]
