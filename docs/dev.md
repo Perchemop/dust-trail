@@ -33,7 +33,11 @@ The `pr-author-is-dev`, `personal-data-scan` and `secret-scan` jobs (added
 to `.ci-required.txt` per II.26.7 / II.29.3) are appended to the required
 contexts once their first run has reported on the introducing PR.
 
-**Merge-method fact (from history):** every prior merge on `main` is a GitHub-authored merge commit (`Merge pull request #N from Perchemop/opencode/ci`) created using the `Perchemop` credential. The repo allows merge commits; squash/rebase merges are not the established practice.
+**Merge method (updated 2026-11-22):** required linear history (§9.3) forbids
+merge commits on `main` — the pre-protection merge-commit practice is retired.
+Merges now use **rebase merge** from the Dev account (`gh pr merge --rebase`),
+which keeps each PR's individual commits and yields a linear `main`. First
+linear merge under the new gate: PR #32, 2026-11-22T01:24:03Z.
 
 ## Required CI checks (from `.ci-required.txt`)
 
