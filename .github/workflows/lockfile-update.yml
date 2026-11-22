@@ -1,19 +1,26 @@
 # Lockfile updates are a CI operation (guide §4 item 5: cargo runs only in
 # GitHub Actions). Dispatch this workflow after editing a manifest version on
-# a feature branch; it regenerates Cargo.lock for the named package and
+# a feature branch; it regenerates the corresponding Cargo.lock entry and
 # commits the result to that branch, so the PR re-runs against a consistent
 # tree. Never run cargo update on a developer machine.
+#
+# The "package" input accepts either "name" or "name@version" — cargo needs
+# the qualified form when the lockfile holds two versions of the same crate
+# (e.g. rand 0.9.5 and rand 0.10.4).
 name: lockfile-update
 
 on:
   workflow_dispatch:
     inputs:
       package:
-        description: "Package name to update (Cargo.lock -p argument)"
+        description: "Package to update: name, or name@version to disambiguate"
         required: true
       version:
         description: "Exact version to pin (--precise), e.g. 0.10.4"
         required: true
+      branch:
+        description: "Branch to commit the regenerated lockfile to (default: the dispatched ref)"
+        required: false
 
 permissions:
   contents: write
@@ -25,6 +32,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
+          ref: ${{ github.event.inputs.branch || github.ref_name }}
       - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable
       - name: Update lockfile entry (resolution only, no compilation)
         env:
@@ -34,9 +42,9 @@ jobs:
           set -euo pipefail
           cargo update -p "$PACKAGE" --precise "$VERSION"
           git diff --stat Cargo.lock
-      - name: Commit and push to the dispatching branch
+      - name: Commit and push to the target branch
         env:
-          BRANCH: ${{ github.ref_name }}
+          BRANCH: ${{ github.event.inputs.branch || github.ref_name }}
         run: |
           set -euo pipefail
           git config user.name "Dust Trail Dev"
