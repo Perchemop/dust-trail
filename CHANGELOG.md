@@ -17,6 +17,7 @@
 - Changelog parsing: a prose `##` heading such as `## Known limitations` is no longer mistaken for a release.
 
 ### Changed
+- Dependencies: `rodio` 0.19 → 0.23 (optional `sound` feature). Adopted from dependabot PR #28, rebased onto current `main` and re-authored from the Dev account per guide II.26.7; CI run verified all eight required checks green.
 - CI: the personal-data/secret scan moved out of the `check` job into two named required checks — `personal-data-scan` (guide II.29.2 patterns incl. Windows profile paths) and `secret-scan` (token/secret patterns) — and a `pr-author-is-dev` check verifies every PR is opened by the Dev account (guide II.26.7). All three are in `.ci-required.txt`.
 - Repository: guide-mandated scaffolding added — `.dsh/` layout (7 command files, 5 agent definitions, `skill/`), `.gitleaks.toml`, `contributors/people.toml` (schema only, no real names), `docs/team-log/`, `docs/reference/index.md`, `docs/design/brand.md`; the stale `.opencode/` tree removed (guide: DSH is the only supported runtime).
 - Repository: `main` branch protection enabled per guide §9.3 and verified via API — required status checks, PR-only merging, linear history, no force-pushes or deletions, admin enforcement, conversation resolution; settings and date recorded in `docs/dev.md`.
