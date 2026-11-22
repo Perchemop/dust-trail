@@ -38,3 +38,14 @@ Suggested change (one concrete edit): add to §5.6.4 (or a short §5.6.8) a fall
 Severity: slows-work
 Workaround I used (if any): performed the compile fixes in-session; merged PR #27 with `gh pr merge 27 --merge` from the Dev account (`gh api user` = Perchemop) after `=== CI RESULT: SUCCESS ===`.
 Confirm: did NOT violate clean-room / v0.1.0 gate / no-secrets / CI-before-client-try / no meta-guide push
+
+---
+
+PROCESS FEEDBACK
+Date / session: 2026-11-22 (GPG provisioning for v1.5.1, owner-directed)
+What I was trying to do: generate the release signing key and provision the release-workflow secrets.
+Block or friction: the machine's GPG keyring already held keys from OTHER suite projects sharing the identity email `dev@example.com`. Selecting the new key by email alone exported and uploaded the **Lintel** project's signing key to dust-trail's secrets, and the cleanup deleted that Lintel key from the local keyring.
+Why the current guide/addendum caused it (or did not cover it): guide §7.2 covers key storage and rotation but says nothing about multi-project keyrings sharing one identity email — key selection during provisioning is unspecified.
+Severity: slows-work (no release impact: dust-trail's secret pair was inconsistent so signing failed closed; Lintel's CI signing secret on `Perchemop/lintel-desktop` is intact — only a redundant local copy was lost, and the local copy should not exist per §7.2 anyway)
+Workaround I used (if any): overwrote dust-trail's secrets with a correctly generated key (fingerprint `E3C7 0D79 A8A8 A209 60B4 5FD4 2A2E 09D1 B7BC D1A1`) generated in an isolated `GNUPGHOME` with a UID assertion on the exported file before upload; stranded intermediate keys deleted; the wrong public-key file removed before commit. Suggested change: §7.2 gains one line — "when generating or selecting a signing key on a machine whose keyring serves multiple projects, generate inside an isolated `GNUPGHOME` and assert the exported key's UID before provisioning".
+Confirm: did NOT violate clean-room / v0.1.0 gate / no-secrets / CI-before-client-try / no meta-guide push
