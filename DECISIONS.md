@@ -89,3 +89,15 @@ Credential setup: GitHub PAT (classic) with scopes repo, workflow, read:org, rea
 One context tool rule (§19 rule 6): code-review-graph is the adopted code-intelligence tool; code-context-engine remains available as a skill but is not stacked as an additional MCP server for the same job. headroom is adopted as a skill (token compression) but not as an MCP server to avoid duplicating rtk's CLI-proxy role.
 
 Vetting (§25.2): Each server checked against §II.20.4 — licence confirmed, maintenance signal checked, security posture reviewed. Credentials never in config; always ' + credRef + ' templates.
+
+
+
+## Standing Agent Operating Preferences (user directive)
+
+| Preference | Setting | Rationale |
+|------------|---------|-----------|
+| Auto-enable skills | Enabled — skills auto-loaded where relevant per guide section 19; caveman terse style always active to cut output tokens | Reduces output volume; matches user directive |
+| Auto-compact | Enabled — context compacted where relevant (headroom/rtk) to stay inside Smart Zone under 150k tokens per guide section 5.6.1 | Prevents dumb-zone degradation |
+| Auto-enable MCP | Enabled — MCP servers auto-enabled where relevant per guide section 25.2; GitHub, Rust Analyzer, Code Review Graph, Context7 active by default | Replaces gh CLI calls and web browsing; enables code navigation and clean-room research |
+
+These preferences are standing instructions for every DSH session on this repository. They do not waive any guide rule: no local cargo builds, no runtime-specific installs, credentials never committed, linear-history rebase merges only, and all changes verified through ci.sh before merge.
