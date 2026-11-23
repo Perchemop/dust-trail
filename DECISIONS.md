@@ -72,3 +72,20 @@
 | D-? | DSH verification shim on this machine | Guide §4 names `~/.config/dsh/scripts/ci.sh` as the verification path; the machine only had the legacy `~/.config/opencode/` shim | Created `~/.config/dsh/scripts/ci.sh` as a relative symlink to the legacy shim (single source; no behavioural change). Known gap: the shim has no `merge` subcommand — PR merges go through `gh pr merge --rebase` from the Dev account, recorded here and in `docs/dev.md` | 2026-11-22 |
 | D-? | Dependabot PR authorship reconciliation | Guide II.26.7 requires Dev-account authorship for all GitHub actions; dependabot PRs cannot pass `pr-author-is-dev` | Dependabot PRs are rebased by dependabot, then re-authored (cherry-pick + Dev-identity commit) and merged from a Dev branch; the dependabot PR is closed with a reference. Applied to #28 (rodio 0.23, merged as #34) | 2026-11-22 |
 | D-? | rand 0.10 deferral | Dependabot PR #29 (rand 0.9→0.10) failed to compile: `StdRng` lost `Clone`, `from_os_rng` removed, range/bool methods moved to `rand::RngExt` | Closed #29 from the Dev account; the migration is a dedicated ticketed slice in `docs/gaps.md` with red/green CI evidence per §5.6.4 — not adopted blind | 2026-11-22 |
+
+
+
+## MCP Server Adoption (guide §25.2, §19)
+
+| Decision | Server | Licence | Transport | Rationale | Date |
+|----------|--------|---------|-----------|-----------|------|
+| D-MCP-001 | GitHub MCP (@modelcontextprotocol/server-github) | MIT | stdio | Replaces gh CLI calls for issues, PRs, releases, Actions. Credential: ' + credRef + '. | 2026-11-23 |
+| D-MCP-002 | Rust Analyzer MCP (rust-analyzer) | Apache-2.0 OR MIT | stdio | Semantic code navigation, type info, goto definition — essential for Rust codebase work. | 2026-11-23 |
+| D-MCP-003 | Code Review Graph MCP (tirth8205/code-review-graph) | MIT | stdio | Persistent codebase knowledge graph, risk-scored PR reviews, token-efficient review per §19 rule 7. | 2026-11-23 |
+| D-MCP-004 | Context7 MCP (@context7/mcp-server) | Apache-2.0 | stdio | Version-specific documentation lookup for clean-room research (§2.4, §25.2). Replaces web browsing for public docs. | 2026-11-23 |
+
+Credential setup: GitHub PAT (classic) with scopes repo, workflow, read:org, read:user. Store in DSH Settings → Credentials as github_token. Referenced as ' + credRef + ' in .dsh/settings.local.json. Never committed to repo.
+
+One context tool rule (§19 rule 6): code-review-graph is the adopted code-intelligence tool; code-context-engine remains available as a skill but is not stacked as an additional MCP server for the same job. headroom is adopted as a skill (token compression) but not as an MCP server to avoid duplicating rtk's CLI-proxy role.
+
+Vetting (§25.2): Each server checked against §II.20.4 — licence confirmed, maintenance signal checked, security posture reviewed. Credentials never in config; always ' + credRef + ' templates.
