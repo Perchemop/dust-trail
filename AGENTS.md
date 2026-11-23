@@ -789,7 +789,7 @@ Record the exact settings in `docs/dev.md` with the date.
 
 - **Release notes and token metrics:** Every semver release includes detailed release notes (app usage / feature changes) plus token usage metrics: total tokens consumed since beginning development and tokens used in this release. Schema in §24. Release notes published to GitHub Releases and embedded in-app.
 - **In-app version & release notes:** App displays version number accurately but subtly in a UI-appropriate non-intrusive corner. Selecting the version opens a dedicated release-notes pop-up showing the full release history, detailed app usage per release, and cumulative / per-release token usage metrics. The pop-up reads the same token file bundled at build time.
-- **Auto-update check:** Every app checks for a newer release, notifies the user in a simple user-friendly way, and offers one-click auto-update from the latest GitHub Release. The flow is simple, consistent across all suite apps, and non-intrusive (II.7.2).
+- **Auto-update check:** Every app checks for a newer release, notifies the user in a simple user-friendly way, and offers one-click auto-update from the latest GitHub Release. The flow is simple, consistent across all suite apps, and non-intrusive (§7.2).
 - **Contributor credits system:** The app includes a credits screen (About ▸ Contributors) with consent-verified entries from `contributors/people.toml` (schema in §24). AI agents and models are credited separately under About ▸ Models, never as people. Pull requests must never claim agent or bot authorship.
 - **Build attestations (optional):** The release pipeline may include an SLSA provenance and Sigstore attestation step (`gh attestation verify`). Optional but recommended for formal security requirements.
 
@@ -957,7 +957,7 @@ Separate **Facts / Assumptions / Decisions**.
 
 ## 15. Session prompt
 
-**Canonical session prompt lives in `addendum.md` section L** (client mode, Rust QA, process feedback). The addendum is a companion file to this guide and is provided alongside it; if it is not present, the orchestrator asks the human to provide it before proceeding with any Rust-specific Task.
+**Canonical session prompt:** the block below (§15, inline). No separate `addendum.md` file exists — the guide and any addendum are local-only, never committed to a public suite repo, and versioned in the human's private maintenance repository (§18). Until a human supplies an addendum, this in-guide prompt is operative.
 
 If only this guide is available, use:
 
@@ -970,9 +970,7 @@ Template and non-negotiables: **addendum section N**. Human promotes changes int
 
 ## 17. Rust note
 
-For Rust desktop apps, **addendum sections K and M** are binding: `*-core` crate, headless workflow tests, `rust-toolchain.toml`, CI — not the client laptop — for heavy work, v0.1.0 structural checklist M.2.
-
-If the addendum is not supplied, the following summary is binding until it is:
+For Rust desktop apps, the binding requirements below (§17, inline) stand in for addendum sections K and M: `*-core` crate, headless workflow tests, `rust-toolchain.toml`, CI — not the client laptop — for heavy work, v0.1.0 structural checklist M.2. No separate `addendum.md` file exists (§18); until a human supplies one, this in-guide summary is binding.
 
 - **Crate layout.** Split the app into `<app>-core` (headless, pure logic, testable with `cargo test` on CI without a display), `<app>-commands` (command definitions), `<app>-persistence` (storage), `<app>-ui` (rendering), and `<app>-app` (wiring). The core crate must not depend on the GUI toolkit.
 - **Headless workflow tests.** Every primary workflow has a test that exercises the command handler end-to-end without launching a window.
@@ -1955,7 +1953,7 @@ A curated catalog of **700+ SaaS, PaaS, and IaaS offerings with permanent free t
 
 **Do not:** assume a free tier is permanent for your usage level. Re-check the service's own pricing page before a release; the catalog is a starting point, not a guarantee.
 
-### 25.7 Use rules (all six)
+### 25.7 Use rules (seven rules)
 
 1. **Discovery only.** A catalog entry is a *pointer*, not a spec. The entry's own source (the API's docs, the MCP server's repo, the design system's site) is the authority. Never commit a catalog's example code as your implementation.
 2. **Record every adoption.** Any API, MCP server, template, skill, or free-tier service adopted from these catalogs goes into `docs/resource-catalog.md` with: the catalog URL, the source URL, the licence, the version or date pinned, and the decision (`DECISIONS.md` reference).

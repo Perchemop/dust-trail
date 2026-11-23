@@ -12,7 +12,7 @@ running version untouched.
 |---|---|
 | Identity | `Dust Trail Dev <dev@example.com>` |
 | Algorithm | RSA 3072 (sign-only) |
-| Fingerprint | `E3C7 0D79 A8A8 A209 60B4  5FD4 2A2E 09D1 B7BC D1A1` |
+| Fingerprint | `E3C7 0D79 A8A8 A209 60B4 5FD4 2A2E 09D1 B7BC D1A1` |
 | Created | 2026-11-22 |
 | Expires | 2028-11-21 (2 years) |
 | Private key | GitHub Actions secret `GPG_PRIVATE_KEY` only — never on a developer machine (guide §7.2) |
@@ -54,8 +54,9 @@ TSYsxZKBlTspDyfgCZ3J9VTcDH3TM0EDygBwOcfw4sO5Yt9u8VPIllI=
 ## Rotation history
 
 | Date | Event |
-|------|-------|
-| 2026-11-22 | First key generated at owner direction (owner directive: "create the gpg yourself"). No prior release was signed; nothing to rotate. |
+|---|---|
+| 2026-11-20 | Release v1.5.1 published with `SHA256SUMS.txt.asc` signed with key `9D07 07AF 32A5 F249 F7F8 2EA2 9829 4016 C6C9 D993` — key was provisioned as a GitHub secret before this session; its public key was **not captured locally** and is not recoverable from the repo or public keyservers. Verification of v1.5.1's signature requires that public key. |
+| 2026-11-22 | Key rotated at owner direction ("create the gpg yourself"). New key `E3C7 0D79 A8A8 A209 60B4 5FD4 2A2E 09D1 B7BC D1A1` generated, UID-verified in an isolated `GNUPGHOME`, secrets provisioned (`GPG_PRIVATE_KEY`/`GPG_PASSPHRASE`/`GPG_KEY_FINGERPRINT`), local private material destroyed after isolated import→sign→verify test. Public key published below. |
 
 ## Compromise procedure (guide §7.2)
 
