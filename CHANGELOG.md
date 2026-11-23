@@ -28,8 +28,8 @@
 
 ### Known limitations
 - The terminal interface and the desktop window are both still present in this release. The terminal interface is removed in v2.0.0.
-- **Release artifacts not yet published.** The release pipeline is configured to attach the following assets when executed: `.msi` for Windows, `.dmg` for macOS, `.deb` for x86_64 and arm64 Linux, `SHA256SUMS.txt`, and a CycloneDX SBOM. These artifacts require a signed release tag to be generated automatically. The release has not yet been published to GitHub.
-- **No signature key provisioned.** GPG detached signatures require a signing key stored as GitHub secrets (`GPG_PRIVATE_KEY` for the ASCII-armored private key and `GPG_PASSPHRASE` for its passphrase). The signing step fails the release rather than publishing unsigned until these are configured.
+- **Release artifacts published.** v1.5.1 ships `.msi` (Windows), `.dmg` (macOS), `.deb` (x86_64 and arm64 Linux), `SHA256SUMS.txt`, `SHA256SUMS.txt.asc` (GPG detached signature), and a CycloneDX SBOM on the GitHub Release.
+- **Release signing key rotated.** v1.5.1's `SHA256SUMS.txt.asc` was signed with GPG key `9D07 07AF 32A5 F249 F7F8 2EA2 9829 4016 C6C9 D993` (key provisioned before this session; public key not recovered locally). The key was rotated at owner direction on 2026-11-22 to `E3C7 0D79 A8A8 A209 60B4 5FD4 2A2E 09D1 B7BC D1A1` (identity `Dust Trail Dev <dev@example.com>`, RSA-3072 sign-only, expires 2028-11-21). Private key + passphrase live only as GitHub Actions secrets (`GPG_PRIVATE_KEY`/`GPG_PASSPHRASE`, pinned by `GPG_KEY_FINGERPRINT`); see `docs/update-signing.md`.
 
 ## v1.5.0 - 2026-11-18
 

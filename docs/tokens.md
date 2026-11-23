@@ -26,8 +26,8 @@ claim.
   6,287,073 tokens, or 0.248%, which is the cost of records
   that carry a session total but no per-message token breakdown. The largest
   single-session difference was 5,874,604 tokens.
-- **A note on the newest row:** the `v1.5.1` row is pending finalisation at
-  release time. The interim measured snapshot lives in `docs/tokens.json`
+- **A note on the newest row:** the `v1.5.1` row was finalised at release
+  time from `docs/tokens.json`
   (284,971,538 this release / 2,525,965,249 cumulative, measured
   2026-11-20); work after that snapshot is not counted, so the interim
   figure is a lower bound for that release.
@@ -48,16 +48,16 @@ Measured at 2026-11-20T06:44:10.440706+10:30.
 | v1.3.0   | 2026-11-18 |          30_161_368 |     2_094_076_454 | UI polish and item system       |
 | v1.4.0   | 2026-11-18 |          37_820_864 |     2_131_897_318 | Inventory UI                    |
 | v1.5.0   | 2026-11-18 |         109_096_393 |     2_240_993_711 | Smarter AI and inventory UI     |
-| v1.5.1   | 2026-11-20 | **PENDING**         | **PENDING**       | Interim measured snapshot: 284,971,538 this release / 2,525,965,249 cumulative (`docs/tokens.json`); this row is finalised at release time |
+| v1.5.1   | 2026-11-20 |   284_971_538       |   2,525,965,249   | Finalised at release time from `docs/tokens.json` (measured 2026-11-20T06:44:10+10:30). |
 
 ## Totals
 
-- **Total tokens since the project began (verified):** 2,240,993,711 (through v1.5.0)
-- **Tokens in the current release (v1.5.1):** **PENDING** — awaiting next green CI run after fixing the latest failed CI run
+- **Total tokens since the project began (verified):** 2,525,965,249 (through v1.5.1)
+- **Tokens in the current release (v1.5.1):** 284,971,538 (finalised at release time from `docs/tokens.json`)
 
 ## Verified measurement sources
 
-The above numbers through v1.5.0 are cross-checked against measured OpenCode session data. The v1.5.1 row cannot be finalized until after the next green CI run (run ID pending) and subsequent release publication.
+The above numbers through v1.5.0 are cross-checked against measured OpenCode session data. The v1.5.1 row was finalised at release time from `docs/tokens.json`.
 
 ## Composition of the total
 
