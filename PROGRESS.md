@@ -244,6 +244,18 @@ pushed anyway, which should not have happened.
 | In-app release-notes popup + version display | Complete | `apps/dust-trail/src/gui/release_notes.rs`, CHANGELOG.md + docs/tokens.md embedded |
 | Auto-update availability check | Partial | `crates/update-check` detects newer releases; installer download, signature verification, installation, and restart are not implemented |
 
+### CI Results (v1.5.1)
+- **check** (fmt + clippy): PASSED
+- **Build (windows-x86_64)**: PASSED
+- **Build (macos-arm64)**: PASSED
+- **Build (linux-arm64)**: PASSED
+- **supply-chain**: PASSED
+- **pr-author-is-dev**: PASSED
+- **personal-data-scan**: PASSED
+- **secret-scan**: PASSED
+
+All 8 required checks green per `.ci-required.txt`. Merged via rebase (linear history preserved).
+
 ### CI Results (v1.0.0)
 - **check** (fmt + clippy): PASSED
 - **Build (windows-x86_64)**: PASSED
@@ -265,6 +277,7 @@ See v1.0.0 section above for full details.
 | v0.4.0 | Released | `.deb` (arm64/x86_64), `.dmg`, `.msi`, `SHA256SUMS.txt` | Item system and inventory |
 | v0.3.0 | Released | `.deb` (arm64/x86_64), `.dmg`, `.msi`, `SHA256SUMS.txt` | Bounties, decay, wanted levels |
 | v0.2.0 | Released | `.deb` (arm64), `.dmg`, `.msi`, `SHA256SUMS.txt` | 3D world, GUI window, save/load |
+| v1.5.1 | Released | `.msi`, `.dmg`, `.deb` (x86_64/arm64), SHA256SUMS.txt, SHA256SUMS.txt.asc, SBOM | GPG signed (key E3C7 0D79 … B7BC D1A1); all 8 CI checks green; rand 0.10 adopted; release pipeline fixed |
 | v0.1.0 | Released | `.deb` (arm64), `.dmg`, `.msi`, `SHA256SUMS.txt` | First functional build. A leftover **draft** release with the same tag still exists and should be deleted. |
 
 ## Planned — v2.0.0 GUI-only ASCII 3D
