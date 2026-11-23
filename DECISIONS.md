@@ -101,3 +101,13 @@ Vetting (§25.2): Each server checked against §II.20.4 — licence confirmed, m
 | Auto-enable MCP | Enabled — MCP servers auto-enabled where relevant per guide section 25.2; GitHub, Rust Analyzer, Code Review Graph, Context7 active by default | Replaces gh CLI calls and web browsing; enables code navigation and clean-room research |
 
 These preferences are standing instructions for every DSH session on this repository. They do not waive any guide rule: no local cargo builds, no runtime-specific installs, credentials never committed, linear-history rebase merges only, and all changes verified through ci.sh before merge.
+
+
+
+## Skill Adoption — poteto-mode (guide §19, §22)
+
+| Decision | Skill | Licence | Capability | Date |
+|----------|-------|---------|------------|------|
+| D-SKILL-008 | JuliusBrussee/poteto-mode | Apache-2.0 | Rigorous engineering workflow: understand → design → verify → review → report; 20+ playbooks (investigation, bug fix, performance, feature, refactoring, visual parity, shipping) mapped to guide §5.6 cases | 2026-11-23 |
+
+**Usage:** Auto-enabled where relevant per standing preference. Primary entry point for Case 3/4 workflows. Enforces HARD BUILD RULE — all verification via ci.sh, never local cargo. Record a DECISIONS.md entry per playbook used (mandatory rule 3).
