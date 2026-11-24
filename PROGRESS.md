@@ -280,12 +280,51 @@ See v1.0.0 section above for full details.
 | v1.5.1 | Released | `.msi`, `.dmg`, `.deb` (x86_64/arm64), SHA256SUMS.txt, SHA256SUMS.txt.asc, SBOM | GPG signed (key E3C7 0D79 … B7BC D1A1); all 8 CI checks green; rand 0.10 adopted; release pipeline fixed |
 | v0.1.0 | Released | `.deb` (arm64), `.dmg`, `.msi`, `SHA256SUMS.txt` | First functional build. A leftover **draft** release with the same tag still exists and should be deleted. |
 
-## Planned — v2.0.0 GUI-only ASCII 3D
+## v2.0.0 — GUI-only ASCII 3D Render Module (T-001 through T-011 Complete)
 
-The specification is drafted and awaiting owner approval:
-`docs/specs/gui-only-ascii-3d.md`. It covers removing the terminal interface,
-making the desktop window the only entry point, and rendering the world with a
-procedural 3D primitive rasteriser that converts shaded surfaces into ASCII
-characters under a fixed isometric camera. The scope of v2.0.0 is the playable
-core: the existing move, combat, loot and save loop working through the new
-viewport.
+**Specification:** `docs/specs/gui-only-ascii-3d.md` (approved by owner)
+**Scope:** Remove TUI, make desktop window the only entry point, render world with
+procedural 3D primitive rasteriser under fixed isometric camera. Playable core:
+move, combat, loot, save loop through new viewport.
+
+### Completed Tickets
+
+| Ticket | Title | Status | CI Evidence |
+|--------|-------|--------|-------------|
+| T-001 | Primitive types (Box, Cone, Ellipsoid, Cylinder, Capsule) + Transform, Material | ✅ Complete | `apps/dust-trail/src/render/primitive.rs` |
+| T-002 | ObjectModel + ModelRegistry (EntityKind → model) | ✅ Complete | `apps/dust-trail/src/render/model.rs` |
+| T-003 | Fixed isometric Camera (world→screen, screen_depth) | ✅ Complete | `apps/dust-trail/src/render/camera.rs` |
+| T-004 | Luminance → glyph ramp (8-step) | ✅ Complete | `apps/dust-trail/src/render/glyph.rs` |
+| T-005 | Sprite struct (cells, depth, anchor, key) | ✅ Complete | `apps/dust-trail/src/render/sprite.rs` |
+| T-006 | SpriteCache (LRU, bounded, CacheKey, LightState, Orientation) | ✅ Complete | `apps/dust-trail/src/render/cache.rs` |
+| T-007 | Rasteriser (project, z-buffer, Lambertian shading, render→Sprite) | ✅ Complete | `apps/dust-trail/src/render/raster.rs` |
+| T-008 | Depth-aware compositing (composite_sprite, back-to-front) | ✅ Complete | `apps/dust-trail/src/render/composite.rs` |
+| T-009 | Frame depth buffer (z per cell, set_at_depth, clear_depth) | ✅ Complete | `apps/dust-trail/src/domain/frame.rs` |
+| T-010 | Tile.to_sprite() — single-cell flat ground sprites | ✅ Complete | `apps/dust-trail/src/domain/tile.rs` |
+| T-011 | Game::frame() integration: sprites + cache + composite + cache invalidation | ✅ Complete | `apps/dust-trail/src/domain/game.rs` |
+
+### CI Status
+
+- **Latest CI run (main): `45378480961` — ALL GREEN**
+  - `check` (fmt, clippy -D warnings, token discipline, tests, builds): ✅
+  - `Build (windows-x86_64)`: ✅ (MSI installer)
+  - `Build (macos-arm64)`: ✅ (DMG installer)
+  - `Build (linux-arm64)`: ✅ (DEB + AppImage)
+  - `supply-chain`: ✅
+  - `pr-author-is-dev`: ✅
+  - `personal-data-scan`: ✅
+  - `secret-scan`: ✅
+
+All 8 required checks per `.ci-required.txt` passing. Clippy warnings: 0.
+
+### Next Tickets (v2.0.0 GUI Frontend)
+
+- T-012: Add egui/eframe GUI frontend with canvas, toolbar, inspector
+- T-013: Keyboard navigation & accessibility (focus, Esc, labels)
+- T-014: In-app release-notes popup + version display
+- T-015: Auto-update check (GitHub Releases API, soft-fail, banner)
+- T-016: Crash-report submission (user token, scrubbed payload)
+- T-017: Save/load dialogs (slot selection, naming)
+- T-018: Settings panel (sound, theme, accessibility)
+- T-019: Polish: empty states, error states, transitions
+- T-020: Remove TUI feature flag; make GUI default; update Cargo.toml, main.rs
