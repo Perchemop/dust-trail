@@ -1,8 +1,8 @@
 [package]
 name = "crash-report"
-version = "0.3.0"
-edition = "2024"
-rust-version = "1.85"
+version = "0.2.0"
+edition = "2021"
+rust-version = "1.82"
 license = "MIT OR Apache-2.0"
 description = "Shared crash/bug reporting for Dust Trail: panic hook, diagnostics capture, optional GitHub issue submission with full user token support and payload scrubbing."
 
@@ -21,4 +21,4 @@ thiserror = "2"
 urlencoding = "2"
 
 [dev-dependencies]
-tempfile = "3"
+# No dev-dependencies needed; all tests use standard library
