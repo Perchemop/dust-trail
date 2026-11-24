@@ -1448,4 +1448,76 @@ mod tests {
         // Deputy should try to move toward outlaw.
         assert!(matches!(action, NpcAction::Move(_)));
     }
+
+    /// Headless workflow test: move → interact → attack → save → load
+    /// through the new sprite-based viewport. Drives the full gameplay loop
+    /// using `Game::frame()` with the gui feature path (T-014).
+    #[test]
+    fn workflow_move_combat_loot_save_roundtrip() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("saves.json");
+
+        // Use a known seed for deterministic world generation
+        let mut game = Game::new_with_seed(42);
+
+        // Verify initial frame renders through new pipeline (gui feature)
+        let frame = game.frame();
+        assert_eq!(frame.width, 80);
+        assert_eq!(frame.height, 50);
+        // Depth buffer should be initialised
+        assert_eq!(frame.depth_at(0, 0), Some(f32::INFINITY));
+
+        // Move right twice
+        game.move_player(Direction::Right);
+        game.move_player(Direction::Right);
+        assert_eq!(game.player.pos.x, 4);
+        assert_eq!(game.player.pos.y, 2);
+
+        // Attack: place an outlaw at player position for instant kill
+        let outlaw_pos = game.player.pos;
+        game.world.npcs.push(crate::domain::world::Npc {
+            kind: NpcKind::Outlaw,
+            pos: outlaw_pos,
+            bounty: 0,
+            health: 25, // One hit kills (damage = 25)
+        });
+        let dead = game.attack(outlaw_pos);
+        assert!(dead, "attack should kill outlaw");
+
+        // Interact: place loot at player position and collect
+        let loot_pos = game.player.pos;
+        game.world.items.push(crate::domain::world::Item {
+            kind: ItemKind::Loot,
+            pos: loot_pos,
+            collected: false,
+        });
+        let interaction = game.interact();
+        assert!(matches!(interaction, Interaction::Collected { kind: ItemKind::Loot }));
+
+        // Save to slot "workflow_test"
+        game.save_named_to("workflow_test", &path).unwrap();
+        let saved_turn = game.turn;
+        let saved_pos = game.player.pos;
+        let saved_score = game.player.score;
+
+        // Verify frame still renders after gameplay
+        let frame2 = game.frame();
+        assert_eq!(frame2.width, 80);
+        assert_eq!(frame2.height, 50);
+
+        // Load from slot "workflow_test"
+        let loaded = Game::load_named_from("workflow_test", &path).unwrap();
+
+        // Verify roundtrip: all state matches
+        assert_eq!(loaded.player.pos, saved_pos);
+        assert_eq!(loaded.turn, saved_turn);
+        assert_eq!(loaded.player.score, saved_score);
+        assert_eq!(loaded.world.height, game.world.height);
+        assert_eq!(loaded.world.width, game.world.width);
+
+        // Verify loaded game frame renders correctly
+        let frame3 = loaded.frame();
+        assert_eq!(frame3.width, 80);
+        assert_eq!(frame3.height, 50);
+    }
 }
