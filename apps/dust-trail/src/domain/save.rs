@@ -77,6 +77,8 @@ impl SaveData {
                 npc.health = npc.health.max(50);
             }
         }
+        // v2.x saves are current; no migration needed.
+        // Unknown future versions rely on #[serde(default)] for safe defaults.
     }
 }
 
@@ -130,5 +132,76 @@ mod tests {
         assert_eq!(restored.player.pos, game.player.pos);
         assert_eq!(restored.turn, game.turn);
         assert!(!restored.game_over);
+    }
+
+    #[test]
+    fn v1_x_save_migrates_health_to_safe_defaults() {
+        // Simulate a v1.1.0 save with zero health (pre-health fields)
+        let mut game = Game::new();
+        let data = SaveData::with_slot(&game, "test");
+        let mut value = serde_json::to_value(data).expect("to value");
+        let object = value.as_object_mut().expect("object");
+        // Set version to v1.1.0
+        object.insert("version".to_owned(), serde_json::Value::String("1.1.0".to_owned()));
+        // Remove health fields to simulate pre-health save
+        if let Some(player_obj) = object.get_mut("player").and_then(|v| v.as_object_mut()) {
+            player_obj.remove("health");
+        }
+        if let Some(world_obj) = object.get_mut("world").and_then(|v| v.as_object_mut()) {
+            if let Some(npcs) = world_obj.get_mut("npcs").and_then(|v| v.as_array_mut()) {
+                for npc in npcs {
+                    if let Some(npc_obj) = npc.as_object_mut() {
+                        npc_obj.remove("health");
+                    }
+                }
+            }
+        }
+
+        let back: SaveData = serde_json::from_value(value).expect("deserialise v1.1 save");
+        let restored = back.into_game();
+
+        // Health should be restored to safe defaults
+        assert_eq!(restored.player.health, 100);
+        for npc in &restored.world.npcs {
+            assert_eq!(npc.health, 50);
+        }
+    }
+
+    #[test]
+    fn v2_x_save_loads_without_migration_changes() {
+        let mut game = Game::new();
+        game.move_player(Direction::Right);
+        let data = SaveData::with_slot(&game, "v2_test");
+        let mut value = serde_json::to_value(data).expect("to value");
+        let object = value.as_object_mut().expect("object");
+        // Set version to 2.0.0
+        object.insert("version".to_owned(), serde_json::Value::String("2.0.0".to_owned()));
+
+        let back: SaveData = serde_json::from_value(value).expect("deserialise v2.0.0 save");
+        let restored = back.into_game();
+
+        // State should be preserved exactly (no migration changes)
+        assert_eq!(restored.player.pos, game.player.pos);
+        assert_eq!(restored.turn, game.turn);
+        assert_eq!(restored.player.health, 100); // Full health
+    }
+
+    #[test]
+    fn unknown_future_version_loads_with_serde_defaults() {
+        let mut game = Game::new();
+        let data = SaveData::with_slot(&game, "future_test");
+        let mut value = serde_json::to_value(data).expect("to value");
+        let object = value.as_object_mut().expect("object");
+        // Set version to unknown future 3.5.0
+        object.insert("version".to_owned(), serde_json::Value::String("3.5.0".to_owned()));
+
+        let back: SaveData = serde_json::from_value(value).expect("deserialise future save");
+        let restored = back.into_game();
+
+        // Should load with safe defaults via #[serde(default)]
+        assert_eq!(restored.player.health, 100);
+        for npc in &restored.world.npcs {
+            assert_eq!(npc.health, 50);
+        }
     }
 }
