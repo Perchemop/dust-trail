@@ -169,7 +169,7 @@ mod tests {
 
     #[test]
     fn v2_x_save_loads_without_migration_changes() {
-        let game = Game::new();
+        let mut game = Game::new();
         game.move_player(Direction::Right);
         let data = SaveData::with_slot(&game, "v2_test");
         let mut value = serde_json::to_value(data).expect("to value");
