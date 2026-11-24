@@ -1,5 +1,31 @@
 # Changelog - Dust Trail
 
+## v2.0.0 — In Progress (GUI-only ASCII 3D)
+
+### Added
+- Render module: 3D primitive types (Box, Cone, Ellipsoid, Cylinder, Capsule) with Transform and Material
+- ObjectModel and ModelRegistry mapping EntityKind to procedural models
+- Fixed isometric Camera with world→screen projection and screen_depth for painter's algorithm
+- Luminance-to-glyph ramp (8-step ASCII gradient) for shaded surfaces
+- Sprite struct with cells, depth buffer, anchor, and key
+- SpriteCache: bounded LRU cache keyed by model, light, size, orientation
+- Rasteriser: software projection, z-buffer, Lambertian shading per primitive kind, renders to Sprite
+- Depth-aware compositing (composite_sprite, composite_sprites_back_to_front) with per-cell z-compare
+- Frame depth buffer (z per cell, set_at_depth, clear_depth)
+- Tile.to_sprite() — single-cell flat ground sprites for terrain
+- Game::frame() integration: new render pipeline when `gui` feature enabled, flat fallback for headless tests; SpriteCache held by Game, invalidated on world state changes
+
+### Changed
+- CI: clippy -D warnings now passes with zero warnings across all targets
+- Build: TUI and GUI configurations both lint and test clean
+
+### Removed (planned for v2.0.0)
+- Terminal interface (TUI feature flag) — removed in v2.0.0 final
+
+### Known limitations
+- The terminal interface is still present in this development state. v2.0.0 will remove it entirely.
+- egui/eframe GUI frontend not yet wired (T-012 through T-020)
+
 ## v1.5.1 - 2026-11-20
 
 ### Fixed
