@@ -373,7 +373,7 @@ where
     F: Fn(&CrashReport) + Send + Sync + 'static,
 {
     let env = Environment::capture(app_version);
-    install_panic_hook(env, on_report);
+    install_panic_hook(&env, on_report);
 }
 
 /// Where an unhandled crash report is parked for review on the next launch.
@@ -712,7 +712,7 @@ mod tests {
         let report = CrashReport::from_json(json).expect("failed to load");
         assert_eq!(report.version, "1.0.0");
         assert_eq!(report.os, "linux");
-        assert_eq!(report.timestamp, 1234567890);
+        assert_eq!(report.timestamp, 1_234_567_890);
     }
 
     #[test]
@@ -754,7 +754,7 @@ mod tests {
             backtrace: Some("a".repeat(10000)),
             message: "test panic message".to_string(),
             user_notes: "test notes".to_string(),
-            timestamp: 1234567890,
+            timestamp: 1_234_567_890,
             env_vars: Vec::new(),
             notes: HashMap::new(),
         };
