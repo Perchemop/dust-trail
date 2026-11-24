@@ -13,8 +13,8 @@ pub fn composite_sprite(frame: &mut Frame, sprite: &Sprite, screen_x: i32, scree
         return;
     }
 
-    let _sw = sprite.width as i32;
-    let sh = sprite.height as i32;
+    let _sw = sprite.width;
+    let sh = sprite.height;
 
     // Sprite anchor is bottom-center of the sprite's footprint
     // Screen position is where the anchor should be placed
