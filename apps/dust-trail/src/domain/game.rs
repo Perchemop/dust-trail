@@ -1506,7 +1506,7 @@ mod tests {
         assert_eq!(frame2.height, 50);
 
         // Load from slot "workflow_test"
-        let loaded = Game::load_named_from("workflow_test", &path).unwrap();
+        let mut loaded = Game::load_named_from("workflow_test", &path).unwrap();
 
         // Verify roundtrip: all state matches
         assert_eq!(loaded.player.pos, saved_pos);
