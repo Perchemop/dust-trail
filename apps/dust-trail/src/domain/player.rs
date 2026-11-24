@@ -10,6 +10,7 @@ pub struct Player {
     pub mounted: bool,
     pub name: String,
     /// Health points — reaches 0 on death.
+    #[serde(default)]
     pub health: u32,
     /// Inventory of collected items awaiting use.
     pub inventory: Vec<ItemKind>,
