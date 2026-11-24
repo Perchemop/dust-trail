@@ -372,7 +372,7 @@ All 8 required checks per `.ci-required.txt` passing. Clippy warnings: 0.
 
 #### Scrubbing Behavior
 - Absolute paths like `/tmp/test_user_123/project/src/lib.rs` → `lib.rs:error`
-- Windows paths `C:\Users\TEST\...` (example) → `user\...`
+- Windows paths `D:\Users\TEST\...` (example) → `user\...`
 - Sensitive env vars (`GITHUB_TOKEN`, `API_KEY`, `SECRET`, `PASSWORD`, etc.) removed
 - Token values in text (`token=abc123`, `Bearer xyz`) replaced with `<redacted>`
 
