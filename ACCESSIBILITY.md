@@ -27,6 +27,5 @@ egui has no cross-platform reduced-motion query. Animations are off by default
 and under ~120 ms. Limitation recorded honestly (II.30.7.7).
 
 ## Limitation
-The TUI renders to the terminal; screen-reader support depends on the terminal
-emulator. The GUI uses egui/eframe; AccessKit integration is a v0.2.0 goal
-(requires a seam refactor first, per II.27.12).
+The GUI uses egui/eframe; AccessKit integration is a v0.2.0 goal (requires a
+seam refactor first, per II.27.12).

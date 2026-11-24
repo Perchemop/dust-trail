@@ -76,14 +76,13 @@ verification), per guide §6.2.
 * Multiple named save slots — Game::save_named_to(slot, path) with arbitrary slot names
 * Game::list_saves() returns all available save slots
 * GUI slot selection UI — selectable slot list in save/load dialogs
-* TUI slot selection — keyboard-navigable slot list (1-9 keys, Esc to cancel)
 * Save slot naming — user can name each save slot when saving
 * CI green: format, clippy, tests, multi-OS release builds
 
 ## v1.2.0 (complete — 2026-11-18)
 * Player health (HP) — default 100, damaged by NPC attacks, death = game over
 * NPC health (HP) — sheriff 50 HP, deputy 40 HP, outlaw 50 HP, removed from world at 0 HP
-* Player attack action (F key in TUI/GUI to attack adjacent NPCs)
+* Player attack action (F key in GUI to attack adjacent NPCs)
 * Combat feedback messages in game log
 * Death states: player death = game over, NPC death = removed from world
 * Combat sound effects (hit, enemy death)
@@ -91,7 +90,7 @@ verification), per guide §6.2.
 
 ## v1.3.0 (complete — 2026-11-18)
 * GUI status bar: health bar (HP), wanted level indicator, mount status
-* Item usage: mount/dismount toggle (M key in TUI/GUI)
+* Item usage: mount/dismount toggle (M key in GUI)
 * Game over screen with restart/quit options
 * Save format version migration (handles pre-1.2.0 saves)
 * CI green: format, clippy, tests, multi-OS release builds
@@ -99,7 +98,6 @@ verification), per guide §6.2.
 ## v1.4.0 (complete — 2026-11-18)
 * Item system: inventory, use_item (consume loot for score, toggle horse mount)
 * GUI toolbar inventory count
-* TUI: 'u' key uses first item from inventory
 * CI green: format, clippy, tests, multi-OS release builds
 
 ## v1.5.0 (complete — 2026-11-18)

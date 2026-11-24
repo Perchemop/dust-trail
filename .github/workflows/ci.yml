@@ -40,8 +40,6 @@ jobs:
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
       - name: Clippy (no warnings)
         run: cargo clippy --all-targets -- -D warnings
-      - name: Clippy (no warnings, TUI-only configuration)
-        run: cargo clippy -p dust-trail --all-targets --no-default-features --features tui -- -D warnings
       - name: Token discipline — no raw colours outside theme module
         run: |
           # guide II.30.6: no Color32::from_* outside src/theme/.
@@ -53,12 +51,8 @@ jobs:
           echo "Token gate clean."
       - name: Tests (default features)
         run: cargo test --all --locked
-      - name: Tests (TUI-only configuration)
-        run: cargo test -p dust-trail --no-default-features --features tui --locked
       - name: Build release (default features)
         run: cargo build --release --locked
-      - name: Build release (TUI-only configuration)
-        run: cargo build --release --locked -p dust-trail --no-default-features --features tui
 
   # Multi-OS release builds (mirrors release.yml targets).
   build:
@@ -122,7 +116,7 @@ jobs:
           mkdir -p "$DEBDIR/DEBIAN" "$DEBDIR/usr/bin" \
                    "$DEBDIR/usr/share/applications" \
                    "$DEBDIR/usr/share/icons/hicolor/256x256/apps"
-          printf 'Package: dust-trail\nVersion: %s-1\nSection: games\nPriority: optional\nArchitecture: %s\nMaintainer: Dust Trail Dev <dev@example.com>\nDescription: Original Western-themed ASCII adventure game (TUI + GUI)\n' "${{ steps.version.outputs.version }}" "$ARCH" > "$DEBDIR/DEBIAN/control"
+          printf 'Package: dust-trail\nVersion: %s-1\nSection: games\nPriority: optional\nArchitecture: %s\nMaintainer: Dust Trail Dev <dev@example.com>\nDescription: Original Western-themed ASCII adventure game (GUI)\n' "${{ steps.version.outputs.version }}" "$ARCH" > "$DEBDIR/DEBIAN/control"
           cp "target/${TRIPLE}/release/dust-trail" "$DEBDIR/usr/bin/dust-trail"
           dpkg-deb --build "$DEBDIR" "dist/${{ matrix.asset }}.deb"
           APPDIR="dist/DustTrail.AppDir"
@@ -130,7 +124,7 @@ jobs:
           mkdir -p "$APPDIR/usr/bin" "$APPDIR/usr/share/applications" \
                    "$APPDIR/usr/share/icons/hicolor/256x256/apps"
           cp "target/${TRIPLE}/release/dust-trail" "$APPDIR/usr/bin/dust-trail"
-          printf '[Desktop Entry]\nType=Application\nName=Dust Trail\nExec=dust-trail\nTerminal=true\nCategories=Game;\n' > "$APPDIR/dust-trail.desktop"
+          printf '[Desktop Entry]\nType=Application\nName=Dust Trail\nExec=dust-trail\nTerminal=false\nCategories=Game;\n' > "$APPDIR/dust-trail.desktop"
           cp "$APPDIR/dust-trail.desktop" "$APPDIR/usr/share/applications/"
           printf '#!/bin/sh\nexec "$(dirname "$(readlink -f "$0")")/usr/bin/dust-trail" "$@"\n' > "$APPDIR/AppRun"
           chmod +x "$APPDIR/AppRun"

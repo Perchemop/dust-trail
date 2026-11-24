@@ -11,8 +11,7 @@ implemented / out of scope. Implementation evidence lives in docs/parity.md.
 | CAP-04 | Item collection | Walking onto loot/horse collects it, updates score/mount | `collecting_loot_raises_score` test | implemented |
 | CAP-05 | NPC interaction | Adjacent E shows a dialogue line; outlaw surrenders if mounted | `interacting_with_sheriff_yields_line` test | implemented |
 | CAP-06 | Save / load | Game state persists to JSON and reloads identically | `save_and_load_roundtrip` test | implemented |
-| CAP-07 | TUI frontend | Playable in terminal | CI release build + manual run | implemented |
-| CAP-08 | GUI frontend | Playable in desktop window | CI release build --features gui | implemented |
+| CAP-07 | GUI frontend | Playable as desktop window | CI release build --features gui | implemented |
 | CAP-09 | Crash-report panic hook | Scrubbed report parked on panic | crash-report unit tests | implemented |
 | CAP-10 | Update-check stub | Quiet fail-soft check against GitHub Releases API | update-check unit tests | implemented |
 | CAP-11 | Contrast AA | 4.5:1 body, 3:1 UI/boundary, all variants | `src/theme/mod.rs` contrast tests | implemented |

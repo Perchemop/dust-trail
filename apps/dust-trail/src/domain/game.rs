@@ -1028,7 +1028,7 @@ impl Game {
         Ok(saved_as)
     }
 
-    /// TUI-compatible save method (takes a path).
+    /// GUI-compatible save method (takes a path).
     pub fn save(&self, path: &Path) -> Result<(), String> {
         let store = SaveStore::new(path);
         store
@@ -1036,10 +1036,12 @@ impl Game {
             .map(|_| ())
     }
 
-    /// TUI-compatible load method.
+    /// GUI-compatible load method.
     pub fn load(path: &Path) -> Result<Self, String> {
         let store = SaveStore::new(path);
         let game = Self::from_save_data(store.load_data("default")?);
+        #[cfg(feature = "gui")]
+        game.mark_cache_dirty();
         #[cfg(feature = "sound")]
         {
             let mut game = game;
@@ -1052,9 +1054,6 @@ impl Game {
     /// Load the game from the named slot of the slot document at `path`.
     pub fn load_named_from(slot: &str, path: &Path) -> Result<Self, String> {
         let store = SaveStore::new(path);
-        // `mut` is consumed only by the gui/sound-gated calls below; a bare
-        // TUI build never mutates the loaded game, so the lint is expected there.
-        #[allow(unused_mut)]
         let mut game = Self::from_save_data(store.load_data(slot)?);
         #[cfg(feature = "gui")]
         game.mark_cache_dirty();

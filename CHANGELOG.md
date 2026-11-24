@@ -3,6 +3,7 @@
 ## v2.0.0 — In Progress (GUI-only ASCII 3D)
 
 ### Added
+- **Crash-report submission capability** — `crates/crash-report` now supports GitHub issue creation with user token; includes `submit_report()`, `prefill_issue_url()`, and complete payload scrubbing (`scrub_backtrace()`, `scrub_env_vars()`)
 - Render module: 3D primitive types (Box, Cone, Ellipsoid, Cylinder, Capsule) with Transform and Material
 - ObjectModel and ModelRegistry mapping EntityKind to procedural models
 - Fixed isometric Camera with world→screen projection and screen_depth for painter's algorithm
@@ -18,15 +19,19 @@
 - Save/load v1.x migration test (T-015): v1.x saves migrate health to safe defaults; v2.0.0 saves load without migration; unknown future versions use serde defaults
 
 ### Changed
-- CI: clippy -D warnings now passes with zero warnings across all targets
-- Build: TUI and GUI configurations both lint and test clean
+- GUI is the default feature; no TUI fallback needed
+- CI: clippy -D warnings passes with zero warnings across all targets
+- Build: GUI configuration only (TUI removed, crossterm dependency removed)
+- Launch behaviour: application opens the GUI window by default; `--gui` forces the desktop window; `--tui` is rejected with an error
 
-### Removed (planned for v2.0.0)
-- Terminal interface (TUI feature flag) — removed in v2.0.0 final
+### Removed
+- Terminal interface (`tui` feature) — removed entirely
+- `crossterm` dependency — no longer used
+- `src/tui/` directory — deleted
 
 ### Known limitations
-- The terminal interface is still present in this development state. v2.0.0 will remove it entirely.
-- egui/eframe GUI frontend not yet wired (T-012 through T-020)
+- CI green: format, clippy -D warnings, tests, multi-OS release builds.
+- Installers: `.msi` (Windows), `.dmg` (macOS), `.deb` (x86_64/arm64 Linux), `SHA256SUMS.txt`, signature, SBOM.
 
 ## v1.5.1 - 2026-11-20
 

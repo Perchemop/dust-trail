@@ -75,7 +75,7 @@ impl Theme {
         egui::Color32::from_rgb(self.rgb(role).r, self.rgb(role).g, self.rgb(role).b)
     }
 
-    /// Resolve a role to a domain RGB (shared with the TUI).
+    /// Resolve a role to a domain RGB (shared with GUI).
     pub fn rgb(&self, role: Role) -> crate::domain::color::Rgb {
         match self.variant {
             Variant::Dark => self.dark_rgb(role),
@@ -164,7 +164,17 @@ impl Theme {
 
     /// Build `egui::Visuals` from this theme (panel fills, selection, etc.).
     pub fn visuals(&self) -> egui::Visuals {
-        egui::Visuals::default()
+        match self.variant {
+            Variant::Light => egui::Visuals::light(),
+            Variant::Dark => egui::Visuals::dark(),
+            Variant::HighContrast => {
+                let mut v = egui::Visuals::dark();
+                v.window_fill = egui::Color32::BLACK;
+                v.panel_fill = egui::Color32::BLACK;
+                v.extreme_bg_color = egui::Color32::BLACK;
+                v
+            }
+        }
     }
 }
 
@@ -222,6 +232,54 @@ impl Theme {
             Role::SurfaceSunken => (Role::TextPrimary, Role::SurfaceSunken),
             _ => (Role::TextPrimary, Role::SurfaceBase),
         }
+    }
+}
+
+/// Animation duration in seconds (guide II.30: transitions stay under 120 ms).
+pub const ANIM_DURATION_SECS: f32 = 0.12;
+
+/// Spacing scale (4-point base, guide II.30.6).
+pub const SPACING_XS: f32 = 2.0;
+pub const SPACING_SM: f32 = 4.0;
+pub const SPACING_MD: f32 = 8.0;
+pub const SPACING_LG: f32 = 12.0;
+pub const SPACING_XL: f32 = 16.0;
+pub const SPACING_XXL: f32 = 24.0;
+
+/// Corner radii.
+pub const RADIUS_SM: f32 = 2.0;
+pub const RADIUS_MD: f32 = 4.0;
+pub const RADIUS_LG: f32 = 8.0;
+
+/// Elevation (shadow) levels — keep subtle (guide XI.1.5).
+pub const ELEVATION_NONE: f32 = 0.0;
+pub const ELEVATION_LOW: f32 = 2.0;
+pub const ELEVATION_MED: f32 = 4.0;
+
+/// Effective animation duration, honouring the reduced-motion preference.
+pub fn anim_duration(reduced_motion: bool) -> f32 {
+    if reduced_motion {
+        0.0
+    } else {
+        ANIM_DURATION_SECS
+    }
+}
+
+/// Draw a loading skeleton rectangle matching the given size, using theme
+/// tokens only (guide II.30.11 loading state).
+pub fn skeleton(ui: &mut egui::Ui, size: egui::Vec2) {
+    let (rect, _) = ui.allocate_exact_size(size, egui::Sense::hover());
+    let color = Theme::dark().color32(Role::SurfaceSunken);
+    ui.painter().rect_filled(rect, 4.0, color);
+}
+
+/// A simple fade transition helper: returns an alpha in [0,1] driven by
+/// egui's animator, honouring reduced-motion.
+pub fn fade_alpha(ctx: &egui::Context, id: egui::Id, visible: bool, reduced_motion: bool) -> f32 {
+    if reduced_motion {
+        if visible { 1.0 } else { 0.0 }
+    } else {
+        ctx.animate_bool(id, visible)
     }
 }
 

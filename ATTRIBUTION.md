@@ -8,7 +8,8 @@ The following third-party crates are used and their licences are recorded:
 
 - `rand` - MIT OR Apache-2.0
 - `serde` - MIT OR Apache-2.0
-- `crossterm` - MIT
+- `serde_json` - MIT OR Apache-2.0
+- `ureq` - MIT OR Apache-2.0
 - `rodio` (optional) - MIT
 - `egui` (optional, via eframe) - MIT
 - `eframe` (optional) - MIT

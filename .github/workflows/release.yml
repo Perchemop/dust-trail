@@ -85,7 +85,7 @@ jobs:
         # brew has no practical version pin for create-dmg; the formula is
         # tracked by Dependabot-free manual review (see docs/dev.md).
         run: brew install create-dmg
-      - name: Build release (TUI + GUI)
+      - name: Build release (GUI)
         run: cargo build --release --locked --features gui --target ${{ matrix.target }}
 
       # ----- Windows: .msi installer via cargo-wix (version pinned) -----
@@ -149,7 +149,7 @@ jobs:
           mkdir -p "$DEBDIR/DEBIAN" "$DEBDIR/usr/bin" \
                    "$DEBDIR/usr/share/applications" \
                    "$DEBDIR/usr/share/icons/hicolor/256x256/apps"
-          printf 'Package: dust-trail\nVersion: %s-1\nSection: games\nPriority: optional\nArchitecture: __ARCH__\nMaintainer: Dust Trail Dev <dev@example.com>\nDescription: Original Western-themed ASCII adventure game (TUI + GUI)\n' "$VERSION" > "$DEBDIR/DEBIAN/control"
+          printf 'Package: dust-trail\nVersion: %s-1\nSection: games\nPriority: optional\nArchitecture: __ARCH__\nMaintainer: Dust Trail Dev <dev@example.com>\nDescription: Original Western-themed ASCII adventure game (GUI)\n' "$VERSION" > "$DEBDIR/DEBIAN/control"
           sed -i "s/__ARCH__/${ARCH}/g" "$DEBDIR/DEBIAN/control"
           cp "target/${TRIPLE}/release/dust-trail" "$DEBDIR/usr/bin/dust-trail"
           cp packaging/linux/dust-trail.desktop "$DEBDIR/usr/share/applications/"
