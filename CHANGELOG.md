@@ -15,6 +15,7 @@
 - Tile.to_sprite() — single-cell flat ground sprites for terrain
 - Game::frame() integration: new render pipeline when `gui` feature enabled, flat fallback for headless tests; SpriteCache held by Game, invalidated on world state changes
 - Headless workflow test (T-014): move → attack → interact → save → load roundtrip through new sprite-based viewport, validates end-to-end pipeline
+- Save/load v1.x migration test (T-015): v1.x saves migrate health to safe defaults; v2.0.0 saves load without migration; unknown future versions use serde defaults
 
 ### Changed
 - CI: clippy -D warnings now passes with zero warnings across all targets

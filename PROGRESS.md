@@ -303,10 +303,11 @@ move, combat, loot, save loop through new viewport.
 | T-010 | Tile.to_sprite() — single-cell flat ground sprites | ✅ Complete | `apps/dust-trail/src/domain/tile.rs` |
 | T-011 | Game::frame() integration: sprites + cache + composite + cache invalidation | ✅ Complete | `apps/dust-trail/src/domain/game.rs` |
 | T-014 | Headless workflow test: move/combat/loot/save roundtrip through new viewport | ✅ Complete | `apps/dust-trail/src/domain/game.rs` |
+| T-015 | Save/load v1.x migration test for v2.x | ✅ Complete | `apps/dust-trail/src/domain/save.rs`, `apps/dust-trail/src/domain/player.rs` |
 
 ### CI Status
 
-- **Latest CI run (main): `45383595361` — ALL GREEN**
+- **Latest CI run (main): `45499662169` — ALL GREEN**
   - `check` (fmt, clippy -D warnings, token discipline, tests, builds): ✅
   - `Build (windows-x86_64)`: ✅ (MSI installer)
   - `Build (macos-arm64)`: ✅ (DMG installer)
