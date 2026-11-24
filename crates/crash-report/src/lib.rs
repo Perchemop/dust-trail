@@ -178,7 +178,7 @@ pub fn submit_report(
         .header("Accept", "application/vnd.github+json")
         .header("Authorization", &format!("Bearer {}", token))
         .header("Content-Type", "application/json")
-        .send_json(ureq::json!(&json_body))
+        .send_json(serde_json::json!(&json_body))
         .map_err(|e| SubmitError::Network(e.to_string()))?;
 
     let status_code = response.status().as_u16();
@@ -193,7 +193,7 @@ pub fn submit_report(
         let message = serde_json::from_str::<serde_json::Value>(&error_msg)
             .ok()
             .and_then(|v| v.get("message").and_then(|m| m.as_str()).map(|s| s.to_string()))
-            .unwrap_or_else(|| "unknown error");
+            .unwrap_or_else(|| "unknown error".to_string());
 
         return Err(SubmitError::Status {
             code: status_code,
@@ -304,12 +304,12 @@ pub fn prefill_issue_url(
     report: &CrashReport,
     config: &SubmissionConfig,
 ) -> String {
-    let title = urlencoding::encode(&issue_title(report));
-    let body = urlencoding::encode(&issue_body(report, config));
+    let encoded_title = urlencoding::encode(&issue_title(report)).to_string();
+    let encoded_body = urlencoding::encode(&issue_body(report, config)).to_string();
 
     format!(
         "https://github.com/{}/{}/issues/new?title={}&body={}",
-        config.owner, config.repo, title, body
+        config.owner, config.repo, encoded_title, encoded_body
     )
 }
 
