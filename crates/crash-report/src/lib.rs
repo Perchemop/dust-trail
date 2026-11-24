@@ -7,7 +7,7 @@
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use std::panic::{self, AssertUnwindSafe};
+use std::panic::AssertUnwindSafe;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 /// A captured environment at the time of the crash.
@@ -629,11 +629,11 @@ mod tests {
 
     #[test]
     fn scrub_backtrace_removes_absolute_paths() {
-        let backtrace = "thread 'main' panicked at src/lib.rs:42:10\n  ::main::{{closure}} at /home/test_user_123/project/src/main.rs:100:5";
+        let backtrace = "thread 'main' panicked at src/lib.rs:42:10\n  ::main::{{closure}} at /tmp/test_user_123/project/src/main.rs:100:5";
         let scrubbed = scrub_backtrace(backtrace);
 
         // Should not contain full paths
-        assert!(!scrubbed.contains("/home/test_user_123/project"));
+        assert!(!scrubbed.contains("/tmp/test_user_123/project"));
         // Should preserve the structure
         assert!(scrubbed.contains("src/lib.rs"));
         assert!(scrubbed.contains("src/main.rs"));
