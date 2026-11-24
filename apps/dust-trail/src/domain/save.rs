@@ -137,7 +137,7 @@ mod tests {
     #[test]
     fn v1_x_save_migrates_health_to_safe_defaults() {
         // Simulate a v1.1.0 save with zero health (pre-health fields)
-        let mut game = Game::new();
+        let game = Game::new();
         let data = SaveData::with_slot(&game, "test");
         let mut value = serde_json::to_value(data).expect("to value");
         let object = value.as_object_mut().expect("object");
@@ -169,7 +169,7 @@ mod tests {
 
     #[test]
     fn v2_x_save_loads_without_migration_changes() {
-        let mut game = Game::new();
+        let game = Game::new();
         game.move_player(Direction::Right);
         let data = SaveData::with_slot(&game, "v2_test");
         let mut value = serde_json::to_value(data).expect("to value");
@@ -188,7 +188,7 @@ mod tests {
 
     #[test]
     fn unknown_future_version_loads_with_serde_defaults() {
-        let mut game = Game::new();
+        let game = Game::new();
         let data = SaveData::with_slot(&game, "future_test");
         let mut value = serde_json::to_value(data).expect("to value");
         let object = value.as_object_mut().expect("object");
