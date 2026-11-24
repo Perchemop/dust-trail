@@ -431,7 +431,7 @@ pub fn scrub_text(text: &str) -> String {
     // Scrub absolute Unix paths like /tmp/username/... or /usr/local/...
     result = scrub_path_fragments(&result, true);
 
-    // Scrub Windows paths like C:\Users\test_user\... or C:\Program Files\...
+    // Scrub Windows paths like C:\Users\TEST\... or C:\Program Files\...
     result = scrub_path_fragments(&result, false);
 
     // Scrub environment variable values that match sensitive patterns
@@ -485,7 +485,7 @@ fn scrub_path_fragments(text: &str, is_unix: bool) -> String {
                 false
             }
         } else {
-            // Windows path: C:\Users\test_user\...
+            // Windows path: C:\Users\TEST\...
             if i + 1 < chars.len()
                 && chars[i].is_alphabetic()
                 && chars[i + 1] == ':'
