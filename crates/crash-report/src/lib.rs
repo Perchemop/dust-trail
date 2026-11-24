@@ -411,6 +411,7 @@ pub fn collect_scrubbed_env_vars() -> Vec<EnvVar> {
 
 /// Scrub a backtrace by removing local path information, keeping only crate names.
 /// This prevents leaking internal file paths while preserving debugging info.
+#[must_use]
 pub fn scrub_backtrace(backtrace: &str) -> String {
     let mut result = String::with_capacity(backtrace.len());
 
@@ -425,6 +426,7 @@ pub fn scrub_backtrace(backtrace: &str) -> String {
 
 /// Scrub text by removing absolute paths and sensitive patterns.
 /// Returns the scrubbed string.
+#[must_use]
 pub fn scrub_text(text: &str) -> String {
     let mut result = text.to_string();
 
@@ -515,7 +517,8 @@ fn scrub_path_fragments(text: &str, is_unix: bool) -> String {
 }
 
 /// Scrub secret values from text, replacing them with `<redacted>`.
-/// Patterns: token=, secret=, password=, api_key=, Authorization: header.
+/// Patterns: token=, secret=, password=, `api_key=`, Authorization: header.
+#[must_use]
 pub fn scrub_secrets(text: &str) -> String {
     let mut result = text.to_string();
 
@@ -548,7 +551,7 @@ pub fn scrub_secrets(text: &str) -> String {
                 if value_end > 0 {
                     let before = &result[..pos + pattern.len()];
                     let after = &result[after_start + value_end..];
-                    result = format!("{}<redacted>{}\"", before, after);
+                    result = format!("{before}<redacted>{after}\"");
                 }
             }
         }
