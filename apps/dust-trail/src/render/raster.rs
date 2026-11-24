@@ -110,7 +110,7 @@ impl Rasteriser {
     fn generate_primitive_vertices(&self, primitive: &Primitive) -> Vec<(i32, i32, i32)> {
         let Transform { translation, rotation, scale } = primitive.transform;
         let (tx, ty, tz) = translation;
-        let (_rx, _ry, _rz) = rotation;
+        let _rotation = rotation;
         let (sx, sy, sz) = scale;
 
         let mut vertices = Vec::new();

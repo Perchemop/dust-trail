@@ -208,12 +208,11 @@ impl Game {
         let mut tile_sprites: Vec<(Sprite, i32, i32)> = Vec::new();
         for y in 0..self.world.height {
             for x in 0..self.world.width {
-                let wx = x;
-                let wy = y;
-                let tile = self.world.tiles[wy as usize][wx as usize];
+                let wy = y as usize;
+                let wx = x as usize;
+                let tile = self.world.tiles[wy][wx];
                 let sprite = tile.to_sprite(&camera);
-                let _depth = camera.screen_depth(wx, wy, 0);
-                tile_sprites.push((sprite, wx, wy));
+                tile_sprites.push((sprite, x, y));
             }
         }
         // Sort back-to-front by screen depth
@@ -251,8 +250,8 @@ impl Game {
                     crate::domain::world::ItemKind::Loot => EntityKind::Loot,
                     crate::domain::world::ItemKind::Horse => EntityKind::Horse,
                 };
-                let _depth = camera.screen_depth(*x, *y, 0);
-                (entity_kind, *x, *y, _depth)
+                let depth = camera.screen_depth(*x, *y, 0);
+                (entity_kind, *x, *y, depth)
             })
             .collect();
 
@@ -273,8 +272,8 @@ impl Game {
                     crate::domain::world::NpcKind::Deputy => EntityKind::Deputy,
                     crate::domain::world::NpcKind::Outlaw => EntityKind::Outlaw,
                 };
-                let _depth = camera.screen_depth(*x, *y, *z);
-                (entity_kind, *x, *y, _depth)
+                let depth = camera.screen_depth(*x, *y, *z);
+                (entity_kind, *x, *y, depth)
             })
             .collect();
 
