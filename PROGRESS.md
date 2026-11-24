@@ -302,10 +302,11 @@ move, combat, loot, save loop through new viewport.
 | T-009 | Frame depth buffer (z per cell, set_at_depth, clear_depth) | ✅ Complete | `apps/dust-trail/src/domain/frame.rs` |
 | T-010 | Tile.to_sprite() — single-cell flat ground sprites | ✅ Complete | `apps/dust-trail/src/domain/tile.rs` |
 | T-011 | Game::frame() integration: sprites + cache + composite + cache invalidation | ✅ Complete | `apps/dust-trail/src/domain/game.rs` |
+| T-014 | Headless workflow test: move/combat/loot/save roundtrip through new viewport | ✅ Complete | `apps/dust-trail/src/domain/game.rs` |
 
 ### CI Status
 
-- **Latest CI run (main): `45378480961` — ALL GREEN**
+- **Latest CI run (main): `45383595361` — ALL GREEN**
   - `check` (fmt, clippy -D warnings, token discipline, tests, builds): ✅
   - `Build (windows-x86_64)`: ✅ (MSI installer)
   - `Build (macos-arm64)`: ✅ (DMG installer)
@@ -316,6 +317,8 @@ move, combat, loot, save loop through new viewport.
   - `secret-scan`: ✅
 
 All 8 required checks per `.ci-required.txt` passing. Clippy warnings: 0.
+
+### Next Tickets (v2.0.0 GUI Frontend)
 
 ### Next Tickets (v2.0.0 GUI Frontend)
 
