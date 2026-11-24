@@ -62,7 +62,7 @@ occurs, a scrubbed report is parked locally and shown on the next launch.
    and a scrubbed backtrace is written to a temporary file.
 2. **On next launch:** The report is displayed for your review before any
    submission. You must explicitly choose to send it.
-3. **Scrubbed:** All absolute file paths (e.g., `/home/test_user_123/project`) and
+3. **Scrubbed:** All absolute file paths (e.g., `/tmp/test_user_123/project`) and
    sensitive values (tokens, API keys, passwords) are removed from the report.
 
 **Submission options:**

@@ -371,7 +371,7 @@ All 8 required checks per `.ci-required.txt` passing. Clippy warnings: 0.
 | `set_panic_hook(environment, on_report)` | Alias for backward compatibility |
 
 #### Scrubbing Behavior
-- Absolute paths like `/home/test_user_123/project/src/lib.rs` → `lib.rs:error`
+- Absolute paths like `/tmp/test_user_123/project/src/lib.rs` → `lib.rs:error`
 - Windows paths `C:\Users\user\...` → `user\...`
 - Sensitive env vars (`GITHUB_TOKEN`, `API_KEY`, `SECRET`, `PASSWORD`, etc.) removed
 - Token values in text (`token=abc123`, `Bearer xyz`) replaced with `<redacted>`
