@@ -52,7 +52,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         if let Some(report) = crash_report::CrashReport::from_json(&json) {
             eprintln!(
                 "[crash report parked from previous run]: {} v{} — {}",
-                report.environment.os, report.environment.app_version, report.message
+                report.os, report.version, report.backtrace.as_deref().unwrap_or("unknown error")
             );
             let _ = std::fs::remove_file(&report_path);
         }

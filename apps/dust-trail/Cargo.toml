@@ -14,7 +14,7 @@ categories = ["games"]
 
 [dependencies]
 # Shared suite crates (guide §7): crash reporting and update checks.
-crash-report = { path = "../../crates/crash-report", version = "0.2.0" }
+crash-report = { path = "../../crates/crash-report", version = "0.3.0" }
 update-check = { path = "../../crates/update-check", version = "0.2.0" }
 
 directories = "6"

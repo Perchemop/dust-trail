@@ -51,7 +51,7 @@ v0.1.0.
 Dust Trail is dual-licensed under **MIT OR Apache-2.0**. Third-party
 dependencies are listed in `ATTRIBUTION.md`.
 
-## Privacy and Crash Reporting
+## Privacy
 
 Dust Trail includes an optional crash/bug reporting feature. When a panic
 occurs, a scrubbed report is parked locally and shown on the next launch.
