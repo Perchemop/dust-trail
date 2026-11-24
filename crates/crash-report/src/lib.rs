@@ -300,6 +300,7 @@ pub fn issue_body(report: &CrashReport, config: &SubmissionConfig) -> String {
 
 /// Generate a pre-filled GitHub issue URL from a crash report.
 /// Useful when the user doesn't want to provide a token immediately.
+#[must_use]
 pub fn prefill_issue_url(
     report: &CrashReport,
     config: &SubmissionConfig,
@@ -315,7 +316,7 @@ pub fn prefill_issue_url(
 
 /// Install a panic hook that writes a scrubbed report to `park_path` and
 /// invokes `on_report`. Nothing is sent over the network from the panic path.
-pub fn install_panic_hook<F>(environment: Environment, on_report: F)
+pub fn install_panic_hook<F>(environment: &Environment, on_report: F)
 where
     F: Fn(&CrashReport) + Send + Sync + 'static,
 {
@@ -666,7 +667,7 @@ mod tests {
 
     #[test]
     fn prefill_creates_valid_url() {
-        let mut report = CrashReport {
+        let report = CrashReport {
             version: "1.0.0".to_string(),
             os: "linux".to_string(),
             arch: "x86_64".to_string(),
@@ -704,7 +705,7 @@ mod tests {
             "backtrace": null,
             "message": "",
             "user_notes": "",
-            "timestamp": 1234567890,
+            "timestamp": 1_234_567_890,
             "env_vars": [],
             "notes": {}
         }"#;
@@ -725,7 +726,7 @@ mod tests {
             "backtrace": null,
             "message": "",
             "user_notes": "",
-            "timestamp": 1234567890,
+            "timestamp": 1_234_567_890,
             "env_vars": [],
             "notes": {"key": "value"}
         }"#;
@@ -775,7 +776,7 @@ mod tests {
             "backtrace": null,
             "message": "assertion failed: my condition",
             "user_notes": "",
-            "timestamp": 1234567890,
+            "timestamp": 1_234_567_890,
             "env_vars": [],
             "notes": {}
         }"#;
