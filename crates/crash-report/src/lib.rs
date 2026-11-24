@@ -376,11 +376,13 @@ where
 }
 
 /// Where an unhandled crash report is parked for review on the next launch.
+#[must_use]
 pub fn default_report_path() -> std::path::PathBuf {
     std::env::temp_dir().join("dust-trail-crash-report.json")
 }
 
 /// Collect and scrub environment variables that may contain sensitive information.
+#[must_use]
 pub fn collect_scrubbed_env_vars() -> Vec<EnvVar> {
     let mut scrubbed = Vec::new();
     let sensitive_patterns = [
@@ -568,8 +570,8 @@ mod tests {
     fn environment_capture_includes_version() {
         let env = Environment::capture("1.0.0");
         assert_eq!(env.app_version, "1.0.0");
-        assert!(!env.os.is_empty());
-        assert!(!env.arch.is_empty());
+        assert_ne!(env.os, "");
+        assert_ne!(env.arch, "");
     }
 
     #[test]
@@ -737,9 +739,8 @@ mod tests {
         let scrubbed = collect_scrubbed_env_vars();
         // The function should return environment variables
         // In a typical test environment, there will be some vars
-        let has_sensitive_redacted = scrubbed.iter().any(|v| v.value == "<redacted>");
-        // At least verify the function doesn't panic
-        assert!(true);
+        let _has_sensitive_redacted = scrubbed.iter().any(|v| v.value == "<redacted>");
+        // Function executed without panic - test passes
     }
 
     #[test]
