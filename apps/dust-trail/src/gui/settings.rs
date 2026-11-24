@@ -108,7 +108,9 @@ pub fn apply_settings(ctx: &egui::Context, settings: &Settings) {
     ctx.set_visuals(theme.visuals());
     // Font size scaling: egui uses the style's text_styles. We set a global
     // override by adjusting the base font size via style.
-    let mut style = (*ctx.style()).clone();
+    // In egui 0.37+, ctx.style() is removed; build a new style from visuals.
+    let mut style = egui::Style::default();
+    style.visuals = theme.visuals();
     for (_name, font_id) in style.text_styles.iter_mut() {
         font_id.size = settings.font_size;
     }
@@ -163,10 +165,10 @@ pub fn draw_settings_panel(
     }
 
     let mut changed = false;
-    let mut open = state.open;
+    let mut window_open = state.open;
 
     egui::Window::new("Settings")
-        .open(&mut open)
+        .open(&mut window_open)
         .resizable(true)
         .default_width(420.0)
         .show(ctx, |ui| {
@@ -259,11 +261,11 @@ pub fn draw_settings_panel(
             }
             if ui.button("Close").clicked() {
                 state.open = false;
-                open = false;
+                window_open = false;
             }
         });
 
-    state.open = open;
+    state.open = window_open;
     if changed {
         state.commit(ctx);
     }

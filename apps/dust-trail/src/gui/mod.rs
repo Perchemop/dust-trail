@@ -26,7 +26,7 @@ impl Gui {
     pub fn new(cc: &eframe::CreationContext) -> Self {
         let settings_state = settings::SettingsPanelState::default();
         // Apply initial settings to the context.
-        settings::apply_settings(cc.egui_ctx, &settings_state.settings);
+        settings::apply_settings(&cc.egui_ctx, &settings_state.settings);
         Self {
             game: Game::new(),
             save_dialog: save_dialog::SaveDialog::default(),

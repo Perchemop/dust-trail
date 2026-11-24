@@ -39,7 +39,7 @@ optional = true
 # including the ones produced by the release pipeline and by `cargo wix` —
 # ships a window-capable binary.
 default = ["gui"]
-gui = ["dep:eframe", "dep:egui"]
+gui = ["dep:eframe", "dep:egui", "sound"]
 sound = ["dep:rodio"]
 
 # --- Linux packaging metadata (cargo-deb / cargo-generate-rpm) ---

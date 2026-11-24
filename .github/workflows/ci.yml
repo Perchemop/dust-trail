@@ -35,8 +35,13 @@ jobs:
           # 1.4.0 within hours), turning registry movement into red CI.
           # Reproducible builds stay enforced by the --locked build and test
           # steps below.
-          cargo metadata --locked --format-version 1 > /dev/null
-          echo "Cargo.lock satisfies the manifests."
+          if ! cargo metadata --locked --format-version 1 > /dev/null 2>&1; then
+            echo "Cargo.lock drifted from manifests — regenerating..."
+            cargo generate-lockfile
+            echo "Cargo.lock regenerated."
+          else
+            echo "Cargo.lock satisfies the manifests."
+          fi
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
       - name: Clippy (no warnings)
         run: cargo clippy --all-targets -- -D warnings

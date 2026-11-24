@@ -1039,12 +1039,11 @@ impl Game {
     /// GUI-compatible load method.
     pub fn load(path: &Path) -> Result<Self, String> {
         let store = SaveStore::new(path);
-        let game = Self::from_save_data(store.load_data("default")?);
+        let mut game = Self::from_save_data(store.load_data("default")?);
         #[cfg(feature = "gui")]
         game.mark_cache_dirty();
         #[cfg(feature = "sound")]
         {
-            let mut game = game;
             game.sound_manager.play(SoundEffect::Load);
             return Ok(game);
         }
