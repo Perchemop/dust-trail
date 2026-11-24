@@ -173,7 +173,7 @@ pub fn submit_report(
         "labels": config.labels
     });
 
-    let response = ureq::post(&url)
+    let mut response = ureq::post(&url)
         .header("User-Agent", &config.user_agent)
         .header("Accept", "application/vnd.github+json")
         .header("Authorization", &format!("Bearer {}", token))
