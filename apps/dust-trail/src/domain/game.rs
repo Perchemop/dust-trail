@@ -1452,6 +1452,7 @@ mod tests {
     /// Headless workflow test: move → interact → attack → save → load
     /// through the new sprite-based viewport. Drives the full gameplay loop
     /// using `Game::frame()` with the gui feature path (T-014).
+    #[cfg(feature = "gui")]
     #[test]
     fn workflow_move_combat_loot_save_roundtrip() {
         let dir = tempfile::tempdir().unwrap();
