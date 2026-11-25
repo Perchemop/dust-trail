@@ -129,7 +129,7 @@ impl SoundManager {
     /// Create a new sound manager with embedded sound files.
     pub fn new() -> Result<Self, Box<dyn std::error::Error>> {
         let handle = DeviceSinkBuilder::open_default_sink()?;
-        let player = Player::connect_new(&handle.mixer());
+        let player = Player::connect_new(handle.mixer());
         player.set_volume(0.5);
 
         let sound_files = Self::load_sound_files()?;
