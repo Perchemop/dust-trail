@@ -236,11 +236,12 @@ pub fn load_report(path: &std::path::Path) -> std::io::Result<Option<CrashReport
 }
 
 /// Generate a title for a GitHub issue from a crash report.
+#[must_use]
 pub fn issue_title(report: &CrashReport) -> String {
-    let msg = if report.backtrace.as_ref().map_or(false, |b| b.len() > 60) {
+    let msg = if report.backtrace.as_ref().is_some_and(|b| b.len() > 60) {
         let bt = report.backtrace.as_ref().unwrap();
         format!("{}...", &bt[..60])
-    } else if !report.backtrace.as_ref().map_or(true, |b| b.is_empty()) {
+    } else if !report.backtrace.as_ref().is_none_or(|b| b.is_empty()) {
         report.backtrace.as_ref().unwrap().chars().take(60).collect()
     } else {
         "crash".to_string()
@@ -250,6 +251,7 @@ pub fn issue_title(report: &CrashReport) -> String {
 
 /// Generate a pre-formatted issue body for GitHub.
 /// Truncates the report to fit within GitHub's limits (~65536 chars for body).
+#[must_use]
 pub fn issue_body(report: &CrashReport, config: &SubmissionConfig) -> String {
     let max_body_len = 6000; // Keep it reasonable for readability
 
