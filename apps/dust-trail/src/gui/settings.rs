@@ -116,7 +116,7 @@ pub fn apply_settings(ctx: &egui::Context, settings: &Settings) {
     // In egui 0.37+, ctx.set_style() is removed; use set_style_of().
     let mut style = egui::Style::default();
     style.visuals = theme.visuals();
-    for (_name, font_id) in style.text_styles.iter_mut() {
+    for font_id in style.text_styles.values_mut() {
         font_id.size = settings.font_size;
     }
     ctx.set_style_of(egui_theme, style);
