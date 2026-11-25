@@ -104,7 +104,6 @@ impl SoundSettings {
 
 /// Manages sound playback for the game.
 #[cfg(feature = "sound")]
-#[derive(Debug)]
 pub struct SoundManager {
     handle: Option<MixerDeviceSink>,
     player: Option<Arc<Mutex<Player>>>,
@@ -117,7 +116,7 @@ impl SoundManager {
     /// Create a new sound manager with embedded sound files.
     pub fn new() -> Result<Self, Box<dyn std::error::Error>> {
         let handle = DeviceSinkBuilder::open_default_sink()?;
-        let player = Player::new(&handle.mixer());
+        let player = Player::connect_new(&handle.mixer());
         player.set_volume(0.5);
 
         let sound_files = Self::load_sound_files()?;
@@ -236,7 +235,7 @@ impl SoundManager {
     pub fn set_master_volume(&mut self, volume: f32) {
         self.settings.master_volume = volume.clamp(0.0, 1.0);
         if let Some(player) = &self.player {
-            let mut player = player.lock().unwrap();
+            let player = player.lock().unwrap();
             player.set_volume(self.settings.master_volume);
         }
     }
@@ -245,7 +244,7 @@ impl SoundManager {
     pub fn toggle_mute(&mut self) {
         self.settings.muted = !self.settings.muted;
         if let Some(player) = &self.player {
-            let mut player = player.lock().unwrap();
+            let player = player.lock().unwrap();
             if self.settings.muted {
                 player.set_volume(0.0);
             } else {
@@ -305,7 +304,7 @@ impl SoundManager {
     pub fn load_settings(&mut self, settings: SoundSettings) {
         self.settings = settings;
         if let Some(player) = &self.player {
-            let mut player = player.lock().unwrap();
+            let player = player.lock().unwrap();
             player.set_volume(if self.settings.muted {
                 0.0
             } else {
