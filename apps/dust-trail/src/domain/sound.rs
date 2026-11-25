@@ -309,12 +309,14 @@ impl SoundManager {
     /// Load settings from saved data.
     pub fn load_settings(&mut self, settings: SoundSettings) {
         self.settings = settings;
-        let sink = self.sink.lock().unwrap();
-        sink.set_volume(if self.settings.muted {
-            0.0
-        } else {
-            self.settings.master_volume
-        });
+        if let Some(sink) = &self.sink {
+            let sink = sink.lock().unwrap();
+            sink.set_volume(if self.settings.muted {
+                0.0
+            } else {
+                self.settings.master_volume
+            });
+        }
     }
 }
 
