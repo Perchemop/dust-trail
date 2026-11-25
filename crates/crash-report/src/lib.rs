@@ -193,7 +193,7 @@ pub fn submit_report(
         // Try to extract the message from GitHub's error response
         let message = serde_json::from_str::<serde_json::Value>(&error_msg)
             .ok()
-            .and_then(|v| v.get("message").and_then(|m| m.as_str()).map(|s| s.to_string()))
+            .and_then(|v| v.get("message").and_then(|m| m.as_str()).map(String::to_string))
             .unwrap_or_else(|| "unknown error".to_string());
 
         return Err(SubmitError::Status {
@@ -214,19 +214,25 @@ pub fn submit_report(
     let issue_url = issue
         .get("html_url")
         .and_then(|v| v.as_str())
-        .map(|s| s.to_string())
+        .map(String::to_string)
         .ok_or_else(|| SubmitError::Parse("missing html_url in response".to_string()))?;
 
     Ok(issue_url)
 }
 
 /// Save a crash report to a local file for later submission.
+///
+/// # Errors
+/// Returns an error if the file cannot be written.
 pub fn save_report_locally(report: &CrashReport, path: &std::path::Path) -> std::io::Result<()> {
     let json = report.to_json();
     std::fs::write(path, json)
 }
 
 /// Load a previously saved crash report from disk.
+///
+/// # Errors
+/// Returns an error if the file cannot be read or the JSON is invalid.
 pub fn load_report(path: &std::path::Path) -> std::io::Result<Option<CrashReport>> {
     if !path.exists() {
         return Ok(None);
@@ -236,12 +242,16 @@ pub fn load_report(path: &std::path::Path) -> std::io::Result<Option<CrashReport
 }
 
 /// Generate a title for a GitHub issue from a crash report.
+///
+/// # Panics
+/// Panics if `report.backtrace` is `Some` but the string is shorter than expected
+/// when taking a substring (should not happen with the length checks above).
 #[must_use]
 pub fn issue_title(report: &CrashReport) -> String {
     let msg = if report.backtrace.as_ref().is_some_and(|b| b.len() > 60) {
         let bt = report.backtrace.as_ref().unwrap();
         format!("{}...", &bt[..60])
-    } else if !report.backtrace.as_ref().is_none_or(|b| b.is_empty()) {
+    } else if !report.backtrace.as_ref().is_none_or(String::is_empty) {
         report.backtrace.as_ref().unwrap().chars().take(60).collect()
     } else {
         "crash".to_string()
