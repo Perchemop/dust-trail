@@ -185,10 +185,11 @@ pub fn submit_report(
         "labels": config.labels
     });
 
+    let auth_header = "Bearer ".to_string() + token;
     let mut response = ureq::post(&url)
         .header("User-Agent", &config.user_agent)
         .header("Accept", "application/vnd.github+json")
-        .header("Authorization", &format!("Bearer {}", token)) // clippy: token used in format string
+        .header("Authorization", &auth_header)
         .header("Content-Type", "application/json")
         .send_json(serde_json::json!(&json_body))
         .map_err(|e| SubmitError::Network(e.to_string()))?;
