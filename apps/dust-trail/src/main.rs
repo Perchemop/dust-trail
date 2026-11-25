@@ -42,7 +42,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let env = crash_report::Environment::capture(env!("CARGO_PKG_VERSION"));
     let report_path = crash_report::default_report_path();
     let hook_path = report_path.clone();
-    crash_report::install_panic_hook(env, move |report| {
+    crash_report::install_panic_hook(&env, move |report| {
         let _ = std::fs::write(&hook_path, report.to_json());
     });
 
