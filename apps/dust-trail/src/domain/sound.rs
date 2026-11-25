@@ -111,6 +111,19 @@ pub struct SoundManager {
     sound_files: std::collections::HashMap<SoundEffect, Vec<u8>>,
 }
 
+// Manual Debug implementation since rodio::Player doesn't implement Debug
+#[cfg(feature = "sound")]
+impl std::fmt::Debug for SoundManager {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("SoundManager")
+            .field("handle", &self.handle.as_ref().map(|_| "MixerDeviceSink"))
+            .field("player", &self.player.as_ref().map(|_| "Player"))
+            .field("settings", &self.settings)
+            .field("sound_files", &format!("{} sounds", self.sound_files.len()))
+            .finish()
+    }
+}
+
 #[cfg(feature = "sound")]
 impl SoundManager {
     /// Create a new sound manager with embedded sound files.
@@ -209,9 +222,9 @@ impl SoundManager {
                     let volume = self
                         .settings
                         .effective_volume(self.category_for_effect(effect));
-                    let mut player = player.lock().unwrap();
+                    let player = player.lock().unwrap();
                     let mut source = source.amplify(volume);
-                    player.add(source);
+                    player.append(source);
                 }
             }
         }
