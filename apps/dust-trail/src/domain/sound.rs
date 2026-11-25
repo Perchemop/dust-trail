@@ -143,7 +143,6 @@ impl SoundManager {
             sound_files: std::collections::HashMap::new(),
         }
     }
-}
 
     /// Load embedded sound files.
     fn load_sound_files(
