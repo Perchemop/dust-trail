@@ -193,7 +193,7 @@ pub fn submit_report(
         // Try to extract the message from GitHub's error response
         let message = serde_json::from_str::<serde_json::Value>(&error_msg)
             .ok()
-            .and_then(|v| v.get("message").and_then(|m| m.as_str()).map(String::to_string))
+            .and_then(|v| v.get("message").and_then(|m| m.as_str()).map(|s| s.to_string()))
             .unwrap_or_else(|| "unknown error".to_string());
 
         return Err(SubmitError::Status {
@@ -214,7 +214,7 @@ pub fn submit_report(
     let issue_url = issue
         .get("html_url")
         .and_then(|v| v.as_str())
-        .map(String::to_string)
+        .map(|s| s.to_string())
         .ok_or_else(|| SubmitError::Parse("missing html_url in response".to_string()))?;
 
     Ok(issue_url)
