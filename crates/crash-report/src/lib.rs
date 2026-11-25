@@ -71,11 +71,13 @@ pub struct CrashReport {
 
 impl CrashReport {
     /// Convert the report to a pretty JSON string.
+    #[must_use]
     pub fn to_json(&self) -> String {
         serde_json::to_string_pretty(self).unwrap_or_else(|e| format!("{{\"error\":\"{e}\"}}"))
     }
 
-    /// Parse a JSON string into a CrashReport.
+    /// Parse a JSON string into a `CrashReport`.
+    #[must_use]
     pub fn from_json(json: &str) -> Option<Self> {
         serde_json::from_str(json).ok()
     }
