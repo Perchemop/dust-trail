@@ -81,6 +81,7 @@ impl CrashReport {
     }
 
     /// Set user notes on the report.
+    #[must_use]
     pub fn with_user_notes(mut self, notes: String) -> Self {
         self.user_notes = notes;
         self
@@ -149,8 +150,15 @@ pub enum SubmitError {
 }
 
 /// Submit a crash report as a GitHub issue.
+///
 /// Returns the created issue URL on success, or an error.
 /// Requires an authentication token (GitHub PAT with `public_repo` scope).
+///
+/// # Errors
+/// Returns `SubmitError::MissingToken` if the token is empty.
+/// Returns `SubmitError::Network` if the request fails.
+/// Returns `SubmitError::Status` if GitHub returns an error status.
+/// Returns `SubmitError::Parse` if the response cannot be parsed.
 pub fn submit_report(
     report: &CrashReport,
     token: &str,
@@ -193,7 +201,7 @@ pub fn submit_report(
         // Try to extract the message from GitHub's error response
         let message = serde_json::from_str::<serde_json::Value>(&error_msg)
             .ok()
-            .and_then(|v| v.get("message").and_then(|m| m.as_str()).map(|s| s.to_string()))
+            .and_then(|v| v.get("message").and_then(|m| m.as_str()).map(ToString::to_string))
             .unwrap_or_else(|| "unknown error".to_string());
 
         return Err(SubmitError::Status {
@@ -214,7 +222,7 @@ pub fn submit_report(
     let issue_url = issue
         .get("html_url")
         .and_then(|v| v.as_str())
-        .map(|s| s.to_string())
+        .map(ToString::to_string)
         .ok_or_else(|| SubmitError::Parse("missing html_url in response".to_string()))?;
 
     Ok(issue_url)
