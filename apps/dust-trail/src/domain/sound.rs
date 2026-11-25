@@ -4,7 +4,7 @@
 //! Feature-gated behind the `sound` Cargo feature.
 
 #[cfg(feature = "sound")]
-use rodio::{Decoder, OutputStream, Sink, Source};
+use rodio::{Decoder, MixerDeviceSink, Player, Source, DeviceSinkBuilder};
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "sound")]
 use std::sync::{Arc, Mutex};
@@ -106,8 +106,8 @@ impl SoundSettings {
 #[cfg(feature = "sound")]
 #[derive(Debug)]
 pub struct SoundManager {
-    stream: Option<OutputStream>,
-    sink: Option<Arc<Mutex<Sink>>>,
+    handle: Option<MixerDeviceSink>,
+    player: Option<Arc<Mutex<Player>>>,
     settings: SoundSettings,
     sound_files: std::collections::HashMap<SoundEffect, Vec<u8>>,
 }
@@ -116,15 +116,15 @@ pub struct SoundManager {
 impl SoundManager {
     /// Create a new sound manager with embedded sound files.
     pub fn new() -> Result<Self, Box<dyn std::error::Error>> {
-        let (stream, stream_handle) = OutputStream::try_default()?;
-        let sink = Sink::try_new(&stream_handle)?;
-        sink.set_volume(0.5);
+        let handle = DeviceSinkBuilder::open_default_sink()?;
+        let player = Player::new(&handle.mixer());
+        player.set_volume(0.5);
 
         let sound_files = Self::load_sound_files()?;
 
         Ok(Self {
-            stream: Some(stream),
-            sink: Some(Arc::new(Mutex::new(sink))),
+            handle: Some(handle),
+            player: Some(Arc::new(Mutex::new(player))),
             settings: SoundSettings::new(),
             sound_files,
         })
@@ -133,8 +133,8 @@ impl SoundManager {
     /// Create a stub sound manager that does nothing (used as fallback when audio is unavailable).
     pub fn stub() -> Self {
         Self {
-            stream: None,
-            sink: None,
+            handle: None,
+            player: None,
             settings: SoundSettings::new(),
             sound_files: std::collections::HashMap::new(),
         }
@@ -206,13 +206,13 @@ impl SoundManager {
             if let Ok(source) =
                 Decoder::new(std::io::BufReader::new(std::io::Cursor::new(data.clone())))
             {
-                if let Some(sink) = &self.sink {
+                if let Some(player) = &self.player {
                     let volume = self
                         .settings
                         .effective_volume(self.category_for_effect(effect));
-                    let sink = sink.lock().unwrap();
+                    let mut player = player.lock().unwrap();
                     let mut source = source.amplify(volume);
-                    sink.append(source);
+                    player.add(source);
                 }
             }
         }
@@ -235,21 +235,21 @@ impl SoundManager {
     /// Set master volume (0.0 to 1.0).
     pub fn set_master_volume(&mut self, volume: f32) {
         self.settings.master_volume = volume.clamp(0.0, 1.0);
-        if let Some(sink) = &self.sink {
-            let sink = sink.lock().unwrap();
-            sink.set_volume(self.settings.master_volume);
+        if let Some(player) = &self.player {
+            let mut player = player.lock().unwrap();
+            player.set_volume(self.settings.master_volume);
         }
     }
 
     /// Toggle mute.
     pub fn toggle_mute(&mut self) {
         self.settings.muted = !self.settings.muted;
-        if let Some(sink) = &self.sink {
-            let sink = sink.lock().unwrap();
+        if let Some(player) = &self.player {
+            let mut player = player.lock().unwrap();
             if self.settings.muted {
-                sink.set_volume(0.0);
+                player.set_volume(0.0);
             } else {
-                sink.set_volume(self.settings.master_volume);
+                player.set_volume(self.settings.master_volume);
             }
         }
     }
@@ -304,9 +304,9 @@ impl SoundManager {
     /// Load settings from saved data.
     pub fn load_settings(&mut self, settings: SoundSettings) {
         self.settings = settings;
-        if let Some(sink) = &self.sink {
-            let sink = sink.lock().unwrap();
-            sink.set_volume(if self.settings.muted {
+        if let Some(player) = &self.player {
+            let mut player = player.lock().unwrap();
+            player.set_volume(if self.settings.muted {
                 0.0
             } else {
                 self.settings.master_volume
@@ -340,7 +340,7 @@ impl SoundManager {
         0.0
     }
     pub fn settings(&self) -> &SoundSettings {
-        static SETTINGS: OnceLock<SoundSettings> = OnceLock::new();
+        static SETTINGS: std::sync::OnceLock<SoundSettings> = std::sync::OnceLock::new();
         SETTINGS.get_or_init(|| SoundSettings {
             master_volume: 0.0,
             muted: true,
