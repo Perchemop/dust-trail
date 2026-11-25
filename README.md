@@ -83,3 +83,4 @@ See `CONTRIBUTING.md`. All work lands on `main` via a reviewed pull request
 with CI green; no direct pushes. This project follows the clean-room rules in
 `guide.md` — no proprietary source or assets are used.
 # CI trigger
+# Force rebuild
