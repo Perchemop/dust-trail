@@ -22,6 +22,7 @@ pub struct Environment {
 
 impl Environment {
     /// Capture the current runtime environment with the given app version.
+    #[must_use]
     pub fn capture(app_version: &str) -> Self {
         Self {
             app_version: app_version.to_string(),
@@ -48,7 +49,7 @@ pub struct CrashReport {
     pub version: String,
     /// Operating system (e.g., "linux", "macos", "windows").
     pub os: String,
-    /// Architecture (e.g., "x86_64", "aarch64").
+    /// Architecture (e.g., `x86_64`, `aarch64`).
     pub arch: String,
     pub rustc_version: String,
     pub backtrace: Option<String>,
