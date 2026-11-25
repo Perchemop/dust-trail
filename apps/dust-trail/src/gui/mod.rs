@@ -153,19 +153,16 @@ impl Gui {
                     if !pressed {
                         continue;
                     }
-                    match key {
-                        egui::Key::Escape => {
-                            if self.save_dialog.open {
-                                self.save_dialog.close();
-                            }
-                            if self.load_dialog.open {
-                                self.load_dialog.close();
-                            }
-                            if self.settings_state.open {
-                                self.settings_state.close();
-                            }
+                    if key == egui::Key::Escape {
+                        if self.save_dialog.open {
+                            self.save_dialog.close();
                         }
-                        _ => {}
+                        if self.load_dialog.open {
+                            self.load_dialog.close();
+                        }
+                        if self.settings_state.open {
+                            self.settings_state.close();
+                        }
                     }
                 }
             }
