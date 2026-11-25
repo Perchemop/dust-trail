@@ -7,11 +7,6 @@
 use rodio::{Decoder, OutputStream, Sink, Source};
 use serde::{Deserialize, Serialize};
 #[cfg(feature = "sound")]
-use std::fs::File;
-#[cfg(feature = "sound")]
-use std::io::BufReader;
-use std::sync::OnceLock;
-#[cfg(feature = "sound")]
 use std::sync::{Arc, Mutex};
 
 /// Sound effect categories for volume control.
@@ -109,6 +104,7 @@ impl SoundSettings {
 
 /// Manages sound playback for the game.
 #[cfg(feature = "sound")]
+#[derive(Debug)]
 pub struct SoundManager {
     stream: Option<OutputStream>,
     sink: Option<Arc<Mutex<Sink>>>,

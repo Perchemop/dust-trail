@@ -9,7 +9,6 @@ use crate::domain::iso::{screen_depth, world_to_screen};
 use crate::domain::player::Player;
 use crate::domain::save::SaveData;
 use crate::domain::slots::SaveStore;
-use crate::domain::sound::SoundSettings;
 #[cfg(feature = "sound")]
 use crate::domain::sound::{SoundEffect, SoundManager};
 use crate::domain::tile::TileType;
@@ -1043,10 +1042,7 @@ impl Game {
         #[cfg(feature = "gui")]
         game.mark_cache_dirty();
         #[cfg(feature = "sound")]
-        {
-            game.sound_manager.play(SoundEffect::Load);
-            return Ok(game);
-        }
+        game.sound_manager.play(SoundEffect::Load);
         Ok(game)
     }
 
