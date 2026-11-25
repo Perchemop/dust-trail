@@ -49,9 +49,9 @@ jobs:
           sudo apt-get install -y --no-install-recommends libasound2-dev
       - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2
         with:
-          key: "rust-cache-${{ hashFiles('**/Cargo.lock') }}-v2"
+          key: "rust-cache-${{ hashFiles('**/Cargo.lock') }}-v3"
       - name: Clippy (no warnings)
-        run: cargo clippy -p dust-trail --all-targets --features gui,sound -- -D warnings
+        run: cargo clippy --package dust-trail --all-targets --features gui,sound -- -D warnings
       - name: Token discipline — no raw colours outside theme module
         run: |
           # guide II.30.6: no Color32::from_* outside src/theme/.
