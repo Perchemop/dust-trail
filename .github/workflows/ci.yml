@@ -117,6 +117,7 @@ jobs:
           set -e
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
+            libasound2-dev \
             dpkg fakeroot file imagemagick
           mkdir -p dist
           TRIPLE="${{ matrix.target }}"
