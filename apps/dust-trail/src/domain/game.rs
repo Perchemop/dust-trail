@@ -85,7 +85,7 @@ pub struct Game {
 
 #[cfg(feature = "sound")]
 fn default_sound_manager() -> SoundManager {
-    SoundManager::new().unwrap_or_default()
+    SoundManager::new().unwrap_or_else(|_| SoundManager::stub())
 }
 
 #[cfg(feature = "gui")]
@@ -118,7 +118,7 @@ impl Game {
             won: false,
             rng: rand::make_rng(),
             #[cfg(feature = "sound")]
-            sound_manager: SoundManager::new().unwrap_or_default(),
+            sound_manager: SoundManager::new().unwrap_or_else(|_| SoundManager::stub()),
             #[cfg(not(feature = "sound"))]
             sound_settings: SoundSettings::new_stub(),
             #[cfg(feature = "gui")]
@@ -141,7 +141,7 @@ impl Game {
             won: false,
             rng: StdRng::seed_from_u64(seed),
             #[cfg(feature = "sound")]
-            sound_manager: SoundManager::new().unwrap_or_default(),
+            sound_manager: SoundManager::new().unwrap_or_else(|_| SoundManager::stub()),
             #[cfg(not(feature = "sound"))]
             sound_settings: SoundSettings::new_stub(),
             #[cfg(feature = "gui")]
@@ -164,7 +164,7 @@ impl Game {
             won: false,
             rng: rand::make_rng(),
             #[cfg(feature = "sound")]
-            sound_manager: SoundManager::new().unwrap_or_default(),
+            sound_manager: SoundManager::new().unwrap_or_else(|_| SoundManager::stub()),
             #[cfg(not(feature = "sound"))]
             sound_settings: SoundSettings::new_stub(),
             #[cfg(feature = "gui")]
@@ -1075,7 +1075,7 @@ impl Game {
             won: false,
             rng: rand::make_rng(),
             #[cfg(feature = "sound")]
-            sound_manager: SoundManager::new().unwrap_or_default(),
+            sound_manager: SoundManager::new().unwrap_or_else(|_| SoundManager::stub()),
             #[cfg(not(feature = "sound"))]
             sound_settings: SoundSettings::new(),
             #[cfg(feature = "gui")]

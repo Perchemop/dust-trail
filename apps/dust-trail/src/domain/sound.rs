@@ -110,8 +110,8 @@ impl SoundSettings {
 /// Manages sound playback for the game.
 #[cfg(feature = "sound")]
 pub struct SoundManager {
-    stream: OutputStream,
-    sink: Arc<Mutex<Sink>>,
+    stream: Option<OutputStream>,
+    sink: Option<Arc<Mutex<Sink>>>,
     settings: SoundSettings,
     sound_files: std::collections::HashMap<SoundEffect, Vec<u8>>,
 }
@@ -127,12 +127,23 @@ impl SoundManager {
         let sound_files = Self::load_sound_files()?;
 
         Ok(Self {
-            stream,
-            sink: Arc::new(Mutex::new(sink)),
+            stream: Some(stream),
+            sink: Some(Arc::new(Mutex::new(sink))),
             settings: SoundSettings::new(),
             sound_files,
         })
     }
+
+    /// Create a stub sound manager that does nothing (used as fallback when audio is unavailable).
+    pub fn stub() -> Self {
+        Self {
+            stream: None,
+            sink: None,
+            settings: SoundSettings::new(),
+            sound_files: std::collections::HashMap::new(),
+        }
+    }
+}
 
     /// Load embedded sound files.
     fn load_sound_files(
@@ -200,12 +211,14 @@ impl SoundManager {
             if let Ok(source) =
                 Decoder::new(std::io::BufReader::new(std::io::Cursor::new(data.clone())))
             {
-                let volume = self
-                    .settings
-                    .effective_volume(self.category_for_effect(effect));
-                let sink = self.sink.lock().unwrap();
-                let mut source = source.amplify(volume);
-                sink.append(source);
+                if let Some(sink) = &self.sink {
+                    let volume = self
+                        .settings
+                        .effective_volume(self.category_for_effect(effect));
+                    let sink = sink.lock().unwrap();
+                    let mut source = source.amplify(volume);
+                    sink.append(source);
+                }
             }
         }
     }
@@ -227,19 +240,22 @@ impl SoundManager {
     /// Set master volume (0.0 to 1.0).
     pub fn set_master_volume(&mut self, volume: f32) {
         self.settings.master_volume = volume.clamp(0.0, 1.0);
-        let sink = self.sink.lock().unwrap();
-        sink.set_volume(self.settings.master_volume);
+        if let Some(sink) = &self.sink {
+            let sink = sink.lock().unwrap();
+            sink.set_volume(self.settings.master_volume);
+        }
     }
 
     /// Toggle mute.
     pub fn toggle_mute(&mut self) {
         self.settings.muted = !self.settings.muted;
-        if self.settings.muted {
-            let sink = self.sink.lock().unwrap();
-            sink.set_volume(0.0);
-        } else {
-            let sink = self.sink.lock().unwrap();
-            sink.set_volume(self.settings.master_volume);
+        if let Some(sink) = &self.sink {
+            let sink = sink.lock().unwrap();
+            if self.settings.muted {
+                sink.set_volume(0.0);
+            } else {
+                sink.set_volume(self.settings.master_volume);
+            }
         }
     }
 

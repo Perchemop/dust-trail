@@ -100,6 +100,11 @@ pub fn effective_variant(settings: &Settings) -> Variant {
 /// Apply settings to the egui context (theme visuals).
 pub fn apply_settings(ctx: &egui::Context, settings: &Settings) {
     let variant = effective_variant(settings);
+    let egui_theme = match variant {
+        Variant::Light => egui::Theme::Light,
+        Variant::Dark => egui::Theme::Dark,
+        Variant::HighContrast => egui::Theme::Dark,
+    };
     let theme = match variant {
         Variant::Light => Theme::light(),
         Variant::Dark => Theme::dark(),
@@ -108,13 +113,13 @@ pub fn apply_settings(ctx: &egui::Context, settings: &Settings) {
     ctx.set_visuals(theme.visuals());
     // Font size scaling: egui uses the style's text_styles. We set a global
     // override by adjusting the base font size via style.
-    // In egui 0.37+, ctx.style() is removed; build a new style from visuals.
+    // In egui 0.37+, ctx.set_style() is removed; use set_style_of().
     let mut style = egui::Style::default();
     style.visuals = theme.visuals();
     for (_name, font_id) in style.text_styles.iter_mut() {
         font_id.size = settings.font_size;
     }
-    ctx.set_style(style);
+    ctx.set_style_of(egui_theme, style);
 }
 
 /// State for the settings panel window.
@@ -261,7 +266,7 @@ pub fn draw_settings_panel(
             }
             if ui.button("Close").clicked() {
                 state.open = false;
-                window_open = false;
+                // window_open will be updated from state.open on next frame
             }
         });
 

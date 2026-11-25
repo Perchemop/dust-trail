@@ -426,7 +426,7 @@ impl eframe::App for Gui {
 
         // Game over overlay.
         if self.game.game_over {
-            let alpha = crate::theme::fade_alpha(ui.ctx(), egui::Id::new("game_over"), true, reduced_motion);
+            let alpha = crate::theme::fade_alpha(ui.ctx(), egui::Id::unique("game_over"), true, reduced_motion);
             egui::Window::new("GAME OVER")
                 .collapsible(false)
                 .resizable(false)
