@@ -1,6 +1,18 @@
 # Changelog - Dust Trail
 
-## v2.0.0 — In Progress (GUI-only ASCII 3D)
+## v2.1.0 — Planned (Full 3D Content + Day/Night + Signed Installers + Debug Camera)
+
+### Added (planned)
+- **Full 3D content set** — 21 entity kinds as detailed 5+ primitive models (trees, buildings, NPCs, props, player)
+- **Animation system** — 4-frame walk cycles for player/NPCs/horse; PingPong idle animations for all entities; Attack/Death animations for combat entities
+- **Day/night cycle** — Turn-based time progression (10 turns/hour, 240 turns/day); directional light elevation/azimuth/intensity modulation; ambient fill at night (0.15); sky gradient background
+- **Time-of-day UI** — Toolbar sun/moon glyph + hour display; inspector panel exact time; sky gradient shifts with time
+- **Signed installers** — Windows MSI (signtool), macOS DMG (codesign + notarization + stapler), Linux .deb (dpkg-sig) & .AppImage (minisign); minisign signature on SHA256SUMS.txt
+- **CycloneDX SBOM** — Generated via cargo-cyclonedx, attached to release
+- **Minisign verification** — update-check crate verifies SHA256SUMS.txt.minisig before offering installer download
+- **Debug camera** — Ctrl+Shift+C toggle; mouse orbit (yaw/pitch), scroll zoom; 'P' toggles isometric/perspective; 'R' resets; state persisted in GUI settings
+
+## v2.0.0 — 2026-11-25 (GUI-only ASCII 3D)
 
 ### Added
 - **Crash-report submission capability** — `crates/crash-report` now supports GitHub issue creation with user token; includes `submit_report()`, `prefill_issue_url()`, and complete payload scrubbing (`scrub_backtrace()`, `scrub_env_vars()`)
