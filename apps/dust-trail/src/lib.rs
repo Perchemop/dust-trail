@@ -14,6 +14,9 @@ pub mod gui;
 pub mod render;
 
 #[cfg(feature = "gui")]
+pub mod viewport;
+
+#[cfg(feature = "gui")]
 pub mod theme;
 
 pub use domain::{Game, TileType, World};
