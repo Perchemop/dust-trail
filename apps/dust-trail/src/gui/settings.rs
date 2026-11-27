@@ -298,5 +298,3 @@ pub struct DebugCameraState {
     /// Toggle key (egui key code).
     pub toggle_key: u8,
 }
-    changed
-}
