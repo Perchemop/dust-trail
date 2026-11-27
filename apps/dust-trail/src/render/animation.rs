@@ -142,7 +142,8 @@ pub fn get_primitive_transforms(
     }
 
     // Delegate to the controller for per-frame transform computation.
-    controller.get_primitive_transforms(anim, entity_transform)
+    // The controller uses its own animation state.
+    controller.get_primitive_transforms(entity_transform)
 }
 
 /// -------------------------------------------------------------------
@@ -275,9 +276,11 @@ mod tests {
     fn unknown_anim_key_returns_base() {
         let anim = Animation::new(AnimKey::Walk, 1, 4, LoopMode::Loop);
         let ctrl = AnimationController::new(anim);
-        let transforms = ctrl.get_primitive_transforms(
-            &Transform::default(),
+        // Call the free function to test unknown key handling
+        let transforms = crate::render::animation::get_primitive_transforms(
+            &anim,
             &ctrl,
+            &Transform::default(),
         );
         // Unknown/should return base; at minimum one primitive.
         assert!(!transforms.is_empty());
