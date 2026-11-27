@@ -164,7 +164,7 @@ impl AnimationController {
     /// Set a new animation, resetting playback.
     pub fn set_animation(&mut self, key: AnimKey, frame_duration: u32, total_frames: u32, mode: LoopMode) {
         self.animation = crate::render::animation::set_animation(
-            self.animation,
+            self.animation.clone(),
             key,
             frame_duration,
             total_frames,
@@ -174,7 +174,7 @@ impl AnimationController {
 
     /// Advance the animation by the given tick count and return the updated controller.
     pub fn tick(&mut self, ticks: u32) {
-        self.animation = crate::render::animation::tick(self.animation, ticks);
+        self.animation = crate::render::animation::tick(self.animation.clone(), ticks);
     }
 
     /// Returns the current frame index (0-based).
