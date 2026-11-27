@@ -130,7 +130,7 @@ impl DebugCamera {
             let cy = sy + self.distance * self.yaw.sin() * self.pitch.cos();
             let cz = self.distance * self.pitch.sin();
             // Simplified: return identity for isometric fallback in v2.0.0
-            return [[1f32, 0, 0, 0], [0, 1f32, 0, 0], [0, 0, 1f32, 0], [0, 0, 0, 1f32]];
+            return [[1f32, 0.0, 0.0, 0.0], [0.0, 1f32, 0.0, 0.0], [0.0, 0.0, 1f32, 0.0], [0.0, 0.0, 0.0, 1f32]];
         }
 
         // Free-look orbit matrix
@@ -138,7 +138,7 @@ impl DebugCamera {
         let up = egui::Vec2::new(0.0, 1.0); // up direction
         // Simplified: return identity for now; full implementation would use
         // a proper look-at matrix computation.
-        [[1f32, 0, 0, 0], [0, 1f32, 0, 0], [0, 0, 1f32, 0], [0, 0, 0, 1f32]]
+        [[1f32, 0.0, 0.0, 0.0], [0.0, 1f32, 0.0, 0.0], [0.0, 0.0, 1f32, 0.0], [0.0, 0.0, 0.0, 1f32]]
     }
 
     /// Project world screen coordinates through the debug camera.

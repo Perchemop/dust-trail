@@ -163,8 +163,8 @@ impl ModelRegistry {
         &self,
         controller: &crate::render::animation::AnimationController,
     ) -> Vec<crate::render::primitive::Primitive> {
-        // Try to get the animation for this entity kind.
-        let anim = match self.animations.get(&AnimKey::Walk) {
+        // Try to get the animation for this entity kind from the placeholder.
+        let anim = match self.placeholder.animations.get(&AnimKey::Walk) {
             Some(a) => a,
             None => return self.placeholder.primitives.clone(), // no animation → base
         };
