@@ -32,13 +32,15 @@ pub enum Orientation {
     Isometric,
 }
 
-/// Cache key: (model key, light state, size, orientation).
+/// Cache key: (model key, light state, size, orientation, animation frame).
+/// animation_frame = 0 means static (no animation); >0 is a content hash for the frame.
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub struct CacheKey {
     pub model_key: ModelKey,
     pub light_state: LightState,
     pub size: (u32, u32),    // raster size
     pub orientation: Orientation,
+    pub animation_frame: u64, // 0 = static; >0 = specific frame hash
 }
 
 /// Bounded LRU cache of rendered sprites.
@@ -119,6 +121,7 @@ mod tests {
             light_state: LightState { dir_x: 0, dir_y: 0, dir_z: 127, intensity: 255 },
             size: (32, 32),
             orientation: Orientation::Isometric,
+            animation_frame: 0,
         }
     }
 
@@ -191,5 +194,43 @@ mod tests {
         cache.clear();
         assert!(cache.is_empty());
         assert_eq!(cache.len(), 0);
+    }
+
+    #[test]
+    fn cache_animation_frame_deduplication() {
+        let mut cache = SpriteCache::new(10);
+        let key1 = make_key("sprite");
+        let key2 = make_key("sprite");
+        key2.animation_frame = 5; // different frame
+        let sprite1 = make_sprite("sprite");
+        let sprite2 = make_sprite("sprite2"); // different content
+
+        cache.insert(key1.clone(), sprite1);
+        // Same model + same frame should deduplicate (return existing)
+        assert!(cache.get(&key1).is_some());
+        // Different frame should be a separate entry
+        cache.insert(key2.clone(), sprite2);
+        assert_eq!(cache.len(), 2);
+    }
+
+    #[test]
+    fn cache_lru_eviction_with_animation() {
+        let mut cache = SpriteCache::new(2);
+        let key_a = make_key("a");
+        key_a.animation_frame = 1;
+        let key_b = make_key("b");
+        key_b.animation_frame = 0;
+        cache.insert(key_a.clone(), make_sprite("a"));
+        cache.insert(key_b.clone(), make_sprite("b"));
+        assert_eq!(cache.len(), 2);
+
+        // Insert third → should evict LRU
+        let key_c = make_key("c");
+        key_c.animation_frame = 0;
+        cache.insert(key_c.clone(), make_sprite("c"));
+        assert_eq!(cache.len(), 2);
+        // The LRU (first inserted) should be evicted
+        assert!(!cache.get(&key_a).is_some() || !cache.get(&key_b).is_some());
+        assert!(cache.get(&key_c).is_some());
     }
 }

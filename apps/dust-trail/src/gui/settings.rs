@@ -37,6 +37,8 @@ pub struct Settings {
     pub reduced_motion: bool,
     pub high_contrast: bool,
     pub target_size: TargetSize,
+    // Debug camera
+    pub debug_camera: DebugCameraState,
 }
 
 impl Default for Settings {
@@ -276,5 +278,25 @@ pub fn draw_settings_panel(
     if changed {
         state.commit(ctx);
     }
+    changed
+}
+
+/// State for the debug camera, persisted in GUI settings.
+/// Serializes: enabled, yaw, pitch, distance, projection, toggle_key.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+pub struct DebugCameraState {
+    /// Whether the debug camera is enabled.
+    pub enabled: bool,
+    /// Yaw angle in radians.
+    pub yaw: f32,
+    /// Pitch angle in radians.
+    pub pitch: f32,
+    /// Distance from the target point.
+    pub distance: f32,
+    /// Projection mode: true = perspective, false = isometric.
+    pub isometric: bool,
+    /// Toggle key (egui key code).
+    pub toggle_key: u8,
+}
     changed
 }

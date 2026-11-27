@@ -1,6 +1,6 @@
 [package]
 name = "dust-trail"
-version = "1.5.1"
+version = "2.1.0"
 edition = "2021"
 rust-version = "1.82"
 description = "Dust Trail — original Western-themed 3D isometric ASCII adventure game (GUI)."

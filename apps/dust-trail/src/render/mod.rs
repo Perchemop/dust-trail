@@ -12,6 +12,7 @@ pub mod sprite;
 pub mod composite;
 pub mod cache;
 pub mod camera;
+pub mod animation; // T-201
 
 // Re-export key types for convenience
 pub use primitive::{Primitive, PrimitiveKind, Transform, Material};
@@ -22,3 +23,4 @@ pub use sprite::Sprite;
 pub use composite::composite_sprite;
 pub use cache::{SpriteCache, CacheKey, LightState, Orientation};
 pub use camera::Camera;
+pub use animation::{Animation, AnimFrame, AnimationController, AnimKey, LoopMode, PrimitiveDelta};

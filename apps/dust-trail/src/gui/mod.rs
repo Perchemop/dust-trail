@@ -6,6 +6,7 @@
 pub mod release_notes;
 pub mod save_dialog;
 pub mod settings;
+pub mod camera; // T-210
 
 use crate::domain::cell::Cell;
 use crate::domain::game::{Direction, Game, Interaction};
@@ -20,6 +21,7 @@ pub struct Gui {
     load_dialog: save_dialog::LoadDialog,
     show_release_notes: bool,
     settings_state: settings::SettingsPanelState,
+    viewport: viewport::Viewport,
 }
 
 impl Gui {
@@ -33,6 +35,7 @@ impl Gui {
             load_dialog: save_dialog::LoadDialog::default(),
             show_release_notes: false,
             settings_state,
+            viewport: viewport::Viewport::default(),
         }
     }
 

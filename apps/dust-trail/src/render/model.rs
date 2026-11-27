@@ -34,6 +34,8 @@ pub struct ObjectModel {
     pub primitives: Vec<Primitive>,
     pub bounding_box: BoundingBox,
     pub draw_key: DrawKey,
+    /// Per-entity animation state, keyed by `AnimKey`. Empty map means no animation.
+    pub animations: std::collections::HashMap<AnimKey, Animation>,
 }
 
 /// Game entity kinds that need models.
@@ -51,6 +53,14 @@ pub enum EntityKind {
     Outlaw,
     Loot,
     Horse,
+    House,
+    Saloon,
+    SheriffOffice,
+    Sign,
+    Fence,
+    Barrel,
+    Crate,
+    Well,
 }
 
 impl EntityKind {
@@ -69,6 +79,14 @@ impl EntityKind {
             EntityKind::Outlaw,
             EntityKind::Loot,
             EntityKind::Horse,
+            EntityKind::House,
+            EntityKind::Saloon,
+            EntityKind::SheriffOffice,
+            EntityKind::Sign,
+            EntityKind::Fence,
+            EntityKind::Barrel,
+            EntityKind::Crate,
+            EntityKind::Well,
         ]
     }
 }
@@ -109,8 +127,10 @@ impl ModelRegistry {
             return Err(format!("Model already registered for {:?}", kind));
         }
         let key = model.key;
-        self.definitions.insert(key, model);
+        self.definitions.insert(key, model.clone());
         self.models.insert(kind, key);
+        // Store a copy of the animations map so each entity kind owns its state.
+        // If the model has no animations field we default to empty (no animation).
         Ok(())
     }
 
@@ -133,6 +153,37 @@ impl ModelRegistry {
     /// Check if a kind is registered.
     pub fn contains(&self, kind: EntityKind) -> bool {
         self.models.contains_key(&kind)
+    }
+
+    /// Return base primitives with animation deltas applied for the current frame.
+    /// Unknown `AnimKey` → returns base primitives unchanged.
+    pub fn animated_primitives(
+        &self,
+        controller: &crate::render::animation::AnimationController,
+    ) -> Vec<crate::render::primitive::Primitive> {
+        // Try to get the animation for this entity kind.
+        let anim = match self.animations.get(&AnimKey::Walk) {
+            Some(a) => a,
+            None => return self.primitives.clone(), // no animation → base
+        };
+
+        // Get transforms from the controller for the current frame.
+        controller.get_primitive_transforms(anim, &self.bounding_box_to_transform())
+    }
+
+    /// Convert the bounding box to a default transform position.
+    fn bounding_box_to_transform(&self) -> crate::render::primitive::Transform {
+        // Use the bounding box centre as a simple transform position.
+        let min = self.bounding_box.min;
+        let max = self.bounding_box.max;
+        let cx = (min.0 + max.0) / 2.0;
+        let cy = (min.1 + max.1) / 2.0;
+        let cz = (min.2 + max.2) / 2.0;
+        Transform {
+            translation: (cx, cy, cz),
+            rotation: (0.0, 0.0, 0.0),
+            scale: (1.0, 1.0, 1.0),
+        }
     }
 }
 

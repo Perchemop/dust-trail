@@ -23,6 +23,7 @@ pub use game::Game;
 pub use iso::world_to_screen;
 pub use player::Player;
 pub use save::SaveData;
-pub use slots::{SaveSlotError, SaveSlotMeta, SaveSlots, SaveStore};
+pub use slots::{SaveSlotError, SaveSlotMeta, SaveSlotMeta, SaveSlots, SaveStore};
 pub use tile::TileType;
+pub use time::TimeOfDay;
 pub use world::World;
