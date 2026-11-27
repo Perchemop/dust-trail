@@ -174,9 +174,10 @@ impl ModelRegistry {
 
     /// Convert the bounding box to a default transform position.
     fn bounding_box_to_transform(&self) -> crate::render::primitive::Transform {
-        // Use the bounding box centre as a simple transform position.
-        let min = self.bounding_box.min;
-        let max = self.bounding_box.max;
+        // Use the placeholder's bounding box as a simple transform position.
+        let bounding = self.placeholder.bounding_box;
+        let min = bounding.min;
+        let max = bounding.max;
         let cx = (min.0 + max.0) / 2.0;
         let cy = (min.1 + max.1) / 2.0;
         let cz = (min.2 + max.2) / 2.0;
