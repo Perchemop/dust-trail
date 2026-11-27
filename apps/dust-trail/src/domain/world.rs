@@ -2,6 +2,7 @@
 
 use crate::domain::color::Rgb;
 use crate::domain::tile::TileType;
+use crate::domain::time::TimeOfDay;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct Pos {

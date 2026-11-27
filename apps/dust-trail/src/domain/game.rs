@@ -12,6 +12,7 @@ use crate::domain::slots::SaveStore;
 #[cfg(feature = "sound")]
 use crate::domain::sound::{SoundEffect, SoundManager};
 use crate::domain::tile::TileType;
+use crate::domain::time::TimeOfDay;
 use crate::domain::world::{
     default_world, spawn_deputies_for_wanted, ItemKind, Npc, NpcKind, Pos, WantedLevel, World,
 };
