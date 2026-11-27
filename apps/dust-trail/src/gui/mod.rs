@@ -7,6 +7,7 @@ pub mod release_notes;
 pub mod save_dialog;
 pub mod settings;
 pub mod camera; // T-210
+pub mod viewport; // T-211
 
 use crate::domain::cell::Cell;
 use crate::domain::game::{Direction, Game, Interaction};

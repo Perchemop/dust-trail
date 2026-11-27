@@ -166,7 +166,7 @@ impl ModelRegistry {
         // Try to get the animation for this entity kind.
         let anim = match self.animations.get(&AnimKey::Walk) {
             Some(a) => a,
-            None => return self.primitives.clone(), // no animation → base
+            None => return self.placeholder.primitives.clone(), // no animation → base
         };
 
         // Get transforms from the controller for the current frame.
