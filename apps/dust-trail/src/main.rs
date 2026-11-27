@@ -1,33 +1,40 @@
 //! Binary entry point.
 //!
-//! Frontend selection:
-//!   - `--gui` forces the egui/eframe desktop window.
-//!   - `--tui` is not supported (TUI removed in v2.0.0).
-//!   - Otherwise the desktop window is used when there is no terminal attached,
-//!     so that the macOS `.app` bundle (and any desktop launcher without
-//!     `Terminal=true`) opens a real window.
+//! Dust Trail is GUI-only. The egui/eframe desktop window is the
+//! sole frontend:
+//!   - `--gui` forces the desktop window explicitly.
+//!   - `--tui` is rejected; the terminal frontend was removed in v2.0.0.
+//!   - With no flag the window opens when no terminal is attached, so the
+//!     macOS `.app` bundle (and any desktop launcher without `Terminal=true`)
+//!     opens a real window.
 //!
 //! Wires the shared suite crates: crash-report panic hook and update-check.
 
 #[cfg(feature = "gui")]
 use dust_trail::gui::Gui;
 use std::error::Error;
-use std::io::IsTerminal;
 
 /// Whether this process is attached to an interactive terminal.
+#[cfg(feature = "gui")]
 fn terminal_attached() -> bool {
+    use std::io::IsTerminal;
     std::io::stdout().is_terminal() && std::io::stdin().is_terminal()
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
     let args: Vec<String> = std::env::args().collect();
-    let want_gui = args.iter().any(|a| a == "--gui");
-    let want_tui = args.iter().any(|a| a == "--tui");
 
-    if want_tui {
-        eprintln!("TUI is not supported in v2.0.0. Use --gui to launch the desktop window.");
+    // The terminal frontend was removed in v2.0.0 (spec FR-008): reject the
+    // retired flag with a clear message instead of silently ignoring it.
+    if args.iter().any(|arg| arg == "--tui") {
+        eprintln!(
+            "The TUI was removed in v2.0.0. Dust Trail is GUI-only; \
+             run with --gui to open the desktop window."
+        );
         std::process::exit(2);
     }
+
+    let force_gui = args.iter().any(|arg| arg == "--gui");
 
     // Crash reporting (guide §7.1): capture a scrubbed report on panic and park
     // it for review on the next launch. Nothing is sent over the network
@@ -35,7 +42,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let env = crash_report::Environment::capture(env!("CARGO_PKG_VERSION"));
     let report_path = crash_report::default_report_path();
     let hook_path = report_path.clone();
-    crash_report::install_panic_hook(env, move |report| {
+    crash_report::install_panic_hook(&env, move |report| {
         let _ = std::fs::write(&hook_path, report.to_json());
     });
 
@@ -45,7 +52,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         if let Some(report) = crash_report::CrashReport::from_json(&json) {
             eprintln!(
                 "[crash report parked from previous run]: {} v{} — {}",
-                report.environment.os, report.environment.app_version, report.message
+                report.os, report.version, report.backtrace.as_deref().unwrap_or("unknown error")
             );
             let _ = std::fs::remove_file(&report_path);
         }
@@ -66,13 +73,11 @@ fn main() -> Result<(), Box<dyn Error>> {
         eprintln!("[update available] Dust Trail {current} → {latest} — {url}");
     }
 
-    // Choose the frontend. An explicit --gui flag always wins; otherwise
-    // the desktop window is used only when no terminal is attached, so that
-    // launching the app from a desktop environment opens the GUI window.
-    let use_gui = want_gui || !terminal_attached();
-
+    // Frontend selection: the GUI is the only frontend. An explicit --gui
+    // always wins; otherwise the window opens when no terminal is attached,
+    // so launching the installed app from a desktop environment works.
     #[cfg(feature = "gui")]
-    if use_gui {
+    if force_gui || !terminal_attached() {
         let options = eframe::NativeOptions {
             viewport: egui::ViewportBuilder::default()
                 .with_title("Dust Trail — ASCII Western Adventure")
@@ -86,20 +91,23 @@ fn main() -> Result<(), Box<dyn Error>> {
             Box::new(|cc| Ok(Box::new(Gui::new(cc)))),
         )
         .map_err(|e: eframe::Error| -> Box<dyn Error> { format!("eframe failed: {e}").into() })?;
-        return Ok(());
+    } else {
+        eprintln!("Dust Trail is GUI-only. Run `dust-trail --gui` to open the desktop window.");
+        std::process::exit(2);
     }
 
+    // No GUI in this build: there is no terminal fallback any more, so exit
+    // with a clear message instead of starting nothing (spec AC-003).
     #[cfg(not(feature = "gui"))]
-    if use_gui {
+    {
+        let _ = force_gui;
         eprintln!(
-            "No terminal is attached and this build has no GUI. \
-             Rebuild with the `gui` feature to get the desktop window."
+            "This build has no GUI feature and Dust Trail no longer has a \
+             terminal frontend. Rebuild with the `gui` feature (the default) \
+             to get the desktop window."
         );
         std::process::exit(2);
     }
 
-    // No GUI feature and no terminal attached but we're in a terminal.
-    // This shouldn't happen with the logic above, but handle it gracefully.
-    eprintln!("No frontend available. Rebuild with the `gui` feature.");
-    std::process::exit(2);
+    Ok(())
 }

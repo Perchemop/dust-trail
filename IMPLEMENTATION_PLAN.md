@@ -1,10 +1,9 @@
 # Implementation Plan
 Vertical slices for Dust Trail, each a PR with CI green.
 
-## Slice 1 — Foundation (done, v0.1.0)
+## Slice 1 — v0.1.0 (done)
 * Workspace, shared crates (crash-report, update-check), app crate.
 * Domain layer: world, player, game, tile, cell, frame, color, save — headless + tests.
-* TUI (crossterm): terminal render, movement, interact, save/load.
 * GUI (egui/eframe 0.37, feature-gated): monospace ASCII grid, toolbar, keyboard.
 * main.rs: crash-report panic hook, parked-report review, update-check stub.
 * CI: fmt, clippy, tests (default + gui), multi-OS builds, secret/personal-data scan, token gate.

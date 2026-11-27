@@ -9,15 +9,14 @@ authors = ["Dust Trail Dev <dev@example.com>"]
 readme = "../../README.md"
 default-run = "dust-trail"
 repository = "https://github.com/Perchemop/dust-trail"
-keywords = ["game", "ascii", "tui", "western", "adventure"]
+keywords = ["game", "ascii", "egui", "western", "adventure"]
 categories = ["games"]
 
 [dependencies]
 # Shared suite crates (guide §7): crash reporting and update checks.
-crash-report = { path = "../../crates/crash-report", version = "0.2.0" }
+crash-report = { path = "../../crates/crash-report", version = "0.2.2" }
 update-check = { path = "../../crates/update-check", version = "0.2.0" }
 
-crossterm = "0.29"
 directories = "6"
 rand = "0.10.4"
 rodio = { version = "0.23", optional = true }
@@ -25,7 +24,7 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 tracing = "0.1"
 
-# Optional GUI frontend (egui/eframe 0.37, matching the suite).
+# GUI frontend (egui/eframe 0.37, matching the suite).
 [dependencies.eframe]
 version = "0.37"
 optional = true
@@ -34,16 +33,13 @@ optional = true
 version = "0.37"
 optional = true
 
-
-
 [features]
-# The GUI is a default feature so that every build of the package — including
-# the ones produced by the release pipeline and by `cargo wix` — ships a
-# window-capable binary. The terminal interface stays available and is
-# selected with `--tui`, or automatically when a terminal is attached.
-default = ["tui", "gui"]
-tui = []
-gui = ["dep:eframe", "dep:egui"]
+# The GUI is the only frontend (the terminal interface was removed in
+# v2.0.0). It is a default feature so that every build of the package —
+# including the ones produced by the release pipeline and by `cargo wix` —
+# ships a window-capable binary.
+default = ["gui"]
+gui = ["dep:eframe", "dep:egui", "sound"]
 sound = ["dep:rodio"]
 
 # --- Linux packaging metadata (cargo-deb / cargo-generate-rpm) ---

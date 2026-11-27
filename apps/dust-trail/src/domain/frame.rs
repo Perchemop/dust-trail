@@ -1,5 +1,5 @@
-//! A rendered frame: a grid of cells plus an optional message line. Both the
-//! TUI and GUI frontends render the same Frame produced by the domain.
+//! A rendered frame: a grid of cells plus an optional message line. The
+//! GUI frontend renders the same Frame produced by the domain.
 //! v2.0.0: adds a depth buffer for occlusion-aware compositing.
 
 use crate::domain::cell::Cell;

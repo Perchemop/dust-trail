@@ -9,7 +9,6 @@ use crate::domain::iso::{screen_depth, world_to_screen};
 use crate::domain::player::Player;
 use crate::domain::save::SaveData;
 use crate::domain::slots::SaveStore;
-use crate::domain::sound::SoundSettings;
 #[cfg(feature = "sound")]
 use crate::domain::sound::{SoundEffect, SoundManager};
 use crate::domain::tile::TileType;
@@ -85,7 +84,7 @@ pub struct Game {
 
 #[cfg(feature = "sound")]
 fn default_sound_manager() -> SoundManager {
-    SoundManager::new().unwrap_or_default()
+    SoundManager::new().unwrap_or_else(|_| SoundManager::stub())
 }
 
 #[cfg(feature = "gui")]
@@ -118,7 +117,7 @@ impl Game {
             won: false,
             rng: rand::make_rng(),
             #[cfg(feature = "sound")]
-            sound_manager: SoundManager::new().unwrap_or_default(),
+            sound_manager: SoundManager::new().unwrap_or_else(|_| SoundManager::stub()),
             #[cfg(not(feature = "sound"))]
             sound_settings: SoundSettings::new_stub(),
             #[cfg(feature = "gui")]
@@ -141,7 +140,7 @@ impl Game {
             won: false,
             rng: StdRng::seed_from_u64(seed),
             #[cfg(feature = "sound")]
-            sound_manager: SoundManager::new().unwrap_or_default(),
+            sound_manager: SoundManager::new().unwrap_or_else(|_| SoundManager::stub()),
             #[cfg(not(feature = "sound"))]
             sound_settings: SoundSettings::new_stub(),
             #[cfg(feature = "gui")]
@@ -164,7 +163,7 @@ impl Game {
             won: false,
             rng: rand::make_rng(),
             #[cfg(feature = "sound")]
-            sound_manager: SoundManager::new().unwrap_or_default(),
+            sound_manager: SoundManager::new().unwrap_or_else(|_| SoundManager::stub()),
             #[cfg(not(feature = "sound"))]
             sound_settings: SoundSettings::new_stub(),
             #[cfg(feature = "gui")]
@@ -1028,7 +1027,7 @@ impl Game {
         Ok(saved_as)
     }
 
-    /// TUI-compatible save method (takes a path).
+    /// GUI-compatible save method (takes a path).
     pub fn save(&self, path: &Path) -> Result<(), String> {
         let store = SaveStore::new(path);
         store
@@ -1036,25 +1035,20 @@ impl Game {
             .map(|_| ())
     }
 
-    /// TUI-compatible load method.
+    /// GUI-compatible load method.
     pub fn load(path: &Path) -> Result<Self, String> {
         let store = SaveStore::new(path);
-        let game = Self::from_save_data(store.load_data("default")?);
+        let mut game = Self::from_save_data(store.load_data("default")?);
+        #[cfg(feature = "gui")]
+        game.mark_cache_dirty();
         #[cfg(feature = "sound")]
-        {
-            let mut game = game;
-            game.sound_manager.play(SoundEffect::Load);
-            return Ok(game);
-        }
+        game.sound_manager.play(SoundEffect::Load);
         Ok(game)
     }
 
     /// Load the game from the named slot of the slot document at `path`.
     pub fn load_named_from(slot: &str, path: &Path) -> Result<Self, String> {
         let store = SaveStore::new(path);
-        // `mut` is consumed only by the gui/sound-gated calls below; a bare
-        // TUI build never mutates the loaded game, so the lint is expected there.
-        #[allow(unused_mut)]
         let mut game = Self::from_save_data(store.load_data(slot)?);
         #[cfg(feature = "gui")]
         game.mark_cache_dirty();
@@ -1077,7 +1071,7 @@ impl Game {
             won: false,
             rng: rand::make_rng(),
             #[cfg(feature = "sound")]
-            sound_manager: SoundManager::new().unwrap_or_default(),
+            sound_manager: SoundManager::new().unwrap_or_else(|_| SoundManager::stub()),
             #[cfg(not(feature = "sound"))]
             sound_settings: SoundSettings::new(),
             #[cfg(feature = "gui")]

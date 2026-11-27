@@ -4,13 +4,8 @@
 //! Feature-gated behind the `sound` Cargo feature.
 
 #[cfg(feature = "sound")]
-use rodio::{Decoder, OutputStream, Sink, Source};
+use rodio::{Decoder, MixerDeviceSink, Player, Source, DeviceSinkBuilder};
 use serde::{Deserialize, Serialize};
-#[cfg(feature = "sound")]
-use std::fs::File;
-#[cfg(feature = "sound")]
-use std::io::BufReader;
-use std::sync::OnceLock;
 #[cfg(feature = "sound")]
 use std::sync::{Arc, Mutex};
 
@@ -110,28 +105,51 @@ impl SoundSettings {
 /// Manages sound playback for the game.
 #[cfg(feature = "sound")]
 pub struct SoundManager {
-    stream: OutputStream,
-    sink: Arc<Mutex<Sink>>,
+    handle: Option<MixerDeviceSink>,
+    player: Option<Arc<Mutex<Player>>>,
     settings: SoundSettings,
     sound_files: std::collections::HashMap<SoundEffect, Vec<u8>>,
+}
+
+// Manual Debug implementation since rodio::Player doesn't implement Debug
+#[cfg(feature = "sound")]
+impl std::fmt::Debug for SoundManager {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("SoundManager")
+            .field("handle", &self.handle.as_ref().map(|_| "MixerDeviceSink"))
+            .field("player", &self.player.as_ref().map(|_| "Player"))
+            .field("settings", &self.settings)
+            .field("sound_files", &format!("{} sounds", self.sound_files.len()))
+            .finish()
+    }
 }
 
 #[cfg(feature = "sound")]
 impl SoundManager {
     /// Create a new sound manager with embedded sound files.
     pub fn new() -> Result<Self, Box<dyn std::error::Error>> {
-        let (stream, stream_handle) = OutputStream::try_default()?;
-        let sink = Sink::try_new(&stream_handle)?;
-        sink.set_volume(0.5);
+        let handle = DeviceSinkBuilder::open_default_sink()?;
+        let player = Player::connect_new(handle.mixer());
+        player.set_volume(0.5);
 
         let sound_files = Self::load_sound_files()?;
 
         Ok(Self {
-            stream,
-            sink: Arc::new(Mutex::new(sink)),
+            handle: Some(handle),
+            player: Some(Arc::new(Mutex::new(player))),
             settings: SoundSettings::new(),
             sound_files,
         })
+    }
+
+    /// Create a stub sound manager that does nothing (used as fallback when audio is unavailable).
+    pub fn stub() -> Self {
+        Self {
+            handle: None,
+            player: None,
+            settings: SoundSettings::new(),
+            sound_files: std::collections::HashMap::new(),
+        }
     }
 
     /// Load embedded sound files.
@@ -142,43 +160,43 @@ impl SoundManager {
         // Embed sound files using include_bytes!
         sounds.insert(
             SoundEffect::Footstep,
-            include_bytes!("../assets/sounds/footstep.wav").to_vec(),
+            include_bytes!("../../assets/sounds/footstep.wav").to_vec(),
         );
         sounds.insert(
             SoundEffect::LootPickup,
-            include_bytes!("../assets/sounds/loot_pickup.wav").to_vec(),
+            include_bytes!("../../assets/sounds/loot_pickup.wav").to_vec(),
         );
         sounds.insert(
             SoundEffect::HorseMount,
-            include_bytes!("../assets/sounds/horse_mount.wav").to_vec(),
+            include_bytes!("../../assets/sounds/horse_mount.wav").to_vec(),
         );
         sounds.insert(
             SoundEffect::Hit,
-            include_bytes!("../assets/sounds/hit.wav").to_vec(),
+            include_bytes!("../../assets/sounds/hit.wav").to_vec(),
         );
         sounds.insert(
             SoundEffect::EnemyDeath,
-            include_bytes!("../assets/sounds/enemy_death.wav").to_vec(),
+            include_bytes!("../../assets/sounds/enemy_death.wav").to_vec(),
         );
         sounds.insert(
             SoundEffect::Save,
-            include_bytes!("../assets/sounds/save.wav").to_vec(),
+            include_bytes!("../../assets/sounds/save.wav").to_vec(),
         );
         sounds.insert(
             SoundEffect::Load,
-            include_bytes!("../assets/sounds/load.wav").to_vec(),
+            include_bytes!("../../assets/sounds/load.wav").to_vec(),
         );
         sounds.insert(
             SoundEffect::GameOver,
-            include_bytes!("../assets/sounds/game_over.wav").to_vec(),
+            include_bytes!("../../assets/sounds/game_over.wav").to_vec(),
         );
         sounds.insert(
             SoundEffect::Victory,
-            include_bytes!("../assets/sounds/victory.wav").to_vec(),
+            include_bytes!("../../assets/sounds/victory.wav").to_vec(),
         );
         sounds.insert(
             SoundEffect::Ambient,
-            include_bytes!("../assets/sounds/ambient.wav").to_vec(),
+            include_bytes!("../../assets/sounds/ambient.wav").to_vec(),
         );
 
         Ok(sounds)
@@ -200,12 +218,14 @@ impl SoundManager {
             if let Ok(source) =
                 Decoder::new(std::io::BufReader::new(std::io::Cursor::new(data.clone())))
             {
-                let volume = self
-                    .settings
-                    .effective_volume(self.category_for_effect(effect));
-                let sink = self.sink.lock().unwrap();
-                let mut source = source.amplify(volume);
-                sink.append(source);
+                if let Some(player) = &self.player {
+                    let volume = self
+                        .settings
+                        .effective_volume(self.category_for_effect(effect));
+                    let player = player.lock().unwrap();
+                    let source = source.amplify(volume);
+                    player.append(source);
+                }
             }
         }
     }
@@ -227,19 +247,22 @@ impl SoundManager {
     /// Set master volume (0.0 to 1.0).
     pub fn set_master_volume(&mut self, volume: f32) {
         self.settings.master_volume = volume.clamp(0.0, 1.0);
-        let sink = self.sink.lock().unwrap();
-        sink.set_volume(self.settings.master_volume);
+        if let Some(player) = &self.player {
+            let player = player.lock().unwrap();
+            player.set_volume(self.settings.master_volume);
+        }
     }
 
     /// Toggle mute.
     pub fn toggle_mute(&mut self) {
         self.settings.muted = !self.settings.muted;
-        if self.settings.muted {
-            let sink = self.sink.lock().unwrap();
-            sink.set_volume(0.0);
-        } else {
-            let sink = self.sink.lock().unwrap();
-            sink.set_volume(self.settings.master_volume);
+        if let Some(player) = &self.player {
+            let player = player.lock().unwrap();
+            if self.settings.muted {
+                player.set_volume(0.0);
+            } else {
+                player.set_volume(self.settings.master_volume);
+            }
         }
     }
 
@@ -293,12 +316,14 @@ impl SoundManager {
     /// Load settings from saved data.
     pub fn load_settings(&mut self, settings: SoundSettings) {
         self.settings = settings;
-        let sink = self.sink.lock().unwrap();
-        sink.set_volume(if self.settings.muted {
-            0.0
-        } else {
-            self.settings.master_volume
-        });
+        if let Some(player) = &self.player {
+            let player = player.lock().unwrap();
+            player.set_volume(if self.settings.muted {
+                0.0
+            } else {
+                self.settings.master_volume
+            });
+        }
     }
 }
 
@@ -327,7 +352,7 @@ impl SoundManager {
         0.0
     }
     pub fn settings(&self) -> &SoundSettings {
-        static SETTINGS: OnceLock<SoundSettings> = OnceLock::new();
+        static SETTINGS: std::sync::OnceLock<SoundSettings> = std::sync::OnceLock::new();
         SETTINGS.get_or_init(|| SoundSettings {
             master_volume: 0.0,
             muted: true,
