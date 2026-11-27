@@ -40,6 +40,7 @@ type FrameTick = u32;
 
 /// Holds the current animation state for a single entity.
 #[derive(Clone, Debug)]
+#[derive(PartialEq)]
 pub struct Animation {
     /// The key that identifies which animation this is.
     pub key: AnimKey,
@@ -71,7 +72,7 @@ impl Animation {
 
 /// Advances the animation state by the given number of ticks.
 /// Uses pure integer arithmetic; no floating-point.
-pub fn tick(mut anim: Animation, ticks: FrameTick) -> Animation {
+pub fn tick(anim: Animation, ticks: FrameTick) -> Animation {
     let new_tick = anim.tick_accumulator.saturating_add(ticks);
     let frame_advances = new_tick / anim.frame_duration;
     let remaining_tick = new_tick % anim.frame_duration;

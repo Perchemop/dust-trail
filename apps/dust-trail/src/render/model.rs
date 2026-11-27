@@ -112,6 +112,7 @@ impl ModelRegistry {
             key: "placeholder",
             name: "Placeholder".to_string(),
             primitives: Vec::new(),
+            animations: HashMap::new(),
             bounding_box: BoundingBox::default(),
             draw_key: DrawKey(0),
         };
