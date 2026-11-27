@@ -113,7 +113,8 @@ impl ModelRegistry {
             name: "Placeholder".to_string(),
             primitives: Vec::new(),
             animations: HashMap::new(),
-            bounding_box: BoundingBox::default(),
+                animations: HashMap::new(),
+bounding_box: BoundingBox::default(),
             draw_key: DrawKey(0),
         };
         Self {
@@ -209,7 +210,8 @@ mod tests {
             key: "test_model",
             name: "Test".to_string(),
             primitives: vec![],
-            bounding_box: BoundingBox::default(),
+                animations: HashMap::new(),
+bounding_box: BoundingBox::default(),
             draw_key: DrawKey(0),
         };
         reg.register(EntityKind::Player, model).unwrap();
@@ -227,7 +229,8 @@ mod tests {
             key: "tree_oak",
             name: "Oak Tree".to_string(),
             primitives: vec![],
-            bounding_box: BoundingBox::default(),
+                animations: HashMap::new(),
+bounding_box: BoundingBox::default(),
             draw_key: DrawKey(10),
         };
         assert!(reg.register(EntityKind::Tree, model.clone()).is_ok());

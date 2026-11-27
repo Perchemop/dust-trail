@@ -8,7 +8,7 @@ use std::f32::consts::{PI, TAU};
 ///
 /// The sun position is a deterministic sine wave keyed only on the turn count.
 /// All outputs are pure functions of `turn_count`; no RNG, no RNG, no external state.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct TimeOfDay {
     /// Number of turns per hour of real time.
     turns_per_hour: u32,

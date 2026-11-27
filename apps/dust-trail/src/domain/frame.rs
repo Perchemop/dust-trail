@@ -31,6 +31,24 @@ impl Frame {
         self.cells.get(y).and_then(|row| row.get(x)).copied()
     }
 
+    /// Frame width in cells.
+    pub fn width(&self) -> usize {
+        self.width
+    }
+
+    /// Frame height in cells.
+    pub fn height(&self) -> usize {
+        self.height
+    }
+
+    /// Write a background pixel colour at (x, y) as an RGB tuple.
+    /// Produces an empty (space) cell with the given background colour.
+    pub fn set_pixel(&mut self, x: usize, y: usize, rgb: (u8, u8, u8)) {
+        if y < self.height && x < self.width {
+            self.cells[y][x] = Cell::new(' ', crate::domain::color::Rgb::BLACK, crate::domain::color::Rgb::new(rgb.0, rgb.1, rgb.2));
+        }
+    }
+
     /// Flat write (unchanged semantics, kept for compatibility).
     pub fn set(&mut self, x: usize, y: usize, cell: Cell) {
         if y < self.height && x < self.width {

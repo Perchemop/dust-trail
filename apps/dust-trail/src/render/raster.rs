@@ -3,9 +3,9 @@
 use crate::render::camera::Camera;
 use crate::render::model::ObjectModel;
 use crate::render::primitive::{Primitive, PrimitiveKind, Transform};
-use crate::render::sprite::Sprite;
-use crate::render::glyph::luminance_to_glyph;
 use crate::render::animation::{Animation, AnimFrame, AnimationController, AnimKey, LoopMode, PrimitiveDelta};
+use crate::render::primitive::Transform;
+use std::collections::HashMap;
 use crate::domain::color::Rgb;
 
 /// Software rasteriser for 3D primitive models.
@@ -334,7 +334,8 @@ mod tests {
                     material: Material { albedo: 0.8, shade_side: true },
                 },
             ],
-            bounding_box: BoundingBox::default(),
+                animations: HashMap::new(),
+bounding_box: BoundingBox::default(),
             draw_key: DrawKey(10),
         }
     }
@@ -362,7 +363,8 @@ mod tests {
             key: "empty",
             name: "Empty".to_string(),
             primitives: vec![],
-            bounding_box: BoundingBox::default(),
+                animations: HashMap::new(),
+bounding_box: BoundingBox::default(),
             draw_key: DrawKey(0),
         };
         let sprite = raster.render(&model, &cam);
@@ -417,7 +419,8 @@ mod tests {
                     material: Material { albedo: 1.0, shade_side: true },
                 },
             ],
-            bounding_box: BoundingBox::default(),
+                animations: HashMap::new(),
+bounding_box: BoundingBox::default(),
             draw_key: DrawKey(0),
         };
         let sprite = raster.render(&model, &cam);

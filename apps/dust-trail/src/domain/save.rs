@@ -52,6 +52,7 @@ impl SaveData {
             world: game.world.clone(),
             player: game.player.clone(),
             turn: game.turn,
+            time_of_day: u64::from(game.world.time_of_day.turn_count()),
             sound_settings,
         }
     }

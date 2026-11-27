@@ -51,6 +51,7 @@ impl Default for Settings {
             reduced_motion: false,
             high_contrast: false,
             target_size: TargetSize::Comfortable,
+            debug_camera: DebugCameraState::default(),
         }
     }
 }
@@ -283,7 +284,7 @@ pub fn draw_settings_panel(
 
 /// State for the debug camera, persisted in GUI settings.
 /// Serializes: enabled, yaw, pitch, distance, projection, toggle_key.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, Default)]
 pub struct DebugCameraState {
     /// Whether the debug camera is enabled.
     pub enabled: bool,

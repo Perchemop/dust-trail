@@ -1,0 +1,1 @@
+s/\(primitives: Vec<Primitive>\)/\1\n    animations: HashMap::new(),/

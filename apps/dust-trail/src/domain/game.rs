@@ -9,6 +9,7 @@ use crate::domain::iso::{screen_depth, world_to_screen};
 use crate::domain::player::Player;
 use crate::domain::save::SaveData;
 use crate::domain::slots::SaveStore;
+use std::collections::HashMap;
 #[cfg(feature = "sound")]
 use crate::domain::sound::{SoundEffect, SoundManager};
 use crate::domain::tile::TileType;
@@ -375,7 +376,8 @@ impl Game {
                     material: Material { albedo: 0.7, shade_side: true },
                 },
             ],
-            bounding_box: BoundingBox::default(),
+                animations: HashMap::new(),
+bounding_box: BoundingBox::default(),
             draw_key: DrawKey(10),
         };
         registry.register(EntityKind::Tree, tree).unwrap();
@@ -389,7 +391,8 @@ impl Game {
                 transform: Transform { translation: (0.0, 0.0, 0.0), rotation: (0.0, 0.0, 0.0), scale: (1.5, 1.5, 1.0) },
                 material: Material { albedo: 0.6, shade_side: true },
             }],
-            bounding_box: BoundingBox::default(),
+                animations: HashMap::new(),
+bounding_box: BoundingBox::default(),
             draw_key: DrawKey(5),
         };
         registry.register(EntityKind::Shrub, shrub).unwrap();
@@ -403,7 +406,8 @@ impl Game {
                 transform: Transform { translation: (0.0, 0.0, 0.0), rotation: (0.0, 0.0, 0.0), scale: (1.0, 1.0, 3.0) },
                 material: Material { albedo: 0.5, shade_side: true },
             }],
-            bounding_box: BoundingBox::default(),
+                animations: HashMap::new(),
+bounding_box: BoundingBox::default(),
             draw_key: DrawKey(5),
         };
         registry.register(EntityKind::Cactus, cactus).unwrap();
@@ -417,7 +421,8 @@ impl Game {
                 transform: Transform { translation: (0.0, 0.0, 0.0), rotation: (0.0, 0.0, 0.0), scale: (1.0, 1.0, 0.5) },
                 material: Material { albedo: 0.4, shade_side: true },
             }],
-            bounding_box: BoundingBox::default(),
+                animations: HashMap::new(),
+bounding_box: BoundingBox::default(),
             draw_key: DrawKey(2),
         };
         registry.register(EntityKind::Rock, rock).unwrap();
@@ -431,7 +436,8 @@ impl Game {
                 transform: Transform { translation: (0.0, 0.0, 0.0), rotation: (0.0, 0.0, 0.0), scale: (2.0, 2.0, 0.2) },
                 material: Material { albedo: 0.8, shade_side: false },
             }],
-            bounding_box: BoundingBox::default(),
+                animations: HashMap::new(),
+bounding_box: BoundingBox::default(),
             draw_key: DrawKey(1),
         };
         registry.register(EntityKind::Water, water).unwrap();
@@ -445,7 +451,8 @@ impl Game {
                 transform: Transform { translation: (0.0, 0.0, 0.0), rotation: (0.0, 0.0, 0.0), scale: (4.0, 3.0, 3.0) },
                 material: Material { albedo: 0.5, shade_side: true },
             }],
-            bounding_box: BoundingBox::default(),
+                animations: HashMap::new(),
+bounding_box: BoundingBox::default(),
             draw_key: DrawKey(15),
         };
         registry.register(EntityKind::Barn, barn).unwrap();
@@ -466,7 +473,8 @@ impl Game {
                     material: Material { albedo: 0.6, shade_side: true },
                 },
             ],
-            bounding_box: BoundingBox::default(),
+                animations: HashMap::new(),
+bounding_box: BoundingBox::default(),
             draw_key: DrawKey(20),
         };
         registry.register(EntityKind::Player, player).unwrap();
@@ -487,7 +495,8 @@ impl Game {
                     material: Material { albedo: 0.8, shade_side: true },
                 },
             ],
-            bounding_box: BoundingBox::default(),
+                animations: HashMap::new(),
+bounding_box: BoundingBox::default(),
             draw_key: DrawKey(20),
         };
         registry.register(EntityKind::Sheriff, sheriff).unwrap();
@@ -501,7 +510,8 @@ impl Game {
                 transform: Transform { translation: (0.0, 0.0, 0.0), rotation: (0.0, 0.0, 0.0), scale: (1.0, 0.8, 1.5) },
                 material: Material { albedo: 0.6, shade_side: true },
             }],
-            bounding_box: BoundingBox::default(),
+                animations: HashMap::new(),
+bounding_box: BoundingBox::default(),
             draw_key: DrawKey(20),
         };
         registry.register(EntityKind::Deputy, deputy).unwrap();
@@ -515,7 +525,8 @@ impl Game {
                 transform: Transform { translation: (0.0, 0.0, 0.0), rotation: (0.0, 0.0, 0.0), scale: (1.0, 0.8, 1.5) },
                 material: Material { albedo: 0.5, shade_side: true },
             }],
-            bounding_box: BoundingBox::default(),
+                animations: HashMap::new(),
+bounding_box: BoundingBox::default(),
             draw_key: DrawKey(20),
         };
         registry.register(EntityKind::Outlaw, outlaw).unwrap();
@@ -529,7 +540,8 @@ impl Game {
                 transform: Transform { translation: (0.0, 0.0, 0.0), rotation: (0.0, 0.0, 0.0), scale: (0.8, 0.8, 0.5) },
                 material: Material { albedo: 1.0, shade_side: true },
             }],
-            bounding_box: BoundingBox::default(),
+                animations: HashMap::new(),
+bounding_box: BoundingBox::default(),
             draw_key: DrawKey(5),
         };
         registry.register(EntityKind::Loot, loot).unwrap();
@@ -565,7 +577,8 @@ impl Game {
                     material: Material { albedo: 0.4, shade_side: true },
                 },
             ],
-            bounding_box: BoundingBox::default(),
+                animations: HashMap::new(),
+bounding_box: BoundingBox::default(),
             draw_key: DrawKey(15),
         };
         registry.register(EntityKind::Horse, horse).unwrap();
@@ -601,7 +614,8 @@ impl Game {
                     material: Material { albedo: 0.5, shade_side: true },
                 },
             ],
-            bounding_box: BoundingBox::default(),
+                animations: HashMap::new(),
+bounding_box: BoundingBox::default(),
             draw_key: DrawKey(25),
         };
         registry.register(EntityKind::House, house).unwrap();
@@ -637,7 +651,8 @@ impl Game {
                     material: Material { albedo: 0.5, shade_side: true },
                 },
             ],
-            bounding_box: BoundingBox::default(),
+                animations: HashMap::new(),
+bounding_box: BoundingBox::default(),
             draw_key: DrawKey(25),
         };
         registry.register(EntityKind::Saloon, saloon).unwrap();
@@ -673,7 +688,8 @@ impl Game {
                     material: Material { albedo: 0.5, shade_side: true },
                 },
             ],
-            bounding_box: BoundingBox::default(),
+                animations: HashMap::new(),
+bounding_box: BoundingBox::default(),
             draw_key: DrawKey(25),
         };
         registry.register(EntityKind::SheriffOffice, sheriff_office).unwrap();
@@ -709,7 +725,8 @@ impl Game {
                     material: Material { albedo: 0.5, shade_side: true },
                 },
             ],
-            bounding_box: BoundingBox::default(),
+                animations: HashMap::new(),
+bounding_box: BoundingBox::default(),
             draw_key: DrawKey(5),
         };
         registry.register(EntityKind::Sign, sign).unwrap();
@@ -750,7 +767,8 @@ impl Game {
                     material: Material { albedo: 0.5, shade_side: true },
                 },
             ],
-            bounding_box: BoundingBox::default(),
+                animations: HashMap::new(),
+bounding_box: BoundingBox::default(),
             draw_key: DrawKey(5),
         };
         registry.register(EntityKind::Fence, fence).unwrap();
@@ -791,7 +809,8 @@ impl Game {
                     material: Material { albedo: 0.4, shade_side: true },
                 },
             ],
-            bounding_box: BoundingBox::default(),
+                animations: HashMap::new(),
+bounding_box: BoundingBox::default(),
             draw_key: DrawKey(5),
         };
         registry.register(EntityKind::Barrel, barrel).unwrap();
@@ -832,7 +851,8 @@ impl Game {
                     material: Material { albedo: 0.6, shade_side: true },
                 },
             ],
-            bounding_box: BoundingBox::default(),
+                animations: HashMap::new(),
+bounding_box: BoundingBox::default(),
             draw_key: DrawKey(5),
         };
         registry.register(EntityKind::Crate, crate_model).unwrap();
@@ -868,7 +888,8 @@ impl Game {
                     material: Material { albedo: 0.4, shade_side: true },
                 },
             ],
-            bounding_box: BoundingBox::default(),
+                animations: HashMap::new(),
+bounding_box: BoundingBox::default(),
             draw_key: DrawKey(5),
         };
         registry.register(EntityKind::Well, well).unwrap();
