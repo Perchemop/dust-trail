@@ -169,7 +169,7 @@ impl ModelRegistry {
         };
 
         // Get transforms from the controller for the current frame.
-        controller.get_primitive_transforms(anim, &self.bounding_box_to_transform())
+        controller.get_primitive_transforms(&self.bounding_box_to_transform())
     }
 
     /// Convert the bounding box to a default transform position.
