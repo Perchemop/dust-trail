@@ -4,7 +4,8 @@ use crate::render::camera::Camera;
 use crate::render::model::ObjectModel;
 use crate::render::primitive::{Primitive, PrimitiveKind, Transform};
 use crate::render::animation::{Animation, AnimFrame, AnimationController, AnimKey, LoopMode, PrimitiveDelta};
-use crate::render::primitive::Transform;
+use crate::render::sprite::Sprite;
+use crate::render::glyph::luminance_to_glyph;
 use std::collections::HashMap;
 use crate::domain::color::Rgb;
 
