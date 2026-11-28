@@ -316,6 +316,7 @@ mod tests {
     use crate::render::camera::Camera;
     use crate::render::model::{ObjectModel, BoundingBox, DrawKey};
     use crate::render::primitive::{Primitive, Transform, Material, PrimitiveKind};
+    use std::collections::HashMap;
 
     fn make_rasteriser() -> Rasteriser {
         Rasteriser::new(32, 32).with_light((0.0, 0.0, 1.0))

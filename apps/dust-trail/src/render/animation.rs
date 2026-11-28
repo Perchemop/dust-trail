@@ -160,9 +160,7 @@ pub fn get_primitive_transforms(
     vec![moved]
 }
 
-/// -------------------------------------------------------------------
 // AnimationController: controls playback of an Animation for one entity.
-// -------------------------------------------------------------------
 
 /// The controller owns the animation state and provides tick / query operations.
 #[derive(Clone, Debug)]
