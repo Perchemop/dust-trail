@@ -6,8 +6,15 @@ use crate::render::primitive::{Primitive, PrimitiveKind, Transform};
 use crate::render::animation::AnimFrame;
 use crate::render::sprite::Sprite;
 use crate::render::glyph::luminance_to_glyph;
-use std::collections::HashMap;
 use crate::domain::color::Rgb;
+
+/// Per-primitive rasterisation scratch buffers (grouped to satisfy `too_many_arguments`).
+struct RasterBuffers<'a> {
+    z_buffer: &'a mut [Vec<f32>],
+    char_buffer: &'a mut [Vec<char>],
+    fg_buffer: &'a mut [Vec<Rgb>],
+    bg_buffer: &'a mut [Vec<Rgb>],
+}
 
 /// Software rasteriser for 3D primitive models.
 #[derive(Clone, Debug)]
@@ -124,14 +131,6 @@ impl Rasteriser {
             depth,
             anchor: (0, 0), // default anchor
         }
-    }
-
-    /// Per-primitive rasterisation scratch buffers (grouped to satisfy `too_many_arguments`).
-    struct RasterBuffers<'a> {
-        z_buffer: &'a mut [Vec<f32>],
-        char_buffer: &'a mut [Vec<char>],
-        fg_buffer: &'a mut [Vec<Rgb>],
-        bg_buffer: &'a mut [Vec<Rgb>],
     }
 
     fn rasterise_primitive(
