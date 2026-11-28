@@ -200,7 +200,7 @@ mod tests {
     fn cache_animation_frame_deduplication() {
         let mut cache = SpriteCache::new(10);
         let key1 = make_key("sprite");
-        let key2 = make_key("sprite");
+        let mut key2 = make_key("sprite");
         key2.animation_frame = 5; // different frame
         let sprite1 = make_sprite("sprite");
         let sprite2 = make_sprite("sprite2"); // different content
@@ -216,16 +216,16 @@ mod tests {
     #[test]
     fn cache_lru_eviction_with_animation() {
         let mut cache = SpriteCache::new(2);
-        let key_a = make_key("a");
+        let mut key_a = make_key("a");
         key_a.animation_frame = 1;
-        let key_b = make_key("b");
+        let mut key_b = make_key("b");
         key_b.animation_frame = 0;
         cache.insert(key_a.clone(), make_sprite("a"));
         cache.insert(key_b.clone(), make_sprite("b"));
         assert_eq!(cache.len(), 2);
 
         // Insert third → should evict LRU
-        let key_c = make_key("c");
+        let mut key_c = make_key("c");
         key_c.animation_frame = 0;
         cache.insert(key_c.clone(), make_sprite("c"));
         assert_eq!(cache.len(), 2);

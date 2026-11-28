@@ -6,6 +6,7 @@ use crate::render::primitive::{Primitive, PrimitiveKind, Transform};
 use crate::render::animation::AnimFrame;
 use crate::render::sprite::Sprite;
 use crate::render::glyph::luminance_to_glyph;
+use std::collections::HashMap;
 use crate::domain::color::Rgb;
 
 /// Software rasteriser for 3D primitive models.
@@ -65,19 +66,19 @@ impl Rasteriser {
                     let delta = &anim_frame.transform_delta;
                     Transform {
                         translation: (
-                            primitive.transform.translation.0 + delta.translation.0 as f32,
-                            primitive.transform.translation.1 + delta.translation.1 as f32,
-                            primitive.transform.translation.2 + delta.translation.2 as f32,
+                            primitive.transform.translation.0 + delta.translation.0,
+                            primitive.transform.translation.1 + delta.translation.1,
+                            primitive.transform.translation.2 + delta.translation.2,
                         ),
                         rotation: (
-                            primitive.transform.rotation.0 + delta.rotation.0 as f32,
-                            primitive.transform.rotation.1 + delta.rotation.1 as f32,
-                            primitive.transform.rotation.2 + delta.rotation.2 as f32,
+                            primitive.transform.rotation.0 + delta.rotation.0,
+                            primitive.transform.rotation.1 + delta.rotation.1,
+                            primitive.transform.rotation.2 + delta.rotation.2,
                         ),
                         scale: (
-                            primitive.transform.scale.0 * delta.scale.0 as f32,
-                            primitive.transform.scale.1 * delta.scale.1 as f32,
-                            primitive.transform.scale.2 * delta.scale.2 as f32,
+                            primitive.transform.scale.0 * delta.scale.0,
+                            primitive.transform.scale.1 * delta.scale.1,
+                            primitive.transform.scale.2 * delta.scale.2,
                         ),
                     }
                 } else {
@@ -88,7 +89,17 @@ impl Rasteriser {
 
         // Rasterise each primitive
         for (i, primitive) in model.primitives.iter().enumerate() {
-            self.rasterise_primitive(primitive, camera, &transforms[i], &mut z_buffer, &mut char_buffer, &mut fg_buffer, &mut bg_buffer);
+            self.rasterise_primitive(
+                primitive,
+                camera,
+                &transforms[i],
+                RasterBuffers {
+                    z_buffer: &mut z_buffer,
+                    char_buffer: &mut char_buffer,
+                    fg_buffer: &mut fg_buffer,
+                    bg_buffer: &mut bg_buffer,
+                },
+            );
         }
 
         // Convert buffers to Sprite
@@ -115,15 +126,20 @@ impl Rasteriser {
         }
     }
 
+    /// Per-primitive rasterisation scratch buffers (grouped to satisfy `too_many_arguments`).
+    struct RasterBuffers<'a> {
+        z_buffer: &'a mut [Vec<f32>],
+        char_buffer: &'a mut [Vec<char>],
+        fg_buffer: &'a mut [Vec<Rgb>],
+        bg_buffer: &'a mut [Vec<Rgb>],
+    }
+
     fn rasterise_primitive(
         &self,
         primitive: &Primitive,
         camera: &Camera,
         transform: &Transform,
-        z_buffer: &mut [Vec<f32>],
-        char_buffer: &mut [Vec<char>],
-        fg_buffer: &mut [Vec<Rgb>],
-        bg_buffer: &mut [Vec<Rgb>],
+        buffers: RasterBuffers<'_>,
     ) {
         // For each primitive kind, generate vertices and project to screen
         let vertices = self.generate_primitive_vertices(primitive, transform);
@@ -138,7 +154,7 @@ impl Rasteriser {
         // Simple fill: project primitive bounds and fill rectangle
         // In a full implementation, this would be proper triangle rasterisation
         // For v2.0.0, we use a simplified footprint approach
-        self.fill_primitive_footprint(&screen_verts, primitive, z_buffer, char_buffer, fg_buffer, bg_buffer);
+        self.fill_primitive_footprint(&screen_verts, primitive, buffers.z_buffer, buffers.char_buffer, buffers.fg_buffer, buffers.bg_buffer);
     }
 
     fn generate_primitive_vertices(&self, primitive: &Primitive, transform: &Transform) -> Vec<(i32, i32, i32)> {

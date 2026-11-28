@@ -22,6 +22,7 @@ pub struct Gui {
     load_dialog: save_dialog::LoadDialog,
     show_release_notes: bool,
     settings_state: settings::SettingsPanelState,
+    #[allow(dead_code)]
     viewport: viewport::Viewport,
 }
 

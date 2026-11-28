@@ -215,7 +215,7 @@ impl Game {
             // Use time_of_day to determine the colour shift.
             let elevation = self.world.time_of_day.light_elevation_deg();
             // Map elevation -90..90 to a blue shade factor 0.2..1.0
-            let blue_factor = ((elevation + 90.0) / 180.0).max(0.2).min(1.0);
+            let blue_factor = ((elevation + 90.0) / 180.0).clamp(0.2, 1.0);
             let ambient = self.world.time_of_day.ambient_fill();
             let r = (0.1 + ambient * 0.1) as u8;
             let g = (0.2 + blue_factor * 0.5) as u8;
@@ -842,12 +842,12 @@ bounding_box: BoundingBox::default(),
                 },
                 Primitive {
                     kind: PrimitiveKind::Box,
-                    transform: Transform { translation: (0.5, 0.0, 0.5), rotation: (3.14159, 0.0, 0.0), scale: (1.0, 1.0, 1.0) },
+                    transform: Transform { translation: (0.5, 0.0, 0.5), rotation: (std::f32::consts::PI, 0.0, 0.0), scale: (1.0, 1.0, 1.0) },
                     material: Material { albedo: 0.6, shade_side: true },
                 },
                 Primitive {
                     kind: PrimitiveKind::Box,
-                    transform: Transform { translation: (-0.5, 0.0, 0.5), rotation: (3.14159, 0.0, 0.0), scale: (1.0, 1.0, 1.0) },
+                    transform: Transform { translation: (-0.5, 0.0, 0.5), rotation: (std::f32::consts::PI, 0.0, 0.0), scale: (1.0, 1.0, 1.0) },
                     material: Material { albedo: 0.6, shade_side: true },
                 },
             ],
