@@ -223,7 +223,7 @@ mod tests {
         // At turn 0 (start), elevation should be 0 (sun on horizon) or we check the shape.
         // Let's just verify the function is deterministic and returns a value in range.
         let elev = t.light_elevation_deg();
-        assert!(elev >= -90.0 && elev <= 90.0);
+        assert!((-90.0..=90.0).contains(&elev));
     }
 
     #[test]
@@ -285,7 +285,7 @@ mod tests {
         let day = TimeOfDay::default_time();
         let intensity = day.light_intensity();
         // Day: ambient=0, directional≈1 → ~2.0; Night: ambient=0.15, directional≈0 → 0.15
-        assert!(intensity >= 0.15 && intensity <= 2.15);
+        assert!((0.15..=2.15).contains(&intensity));
     }
 
     #[test]
