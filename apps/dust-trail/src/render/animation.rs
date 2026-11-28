@@ -125,15 +125,19 @@ pub fn set_animation(mut anim: Animation, key: AnimKey, frame_duration: FrameTic
     anim
 }
 
-/// Returns the current frame's primitive transforms for the given controller.
-/// If the animation key is unknown / no animation, returns base (identity) transforms.
+/// Returns the current frame's primitive transforms for the given animation
+/// state. Static state (frame 0 outside ping-pong, or a single-frame
+/// animation) returns the entity's base transform.
+///
+/// The result is a pure function of `anim` only. An earlier draft delegated
+/// to the controller, which delegated back here and could recurse without
+/// bound; that cycle is removed by design (never-crash discipline).
 pub fn get_primitive_transforms(
     anim: &Animation,
-    controller: &AnimationController,
     entity_transform: &Transform,
 ) -> Vec<Primitive> {
-    // If there's no effective animation, return the entity's base transform.
-    if anim.current_frame == 0 && anim.mode != LoopMode::PingPong {
+    // Static: nothing effectively playing.
+    if anim.total_frames <= 1 || (anim.current_frame == 0 && anim.mode != LoopMode::PingPong) {
         return vec![Primitive {
             kind: PrimitiveKind::Box,
             transform: *entity_transform,
@@ -141,9 +145,19 @@ pub fn get_primitive_transforms(
         }];
     }
 
-    // Delegate to the controller for per-frame transform computation.
-    // The controller uses its own animation state.
-    controller.get_primitive_transforms(entity_transform)
+    // Deterministic per-frame vertical bob (v2.0.0 walk-cycle placeholder):
+    // one full sine period across the animation, amplitude 0.05 world units.
+    // Same frame index ⇒ same output, so cache keys and headless tests stay
+    // stable.
+    let t = anim.current_frame as f32 / anim.total_frames.max(2) as f32;
+    let bob = (t * std::f32::consts::TAU).sin() * 0.05;
+    let mut moved = Primitive {
+        kind: PrimitiveKind::Box,
+        transform: *entity_transform,
+        material: crate::render::primitive::Material::default(),
+    };
+    moved.transform.translation.1 += bob;
+    vec![moved]
 }
 
 /// -------------------------------------------------------------------
@@ -191,14 +205,13 @@ impl AnimationController {
     }
 
     /// Returns the primitive transforms for the current frame.
-    /// Unknown `AnimKey` falls back to base transforms (no animation).
+    /// Falls back to base transforms (no animation) when static.
     pub fn get_primitive_transforms(
         &self,
         entity_transform: &crate::render::primitive::Transform,
     ) -> Vec<crate::render::primitive::Primitive> {
         crate::render::animation::get_primitive_transforms(
             &self.animation,
-            self,
             entity_transform,
         )
     }
@@ -273,18 +286,34 @@ mod tests {
     }
 
     #[test]
-    fn unknown_anim_key_returns_base() {
+    fn static_animation_returns_base() {
         let anim = Animation::new(AnimKey::Walk, 1, 4, LoopMode::Loop);
-        let ctrl = AnimationController::new(anim);
-        // Call the free function to test unknown key handling
-        let transforms = crate::render::animation::get_primitive_transforms(
-            &anim,
-            &ctrl,
-            &Transform::default(),
-        );
-        // Unknown/should return base; at minimum one primitive.
+        // A fresh Walk animation sits on frame 0 in Loop mode: static, so the
+        // base box transform is returned unchanged.
+        let transforms =
+            crate::render::animation::get_primitive_transforms(&anim, &Transform::default());
         assert!(!transforms.is_empty());
         assert_eq!(transforms[0].kind, PrimitiveKind::Box);
+    }
+
+    #[test]
+    fn animating_transform_never_recurses_and_stays_deterministic() {
+        // Regression guard for the removed free-fn → controller → free-fn
+        // delegation cycle: an actively playing animation must return without
+        // unbounded recursion and must be deterministic per frame index.
+        let anim = tick(
+            Animation::new(AnimKey::Walk, 1, 4, LoopMode::Loop),
+            2,
+        );
+        assert_eq!(anim.current_frame, 2);
+        let a = crate::render::animation::get_primitive_transforms(&anim, &Transform::default());
+        let b = crate::render::animation::get_primitive_transforms(&anim, &Transform::default());
+        assert_eq!(a, b);
+        assert!(!a.is_empty());
+        assert_eq!(a[0].kind, PrimitiveKind::Box);
+        // The bob must be finite (no NaN propagation into the rasteriser).
+        let (tx, ty, _tz) = a[0].transform.translation;
+        assert!(ty.is_finite() && tx.is_finite());
     }
 
     #[test]

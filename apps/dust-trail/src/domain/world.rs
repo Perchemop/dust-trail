@@ -145,7 +145,7 @@ impl ItemKind {
 ///
 /// Tracks the time-of-day cycle which affects lighting, ambient fill, and
 /// the sun/moon glyph displayed in the UI.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct World {
     pub width: i32,
     pub height: i32,

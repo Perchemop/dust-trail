@@ -341,6 +341,7 @@ impl Game {
             light_state,
             size: (80, 50),
             orientation: crate::render::Orientation::Isometric,
+            animation_frame: 0,
         };
 
         if let Some(sprite) = self.sprite_cache.get(&cache_key) {
@@ -348,7 +349,7 @@ impl Game {
         }
 
         // Cache miss: render and store
-        let sprite = raster.render(model, camera);
+        let sprite = raster.render(model, camera, None);
         self.sprite_cache.insert(cache_key, sprite.clone());
         sprite
     }

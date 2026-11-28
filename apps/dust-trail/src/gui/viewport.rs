@@ -36,9 +36,9 @@ impl Viewport {
         if self.debug_camera.is_enabled() {
             // When debug camera is enabled, we return the fixed camera but
             // the caller (rasteriser) will use debug_camera.project() instead.
-            self.fixed_camera.clone()
+            self.fixed_camera
         } else {
-            self.fixed_camera.clone()
+            self.fixed_camera
         }
     }
 

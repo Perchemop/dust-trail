@@ -3,7 +3,7 @@
 use crate::render::camera::Camera;
 use crate::render::model::ObjectModel;
 use crate::render::primitive::{Primitive, PrimitiveKind, Transform};
-use crate::render::animation::{Animation, AnimFrame, AnimationController, AnimKey, LoopMode, PrimitiveDelta};
+use crate::render::animation::AnimFrame;
 use crate::render::sprite::Sprite;
 use crate::render::glyph::luminance_to_glyph;
 use std::collections::HashMap;
@@ -82,7 +82,7 @@ impl Rasteriser {
                         ),
                     }
                 } else {
-                    primitive.transform.clone()
+                    primitive.transform
                 }
             })
             .collect();
@@ -335,8 +335,8 @@ mod tests {
                     material: Material { albedo: 0.8, shade_side: true },
                 },
             ],
-                animations: HashMap::new(),
-bounding_box: BoundingBox::default(),
+            animations: HashMap::new(),
+            bounding_box: BoundingBox::default(),
             draw_key: DrawKey(10),
         }
     }
@@ -346,7 +346,7 @@ bounding_box: BoundingBox::default(),
         let raster = make_rasteriser();
         let cam = make_camera();
         let model = make_tree_model();
-        let sprite = raster.render(&model, &cam);
+        let sprite = raster.render(&model, &cam, None);
         assert!(sprite.width > 0);
         assert!(sprite.height > 0);
         assert_eq!(sprite.cells.len(), sprite.depth.len());
@@ -364,11 +364,11 @@ bounding_box: BoundingBox::default(),
             key: "empty",
             name: "Empty".to_string(),
             primitives: vec![],
-                animations: HashMap::new(),
-bounding_box: BoundingBox::default(),
+            animations: HashMap::new(),
+            bounding_box: BoundingBox::default(),
             draw_key: DrawKey(0),
         };
-        let sprite = raster.render(&model, &cam);
+        let sprite = raster.render(&model, &cam, None);
         assert!(sprite.is_empty());
         assert_eq!(sprite.width, 0);
         assert_eq!(sprite.height, 0);
@@ -379,7 +379,7 @@ bounding_box: BoundingBox::default(),
         let raster = Rasteriser::new(0, 32);
         let cam = make_camera();
         let model = make_tree_model();
-        let sprite = raster.render(&model, &cam);
+        let sprite = raster.render(&model, &cam, None);
         assert!(sprite.is_empty());
     }
 
@@ -388,8 +388,8 @@ bounding_box: BoundingBox::default(),
         let raster = make_rasteriser();
         let cam = make_camera();
         let model = make_tree_model();
-        let s1 = raster.render(&model, &cam);
-        let s2 = raster.render(&model, &cam);
+        let s1 = raster.render(&model, &cam, None);
+        let s2 = raster.render(&model, &cam, None);
         assert_eq!(s1.cells, s2.cells);
         assert_eq!(s1.depth, s2.depth);
         assert_eq!(s1.anchor, s2.anchor);
@@ -420,11 +420,11 @@ bounding_box: BoundingBox::default(),
                     material: Material { albedo: 1.0, shade_side: true },
                 },
             ],
-                animations: HashMap::new(),
-bounding_box: BoundingBox::default(),
+            animations: HashMap::new(),
+            bounding_box: BoundingBox::default(),
             draw_key: DrawKey(0),
         };
-        let sprite = raster.render(&model, &cam);
+        let sprite = raster.render(&model, &cam, None);
         // Verify at least some cells have different glyphs (shading variation)
         let glyphs: std::collections::HashSet<char> = sprite.cells.iter()
             .flat_map(|row| row.iter().map(|(ch, _, _)| *ch))

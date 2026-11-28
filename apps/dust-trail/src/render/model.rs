@@ -113,8 +113,7 @@ impl ModelRegistry {
             name: "Placeholder".to_string(),
             primitives: Vec::new(),
             animations: HashMap::new(),
-                animations: HashMap::new(),
-bounding_box: BoundingBox::default(),
+            bounding_box: BoundingBox::default(),
             draw_key: DrawKey(0),
         };
         Self {
@@ -158,19 +157,16 @@ bounding_box: BoundingBox::default(),
         self.models.contains_key(&kind)
     }
 
-    /// Return base primitives with animation deltas applied for the current frame.
-    /// Unknown `AnimKey` → returns base primitives unchanged.
+    /// Return base primitives with the controller's current animation state
+    /// applied. A controller with no animation (or a static frame) returns
+    /// the base transform unchanged.
     pub fn animated_primitives(
         &self,
         controller: &crate::render::animation::AnimationController,
     ) -> Vec<crate::render::primitive::Primitive> {
-        // Try to get the animation for this entity kind from the placeholder.
-        let anim = match self.placeholder.animations.get(&AnimKey::Walk) {
-            Some(a) => a,
-            None => return self.placeholder.primitives.clone(), // no animation → base
-        };
-
-        // Get transforms from the controller for the current frame.
+        // Evaluate the controller's animation state against this model's
+        // base transform. v2.1.0 will key per-model animation definitions;
+        // v2.0.0 ships the static registry.
         controller.get_primitive_transforms(&self.bounding_box_to_transform())
     }
 
@@ -210,8 +206,8 @@ mod tests {
             key: "test_model",
             name: "Test".to_string(),
             primitives: vec![],
-                animations: HashMap::new(),
-bounding_box: BoundingBox::default(),
+            animations: HashMap::new(),
+            bounding_box: BoundingBox::default(),
             draw_key: DrawKey(0),
         };
         reg.register(EntityKind::Player, model).unwrap();
@@ -229,8 +225,8 @@ bounding_box: BoundingBox::default(),
             key: "tree_oak",
             name: "Oak Tree".to_string(),
             primitives: vec![],
-                animations: HashMap::new(),
-bounding_box: BoundingBox::default(),
+            animations: HashMap::new(),
+            bounding_box: BoundingBox::default(),
             draw_key: DrawKey(10),
         };
         assert!(reg.register(EntityKind::Tree, model.clone()).is_ok());

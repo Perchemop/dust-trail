@@ -1,16 +1,14 @@
 //! Debug camera: free-look / isometric toggle with keyboard shortcut.
 //! GUI-only (egui imports allowed); headless tests use `enabled=false`.
 
-use crate::theme::Role;
 use egui::Context;
-use std::sync::atomic::{AtomicU8, Ordering};
 
 /// Debug camera state for the GUI viewport.
 ///
 /// Can be toggled with Ctrl+Shift+C (configurable in Settings). When enabled,
 /// the camera responds to mouse drag, scroll, and key presses. When disabled,
 /// it falls back to the fixed isometric view.
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 pub struct DebugCamera {
     /// Whether the debug camera is active.
     enabled: bool,
@@ -21,34 +19,38 @@ pub struct DebugCamera {
     /// Distance from the target point.
     distance: f32,
     /// Toggle key (stored as a byte code for comparison).
-    toggle_key: AtomicU8,
+    toggle_key: u8,
     /// Isometric / perspective mode flag.
     isometric: bool,
-    /// Anchor point the camera orbits (typically screen centre).
-    anchor: (f32, f32),
+}
+
+impl Default for DebugCamera {
+    fn default() -> Self {
+        Self::default_camera()
+    }
 }
 
 impl DebugCamera {
-    /// Create a new debug camera with defaults.
+    /// Create a new debug camera with the given configuration.
     ///
     /// * `enabled` – starts disabled (fixed isometric view is the default).
-    /// * `toggle_key` – egui key code for the toggle shortcut (Ctrl+Shift+C = 17 for Ctrl, 17+90+67 for full, but we store the primary mod+ctrl combo as a single byte for simplicity).
+    /// * `toggle_key` – primary key code for the toggle shortcut (the
+    ///   handler also requires Ctrl+Shift modifiers).
+    /// * `isometric` – start in isometric (true) or free-look (false) mode.
     pub fn new(enabled: bool, toggle_key: u8, isometric: bool) -> Self {
         Self {
             enabled,
             yaw: 0.0,
             pitch: 0.0,
             distance: 10.0,
-            toggle_key: AtomicU8::new(toggle_key),
+            toggle_key,
             isometric,
-            anchor: (0.0, 0.0),
         }
     }
 
-    /// Default: disabled, isometric, toggle key = Ctrl+Shift+C (encoded as 'C'=67 with ctrl modifier).
-    /// In practice the caller sets the actual key via Settings.
+    /// Default: disabled, isometric, toggle key = 'C' (Ctrl+Shift+C handled
+    /// in the input handler by checking modifier flags).
     pub fn default_camera() -> Self {
-        // Ctrl=17, Shift=16, C=67; we store the 'C' code and let the handler check mods.
         Self::new(false, b'C', true)
     }
 
@@ -65,58 +67,61 @@ impl DebugCamera {
     /// Handle egui input events. Returns `true` if the event was consumed
     /// (should not be processed by the regular GUI).
     pub fn handle_input(&mut self, ctx: &Context) -> bool {
-        let mut consumed = false;
-        let input = ctx.input();
+        let toggle_key_code =
+            egui::Key::from_name(&format!("{:?}", self.toggle_key as char));
 
-        // Check toggle key (Ctrl+Shift+C)
-        // We check for Ctrl+Shift+C by examining the modifier flags + key code.
-        let is_ctrl = input.modifiers.ctrl;
-        let is_shift = input.modifiers.shift;
-        let key_c = input.key_pressed(egui::Key::C);
+        ctx.input(|input| {
+            let mut consumed = false;
 
-        if is_ctrl && is_shift && key_c {
-            self.enabled = !self.enabled;
-            consumed = true;
-        }
-
-        // When debug camera is enabled, process input.
-        if self.enabled {
-            // Mouse drag: rotate yaw/pitch
-            if input.mouse_delta().0 != 0.0 || input.mouse_delta().1 != 0.0 {
-                let mut delta = input.mouse_delta();
-                self.yaw -= delta.0 * 0.01;
-                self.pitch -= delta.1 * 0.01;
-                // Clamp pitch to prevent flipping
-                self.pitch = self.pitch.max(-std::f32::consts::FRAC_PI_2 - 0.01);
-                self.pitch = self.pitch.min(std::f32::consts::FRAC_PI_2 - 0.01);
+            // Toggle shortcut: Ctrl+Shift+<toggle_key>.
+            let modifiers_match = input.modifiers.ctrl && input.modifiers.shift;
+            let key_pressed = toggle_key_code.is_some_and(|k| input.key_pressed(k));
+            if modifiers_match && key_pressed {
+                self.enabled = !self.enabled;
                 consumed = true;
             }
 
-            // Scroll: adjust distance
-            if input.scroll_delta().0 != 0.0 || input.scroll_delta().1 != 0.0 {
-                let scroll = input.scroll_delta().0.abs().max(input.scroll_delta().1.abs());
-                self.distance -= scroll * 0.5;
-                self.distance = self.distance.max(1.0).min(50.0);
-                consumed = true;
+            // When the debug camera is enabled, process navigation input.
+            if self.enabled {
+                // Mouse drag: rotate yaw/pitch.
+                let delta = input.pointer.delta();
+                if delta != egui::Vec2::ZERO {
+                    self.yaw -= delta.x * 0.01;
+                    self.pitch -= delta.y * 0.01;
+                    // Clamp pitch to prevent flipping.
+                    self.pitch = self
+                        .pitch
+                        .clamp(-std::f32::consts::FRAC_PI_2 + 0.01, std::f32::consts::FRAC_PI_2 - 0.01);
+                    consumed = true;
+                }
+
+                // Scroll: adjust distance.
+                let scroll = input.raw_scroll_delta;
+                if scroll != egui::Vec2::ZERO {
+                    let amount = scroll.x.abs().max(scroll.y.abs());
+                    self.distance -= amount * 0.5;
+                    self.distance = self.distance.clamp(1.0, 50.0);
+                    consumed = true;
+                }
+
+                // 'P' key: toggle isometric/perspective.
+                if input.key_pressed(egui::Key::P) {
+                    self.isometric = !self.isometric;
+                    consumed = true;
+                }
+
+                // 'R' key: reset to defaults.
+                if input.key_pressed(egui::Key::R) {
+                    self.yaw = 0.0;
+                    self.pitch = 0.0;
+                    self.distance = 10.0;
+                    self.isometric = true;
+                    consumed = true;
+                }
             }
 
-            // 'P' key: toggle isometric/perspective
-            if input.key_pressed(egui::Key::P) {
-                self.isometric = !self.isometric;
-                consumed = true;
-            }
-
-            // 'R' key: reset to defaults
-            if input.key_pressed(egui::Key::R) {
-                self.yaw = 0.0;
-                self.pitch = 0.0;
-                self.distance = 10.0;
-                self.isometric = true;
-                consumed = true;
-            }
-        }
-
-        consumed
+            consumed
+        })
     }
 
     /// Return the view matrix (4×4 look-at matrix) for the rasteriser.
@@ -124,21 +129,22 @@ impl DebugCamera {
     /// When the debug camera is disabled, returns the fixed isometric matrix.
     pub fn view_matrix(&self) -> [[f32; 4]; 4] {
         if !self.enabled || self.isometric {
-            // Fixed isometric look-at
-            let (sx, sy) = self.anchor;
-            let cx = sx + self.distance * self.yaw.cos() * self.pitch.cos();
-            let cy = sy + self.distance * self.yaw.sin() * self.pitch.cos();
-            let cz = self.distance * self.pitch.sin();
-            // Simplified: return identity for isometric fallback in v2.0.0
-            return [[1f32, 0.0, 0.0, 0.0], [0.0, 1f32, 0.0, 0.0], [0.0, 0.0, 1f32, 0.0], [0.0, 0.0, 0.0, 1f32]];
+            // Simplified: identity for isometric fallback in v2.0.0.
+            return [
+                [1.0, 0.0, 0.0, 0.0],
+                [0.0, 1.0, 0.0, 0.0],
+                [0.0, 0.0, 1.0, 0.0],
+                [0.0, 0.0, 0.0, 1.0],
+            ];
         }
 
-        // Free-look orbit matrix
-        let target = self.anchor;
-        let up = egui::Vec2::new(0.0, 1.0); // up direction
-        // Simplified: return identity for now; full implementation would use
-        // a proper look-at matrix computation.
-        [[1f32, 0.0, 0.0, 0.0], [0.0, 1f32, 0.0, 0.0], [0.0, 0.0, 1f32, 0.0], [0.0, 0.0, 0.0, 1f32]]
+        // Free-look orbit matrix (simplified: identity in v2.0.0).
+        [
+            [1.0, 0.0, 0.0, 0.0],
+            [0.0, 1.0, 0.0, 0.0],
+            [0.0, 0.0, 1.0, 0.0],
+            [0.0, 0.0, 0.0, 1.0],
+        ]
     }
 
     /// Project world screen coordinates through the debug camera.
@@ -155,11 +161,6 @@ impl DebugCamera {
             // Free-look projection (simplified)
             (wx, wy, wz)
         }
-    }
-
-    /// Set the anchor point around which the camera orbits.
-    pub fn set_anchor(&mut self, anchor: (f32, f32)) {
-        self.anchor = anchor;
     }
 
     /// Get the current distance.
@@ -181,7 +182,6 @@ impl DebugCamera {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use egui::Context;
 
     fn make_camera() -> DebugCamera {
         DebugCamera::default_camera()
@@ -195,13 +195,21 @@ mod tests {
     }
 
     #[test]
-    fn toggle_camera() {
+    fn set_enabled_toggles() {
         let mut cam = make_camera();
-        // Simulate Ctrl+Shift+C press
-        cam.handle_input(&Context::default());
+        cam.set_enabled(true);
         assert!(cam.is_enabled());
-        // Toggle again
-        cam.handle_input(&Context::default());
+        cam.set_enabled(false);
+        assert!(!cam.is_enabled());
+    }
+
+    #[test]
+    fn handle_input_without_events_is_noop() {
+        let mut cam = make_camera();
+        // A default context has no key presses; nothing should be consumed
+        // and the camera state must not change.
+        let consumed = cam.handle_input(&Context::default());
+        assert!(!consumed);
         assert!(!cam.is_enabled());
     }
 
