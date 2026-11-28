@@ -12,9 +12,8 @@ with evidence (test name, CI run).
 | CAP-04 | Item collection (loot/horse) | met | `tests: collecting_loot_raises_score` |
 | CAP-05 | NPC interaction (sheriff/outlaw) | met | `tests: interacting_with_sheriff_yields_line` |
 | CAP-06 | Save / load | met | `tests: save_and_load_roundtrip` |
-| CAP-07 | TUI frontend | met | CI `cargo build --release` |
-| CAP-08 | GUI frontend | met | CI `cargo build --release --features gui` |
-| CAP-09 | Crash-report panic hook | met | `crates/crash-report` unit tests |
+| CAP-07 | GUI frontend | met | CI `cargo build --release` (gui is default) |
+| CAP-08 | Crash-report panic hook | met | `crates/crash-report` unit tests |
 | CAP-10 | Update-check stub | met | `crates/update-check` unit tests |
 | CAP-11 | Contrast (4.5:1/3:1, all variants) | met | `theme.rs` contrast tests |
 | CAP-12 | Multiple save slots | met | `tests: slot_names_are_validated_and_trimmed`; `tests: save_named_to_load_named_from_roundtrip`; `tests: store_roundtrips_two_slots_through_disk`; CI run 44521541346 |

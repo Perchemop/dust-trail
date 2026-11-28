@@ -17,7 +17,7 @@ This project integrates the OpenCode Game Studios (OCGS) framework for agent-bas
 | Technical Director | Architecture, toolchain, build system | `.opencode/modules/core/agents/technical-director.md` |
 | Producer | Project management, scheduling, release planning | `.opencode/modules/core/agents/producer.md` |
 | Game Developer | Game mechanics, domain logic, gameplay features | `.opencode/modules/core/agents/game-dev.md` |
-| UI Developer | GUI (egui/eframe) and TUI (crossterm) frontends | `.opencode/modules/core/agents/ui-dev.md` |
+| UI Developer | GUI (egui/eframe) frontend | `.opencode/modules/core/agents/ui-dev.md` |
 | Test Writer | Unit tests, integration tests, regression tests | `.opencode/modules/core/agents/test-writer.md` |
 | Domain Developer | Domain logic, persistence, save/load systems | `.opencode/modules/core/agents/domain-dev.md` |
 

@@ -1,5 +1,5 @@
-//! A rendered frame: a grid of cells plus an optional message line. Both the
-//! TUI and GUI frontends render the same Frame produced by the domain.
+//! A rendered frame: a grid of cells plus an optional message line. The
+//! GUI frontend renders the same Frame produced by the domain.
 //! v2.0.0: adds a depth buffer for occlusion-aware compositing.
 
 use crate::domain::cell::Cell;
@@ -29,6 +29,24 @@ impl Frame {
 
     pub fn cell(&self, x: usize, y: usize) -> Option<Cell> {
         self.cells.get(y).and_then(|row| row.get(x)).copied()
+    }
+
+    /// Frame width in cells.
+    pub fn width(&self) -> usize {
+        self.width
+    }
+
+    /// Frame height in cells.
+    pub fn height(&self) -> usize {
+        self.height
+    }
+
+    /// Write a background pixel colour at (x, y) as an RGB tuple.
+    /// Produces an empty (space) cell with the given background colour.
+    pub fn set_pixel(&mut self, x: usize, y: usize, rgb: (u8, u8, u8)) {
+        if y < self.height && x < self.width {
+            self.cells[y][x] = Cell::new(' ', crate::domain::color::Rgb::BLACK, crate::domain::color::Rgb::new(rgb.0, rgb.1, rgb.2));
+        }
     }
 
     /// Flat write (unchanged semantics, kept for compatibility).

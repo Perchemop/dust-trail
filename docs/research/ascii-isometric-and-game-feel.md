@@ -28,9 +28,9 @@ dress, or source is used as implementation input.
    subtle vertical offset for walls/props; keep the existing 2:1 iso mapping.
 2. **Game feel** — add a short (<120 ms) move animation and a reduced-motion
    preference (guide II.30.7.7); optional screen-shake on the outlaw capture.
-3. **Headless visual evidence** — add a `ratatui::TestBackend` snapshot test for
-   the TUI frame and an `egui_kittest` harness for the GUI (seam refactor first,
-   guide II.27.12), both as CI artefacts, never committed baselines.
+3. **Headless visual evidence** — add an `egui_kittest` harness for the GUI
+   (seam refactor first, guide II.27.12), as CI artefacts, never committed
+   baselines.
 4. **Audio** — optional, feature-gated, off by default (no bundled licensed
    audio; generate simple tones or omit).
 

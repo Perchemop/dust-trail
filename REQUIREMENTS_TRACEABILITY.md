@@ -4,7 +4,6 @@ Each requirement ID is traced to an implementation and a CI-verified test.
 
 | ID | Requirement | Source | Status | Implementation | Evidence |
 |----|-------------|--------|--------|----------------|----------|
-| RT-01 | App runs as a TUI in the terminal | User request | Done | `src/tui/mod.rs`, `src/main.rs` | CI `cargo test`, `cargo build --release` |
 | RT-02 | App runs as a GUI desktop window | User request | Done | `src/gui/mod.rs` (feature `gui`) | CI `cargo test --features gui`, `cargo build --release --features gui` |
 | RT-03 | ASCII art rendering of a Western world | User request | Done | `src/domain/frame.rs`, `src/domain/tile.rs` | domain unit tests |
 | RT-04 | Turn-based player movement | User request | Done | `src/domain/game.rs::move_player` | `tests: player_can_move_on_ground` |

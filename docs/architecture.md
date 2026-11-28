@@ -5,25 +5,24 @@ Dust Trail follows a domain-first, command-centric architecture (guide §3).
 ## Layers
 
 ```
-gui (egui/eframe, feature `gui`)   tui (crossterm)
-        \                           /
-         +-------- domain ----------
-         |  game.rs (turn logic)   |
-         |  world.rs (grid+entities)|
-         |  player.rs, tile.rs     |
-         |  cell.rs, frame.rs      |
-         |  color.rs (domain RGB)  |
-         |  iso.rs (world->screen isometric projection) |
-         |  save.rs (JSON save)    |
-         +-------------------------+
-              crash-report (panic hook)
-              update-check (GitHub Releases API)
+gui (egui/eframe, feature `gui`)
+          |
+           +-------- domain ----------
+           |  game.rs (turn logic)   |
+           |  world.rs (grid+entities)|
+           |  player.rs, tile.rs     |
+           |  cell.rs, frame.rs      |
+           |  color.rs (domain RGB)  |
+           |  iso.rs (world->screen isometric projection) |
+           |  save.rs (JSON save)    |
+           +-------------------------+
+                crash-report (panic hook)
+                update-check (GitHub Releases API)
 ```
 
 * **Domain** (`apps/dust-trail/src/domain`): pure Rust, no UI deps, fully
   serialisable with serde, testable headlessly. Produces a `Frame` (grid of
   `Cell`s) each turn.
-* **TUI** (`src/tui`): renders a `Frame` to the terminal via crossterm.
 * **GUI** (`src/gui`, feature `gui`): renders a `Frame` as monospace ASCII in
   egui/eframe, colour runs per cell.
 * **theme** (`src/theme`, feature `gui`): single source of semantic colour roles

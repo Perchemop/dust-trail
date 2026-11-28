@@ -1,11 +1,24 @@
 [package]
 name = "crash-report"
-version = "0.2.0"
+version = "0.2.2"
 edition = "2021"
 rust-version = "1.82"
-license = "MIT"
-description = "Shared crash/bug reporting for Dust Trail: panic hook, diagnostics capture, optional GitHub issue submission."
+license = "MIT OR Apache-2.0"
+description = "Shared crash/bug reporting for Dust Trail: panic hook, diagnostics capture, optional GitHub issue submission with full user token support and payload scrubbing."
+
+[lints.rust]
+unsafe_code = "forbid"
+
+[lints.clippy]
+all = "warn"
+pedantic = "warn"
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+ureq = { version = "3", features = ["json"] }
+thiserror = "2"
+urlencoding = "2"
+
+[dev-dependencies]
+# No dev-dependencies needed; all tests use standard library

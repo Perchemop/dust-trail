@@ -12,7 +12,7 @@ Rust: egui/eframe 0.37, eframe-wgpu; core domain crate, GUI crate feature-gated
 
 ## Users
 
-Primary: Players who enjoy turn-based, exploration-focused ASCII games with a minimalist Western aesthetic. They play in a terminal (TUI) or as a lightweight desktop window (GUI). They value hackability, readability, and zero network requirement.
+Primary: Players who enjoy turn-based, exploration-focused ASCII games with a minimalist Western aesthetic. They play as a desktop window (GUI). They value hackability, readability, and zero network requirement.
 
 ## Product Purpose
 
@@ -26,9 +26,9 @@ A hackable, zero-dependency ASCII Western adventure that runs everywhere Rust ru
 
 - Play sessions: 10–30 minutes, save/load anytime
 - Input: keyboard-first (WASD/arrows/hjkl, E interact, F attack, M mount, U use item)
-- Two frontends: TUI (ratatui/crossterm) and GUI (egui/eframe), same domain core
 - Persistence: JSON save slots in platform config dir
 - No network required for core gameplay; update-check and crash-report are optional, user-consented, soft-fail offline
+- Frontend: GUI (egui/eframe), same domain core
 - Platforms: Linux (primary), macOS, Windows; AppImage/.msi/.dmg via CI
 
 ## Capabilities and Constraints
@@ -36,7 +36,6 @@ A hackable, zero-dependency ASCII Western adventure that runs everywhere Rust ru
 - Domain: turn-based movement, NPC interaction (sheriff/outlaw/townsfolk), inventory (loot/horse), combat, wanted level, score, mount toggle
 - Save/load: named slots, list existing, overwrite confirmation
 - GUI: toolbar (New/Save/Load/Quit), right-aligned status (Wanted, HP, Inv, Turn, Score, Mount), inventory window, save/load dialogs, release notes modal, game-over overlay
-- TUI: equivalent flows in terminal
 - Clean-room: all code, strings, ASCII art, mechanics original; no RE, no proprietary assets
 - Legal: MIT OR Apache-2.0; ATTRIBUTION.md for third-party crates
 - Accessibility: WCAG 2.2 AA where feasible (keyboard complete, focus visible, contrast AA, reduced-motion preference)
@@ -53,7 +52,7 @@ A hackable, zero-dependency ASCII Western adventure that runs everywhere Rust ru
 
 ## Evidence on Hand
 
-- Working TUI and GUI frontends (feature-gated)
+- GUI frontend running in egui/eframe 0.37
 - Domain core with save/load, turn loop, NPC AI, combat, inventory
 - CI: fmt, clippy -D warnings, tests, release builds for Linux/macOS/Windows
 - Release workflow: semver tags, GitHub Releases with SHA256SUMS.txt + minisign
@@ -65,7 +64,7 @@ A hackable, zero-dependency ASCII Western adventure that runs everywhere Rust ru
 
 ## Product Principles
 
-1. **Core first, shell thin** — domain logic is headless, tested, and independent of the renderer; GUI/TUI are interchangeable views.
+1. **Core first, shell thin** — domain logic is headless, tested, and independent of the renderer; GUI is the view.
 2. **Originality over homage** — every glyph, string, and mechanic is ours; inspiration is behavioural only, never visual cloning.
 3. **Keyboard completes every flow** — no mouse-only paths; focus is visible and sensible.
 4. **Polish is evidence, not prose** — contrast tests, rendered captures, AccessKit assertions gate UI merges.

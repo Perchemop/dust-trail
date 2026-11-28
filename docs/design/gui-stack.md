@@ -5,9 +5,7 @@ Detected before any UI recommendation; recorded here per II.30.2.
 | Field | Value |
 |-------|-------|
 | GUI toolkit (desktop) | egui 0.37 + eframe 0.37 |
-| TUI toolkit | crossterm 0.27 |
 | Resolved versions | From `Cargo.lock` (to be confirmed on first CI build) |
-| TUI shell shape | Renders to the terminal (no `&mut Ui`); headless-friendly |
 | GUI shell shape | Renders into `egui::Context` / `&mut Ui` via `eframe::App::update` |
 | Theme module | `apps/dust-trail/src/theme/mod.rs` (semantic roles, light/dark/high-contrast) |
 | Raw-colour guard | CI grep gate: no `Color32::from_*` outside `src/theme/` |

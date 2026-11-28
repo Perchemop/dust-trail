@@ -2,6 +2,7 @@
 
 use crate::domain::color::Rgb;
 use crate::domain::tile::TileType;
+use crate::domain::time::TimeOfDay;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct Pos {
@@ -140,14 +141,19 @@ impl ItemKind {
     }
 }
 
-/// The world grid and its entities.
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+/// The ASCII world: a rectangular tile grid plus entities (NPCs and items).
+///
+/// Tracks the time-of-day cycle which affects lighting, ambient fill, and
+/// the sun/moon glyph displayed in the UI.
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
 pub struct World {
     pub width: i32,
     pub height: i32,
     pub tiles: Vec<Vec<TileType>>,
     pub npcs: Vec<Npc>,
     pub items: Vec<Item>,
+    /// Time-of-day cycle: turns since midnight, sun position, light levels.
+    pub time_of_day: TimeOfDay,
 }
 
 impl World {
@@ -160,7 +166,13 @@ impl World {
             tiles,
             npcs: Vec::new(),
             items: Vec::new(),
+            time_of_day: TimeOfDay::default_time(),
         }
+    }
+
+    /// Advance the time-of-day by one turn.
+    pub fn advance_turn(&mut self) {
+        self.time_of_day.advance_turn();
     }
 
     /// Generate a world from a deterministic seed.

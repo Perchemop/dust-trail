@@ -1,6 +1,6 @@
-//! RGB colour used by the domain. Frontends convert to their own colour type
-//! (crossterm Color for TUI, egui::Color32 for GUI). Keeping colour in the
-//! domain keeps the domain pure and lets both frontends render identical frames.
+//! RGB colour used by the domain. GUI converts to egui::Color32.
+//! Keeping colour in the domain keeps the domain pure and lets the frontend
+//! render identical frames.
 
 /// An sRGB colour.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]

@@ -1,6 +1,7 @@
 //! ObjectModel and ModelRegistry: maps game entity kinds to 3D models.
 
-use crate::render::primitive::Primitive;
+use crate::render::animation::{Animation, AnimKey};
+use crate::render::primitive::{Primitive, Transform};
 use std::collections::HashMap;
 
 /// Stable identifier for a model (e.g., "tree_oak", "player").
@@ -34,6 +35,8 @@ pub struct ObjectModel {
     pub primitives: Vec<Primitive>,
     pub bounding_box: BoundingBox,
     pub draw_key: DrawKey,
+    /// Per-entity animation state, keyed by `AnimKey`. Empty map means no animation.
+    pub animations: std::collections::HashMap<AnimKey, Animation>,
 }
 
 /// Game entity kinds that need models.
@@ -51,6 +54,14 @@ pub enum EntityKind {
     Outlaw,
     Loot,
     Horse,
+    House,
+    Saloon,
+    SheriffOffice,
+    Sign,
+    Fence,
+    Barrel,
+    Crate,
+    Well,
 }
 
 impl EntityKind {
@@ -69,6 +80,14 @@ impl EntityKind {
             EntityKind::Outlaw,
             EntityKind::Loot,
             EntityKind::Horse,
+            EntityKind::House,
+            EntityKind::Saloon,
+            EntityKind::SheriffOffice,
+            EntityKind::Sign,
+            EntityKind::Fence,
+            EntityKind::Barrel,
+            EntityKind::Crate,
+            EntityKind::Well,
         ]
     }
 }
@@ -93,6 +112,7 @@ impl ModelRegistry {
             key: "placeholder",
             name: "Placeholder".to_string(),
             primitives: Vec::new(),
+            animations: HashMap::new(),
             bounding_box: BoundingBox::default(),
             draw_key: DrawKey(0),
         };
@@ -109,8 +129,10 @@ impl ModelRegistry {
             return Err(format!("Model already registered for {:?}", kind));
         }
         let key = model.key;
-        self.definitions.insert(key, model);
+        self.definitions.insert(key, model.clone());
         self.models.insert(kind, key);
+        // Store a copy of the animations map so each entity kind owns its state.
+        // If the model has no animations field we default to empty (no animation).
         Ok(())
     }
 
@@ -134,6 +156,35 @@ impl ModelRegistry {
     pub fn contains(&self, kind: EntityKind) -> bool {
         self.models.contains_key(&kind)
     }
+
+    /// Return base primitives with the controller's current animation state
+    /// applied. A controller with no animation (or a static frame) returns
+    /// the base transform unchanged.
+    pub fn animated_primitives(
+        &self,
+        controller: &crate::render::animation::AnimationController,
+    ) -> Vec<crate::render::primitive::Primitive> {
+        // Evaluate the controller's animation state against this model's
+        // base transform. v2.1.0 will key per-model animation definitions;
+        // v2.0.0 ships the static registry.
+        controller.get_primitive_transforms(&self.bounding_box_to_transform())
+    }
+
+    /// Convert the bounding box to a default transform position.
+    fn bounding_box_to_transform(&self) -> crate::render::primitive::Transform {
+        // Use the placeholder's bounding box as a simple transform position.
+        let bounding = self.placeholder.bounding_box;
+        let min = bounding.min;
+        let max = bounding.max;
+        let cx = (min.0 + max.0) / 2.0;
+        let cy = (min.1 + max.1) / 2.0;
+        let cz = (min.2 + max.2) / 2.0;
+        Transform {
+            translation: (cx, cy, cz),
+            rotation: (0.0, 0.0, 0.0),
+            scale: (1.0, 1.0, 1.0),
+        }
+    }
 }
 
 #[cfg(test)]
@@ -155,6 +206,7 @@ mod tests {
             key: "test_model",
             name: "Test".to_string(),
             primitives: vec![],
+            animations: HashMap::new(),
             bounding_box: BoundingBox::default(),
             draw_key: DrawKey(0),
         };
@@ -173,6 +225,7 @@ mod tests {
             key: "tree_oak",
             name: "Oak Tree".to_string(),
             primitives: vec![],
+            animations: HashMap::new(),
             bounding_box: BoundingBox::default(),
             draw_key: DrawKey(10),
         };

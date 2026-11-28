@@ -490,6 +490,7 @@ pub fn generate(config: GenerationConfig) -> GeneratedWorld {
             // Outlaw entry - ensure valid position.
         ],
         items,
+        time_of_day: crate::domain::time::TimeOfDay::default_time(),
     };
 
     GeneratedWorld {

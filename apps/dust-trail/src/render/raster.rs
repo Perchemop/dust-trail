@@ -3,9 +3,18 @@
 use crate::render::camera::Camera;
 use crate::render::model::ObjectModel;
 use crate::render::primitive::{Primitive, PrimitiveKind, Transform};
+use crate::render::animation::AnimFrame;
 use crate::render::sprite::Sprite;
 use crate::render::glyph::luminance_to_glyph;
 use crate::domain::color::Rgb;
+
+/// Per-primitive rasterisation scratch buffers (grouped to satisfy `too_many_arguments`).
+struct RasterBuffers<'a> {
+    z_buffer: &'a mut [Vec<f32>],
+    char_buffer: &'a mut [Vec<char>],
+    fg_buffer: &'a mut [Vec<Rgb>],
+    bg_buffer: &'a mut [Vec<Rgb>],
+}
 
 /// Software rasteriser for 3D primitive models.
 #[derive(Clone, Debug)]
@@ -33,7 +42,8 @@ impl Rasteriser {
     /// Rasterise one model into a Sprite. Projects primitives, fills, writes z-buffer,
     /// applies Lambertian shading, converts luminance to glyph. Never panics on
     /// degenerate input; returns placeholder/empty sprite for empty/degenerate models.
-    pub fn render(&self, model: &ObjectModel, camera: &Camera) -> Sprite {
+    /// If `anim_frame` is provided, per-primitive animation deltas are applied.
+    pub fn render(&self, model: &ObjectModel, camera: &Camera, anim_frame: Option<&AnimFrame>) -> Sprite {
         // Empty model → empty sprite
         if model.primitives.is_empty() {
             return Sprite::empty(model.key);
@@ -53,9 +63,50 @@ impl Rasteriser {
         let mut fg_buffer = vec![vec![Rgb { r: 255, g: 255, b: 255 }; w]; h];
         let mut bg_buffer = vec![vec![Rgb { r: 0, g: 0, b: 0 }; w]; h];
 
+        // Build per-primitive transforms, applying animation deltas if present.
+        let transforms: Vec<Transform> = model.primitives
+            .iter()
+            .map(|primitive| {
+                if let Some(anim_frame) = anim_frame {
+                    // Apply the animation frame's primitive delta to the base transform.
+                    // The animation controller has already computed the delta; we add it here.
+                    let delta = &anim_frame.transform_delta;
+                    Transform {
+                        translation: (
+                            primitive.transform.translation.0 + delta.translation.0,
+                            primitive.transform.translation.1 + delta.translation.1,
+                            primitive.transform.translation.2 + delta.translation.2,
+                        ),
+                        rotation: (
+                            primitive.transform.rotation.0 + delta.rotation.0,
+                            primitive.transform.rotation.1 + delta.rotation.1,
+                            primitive.transform.rotation.2 + delta.rotation.2,
+                        ),
+                        scale: (
+                            primitive.transform.scale.0 * delta.scale.0,
+                            primitive.transform.scale.1 * delta.scale.1,
+                            primitive.transform.scale.2 * delta.scale.2,
+                        ),
+                    }
+                } else {
+                    primitive.transform
+                }
+            })
+            .collect();
+
         // Rasterise each primitive
-        for primitive in &model.primitives {
-            self.rasterise_primitive(primitive, camera, &mut z_buffer, &mut char_buffer, &mut fg_buffer, &mut bg_buffer);
+        for (i, primitive) in model.primitives.iter().enumerate() {
+            self.rasterise_primitive(
+                primitive,
+                camera,
+                &transforms[i],
+                RasterBuffers {
+                    z_buffer: &mut z_buffer,
+                    char_buffer: &mut char_buffer,
+                    fg_buffer: &mut fg_buffer,
+                    bg_buffer: &mut bg_buffer,
+                },
+            );
         }
 
         // Convert buffers to Sprite
@@ -86,13 +137,11 @@ impl Rasteriser {
         &self,
         primitive: &Primitive,
         camera: &Camera,
-        z_buffer: &mut [Vec<f32>],
-        char_buffer: &mut [Vec<char>],
-        fg_buffer: &mut [Vec<Rgb>],
-        bg_buffer: &mut [Vec<Rgb>],
+        transform: &Transform,
+        buffers: RasterBuffers<'_>,
     ) {
         // For each primitive kind, generate vertices and project to screen
-        let vertices = self.generate_primitive_vertices(primitive);
+        let vertices = self.generate_primitive_vertices(primitive, transform);
         
         // Project all vertices
         let mut screen_verts = Vec::with_capacity(vertices.len());
@@ -104,11 +153,11 @@ impl Rasteriser {
         // Simple fill: project primitive bounds and fill rectangle
         // In a full implementation, this would be proper triangle rasterisation
         // For v2.0.0, we use a simplified footprint approach
-        self.fill_primitive_footprint(&screen_verts, primitive, z_buffer, char_buffer, fg_buffer, bg_buffer);
+        self.fill_primitive_footprint(&screen_verts, primitive, buffers.z_buffer, buffers.char_buffer, buffers.fg_buffer, buffers.bg_buffer);
     }
 
-    fn generate_primitive_vertices(&self, primitive: &Primitive) -> Vec<(i32, i32, i32)> {
-        let Transform { translation, rotation, scale } = primitive.transform;
+    fn generate_primitive_vertices(&self, primitive: &Primitive, transform: &Transform) -> Vec<(i32, i32, i32)> {
+        let Transform { translation, rotation, scale } = *transform;
         let (tx, ty, tz) = translation;
         let _rotation = rotation;
         let (sx, sy, sz) = scale;
@@ -267,6 +316,7 @@ mod tests {
     use crate::render::camera::Camera;
     use crate::render::model::{ObjectModel, BoundingBox, DrawKey};
     use crate::render::primitive::{Primitive, Transform, Material, PrimitiveKind};
+    use std::collections::HashMap;
 
     fn make_rasteriser() -> Rasteriser {
         Rasteriser::new(32, 32).with_light((0.0, 0.0, 1.0))
@@ -300,6 +350,7 @@ mod tests {
                     material: Material { albedo: 0.8, shade_side: true },
                 },
             ],
+            animations: HashMap::new(),
             bounding_box: BoundingBox::default(),
             draw_key: DrawKey(10),
         }
@@ -310,7 +361,7 @@ mod tests {
         let raster = make_rasteriser();
         let cam = make_camera();
         let model = make_tree_model();
-        let sprite = raster.render(&model, &cam);
+        let sprite = raster.render(&model, &cam, None);
         assert!(sprite.width > 0);
         assert!(sprite.height > 0);
         assert_eq!(sprite.cells.len(), sprite.depth.len());
@@ -328,10 +379,11 @@ mod tests {
             key: "empty",
             name: "Empty".to_string(),
             primitives: vec![],
+            animations: HashMap::new(),
             bounding_box: BoundingBox::default(),
             draw_key: DrawKey(0),
         };
-        let sprite = raster.render(&model, &cam);
+        let sprite = raster.render(&model, &cam, None);
         assert!(sprite.is_empty());
         assert_eq!(sprite.width, 0);
         assert_eq!(sprite.height, 0);
@@ -342,7 +394,7 @@ mod tests {
         let raster = Rasteriser::new(0, 32);
         let cam = make_camera();
         let model = make_tree_model();
-        let sprite = raster.render(&model, &cam);
+        let sprite = raster.render(&model, &cam, None);
         assert!(sprite.is_empty());
     }
 
@@ -351,8 +403,8 @@ mod tests {
         let raster = make_rasteriser();
         let cam = make_camera();
         let model = make_tree_model();
-        let s1 = raster.render(&model, &cam);
-        let s2 = raster.render(&model, &cam);
+        let s1 = raster.render(&model, &cam, None);
+        let s2 = raster.render(&model, &cam, None);
         assert_eq!(s1.cells, s2.cells);
         assert_eq!(s1.depth, s2.depth);
         assert_eq!(s1.anchor, s2.anchor);
@@ -383,10 +435,11 @@ mod tests {
                     material: Material { albedo: 1.0, shade_side: true },
                 },
             ],
+            animations: HashMap::new(),
             bounding_box: BoundingBox::default(),
             draw_key: DrawKey(0),
         };
-        let sprite = raster.render(&model, &cam);
+        let sprite = raster.render(&model, &cam, None);
         // Verify at least some cells have different glyphs (shading variation)
         let glyphs: std::collections::HashSet<char> = sprite.cells.iter()
             .flat_map(|row| row.iter().map(|(ch, _, _)| *ch))

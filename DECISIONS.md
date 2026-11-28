@@ -18,6 +18,16 @@
 ### v2.0.0 exclusion
 - GUI-only ASCII-3D rendering and TUI removal are explicitly reserved for v2.0.0. These are not part of the v1.5.1 release-infrastructure slice.
 
+## TUI Removal Complete (2026-11-23)
+- **Decision:** Remove the `tui` feature and `crossterm` dependency entirely. The GUI (egui/eframe) is now the only frontend.
+- **Implementation:** 
+  - `apps/dust-trail/Cargo.toml`: removed `crossterm` dep, changed `default = ["tui", "gui"]` to `default = ["gui"]`, removed `tui = []` feature flag
+  - `apps/dust-trail/src/main.rs`: `--tui` now prints error and exits 2; `--gui` forces GUI; default is GUI when no terminal attached
+  - `Cargo.lock`: removed crossterm and orphaned dependencies (crossterm_winapi, derive_more, derive_more-impl, signal-hook, signal-hook-mio, convert_case, mio)
+  - Deleted `apps/dust-trail/src/tui/` directory
+- **Constraint:** `directories` dependency preserved (used by settings, save/load, domain)
+- **Verification:** CI passes `cargo clippy --all-targets -D warnings`, `cargo test --all --locked`, `cargo build --release --locked --features gui`
+
 ## Frontend selection (2026-11-20)
 - **Decision:** The app opens the desktop window when it is started without a terminal attached, and the terminal interface when a terminal is attached. `--gui` forces the window, `--tui` forces the terminal.
 - **Rationale:** The macOS app bundle and the Linux launcher both start the app with no terminal attached. Under the previous behaviour they opened a terminal interface inside a window with no terminal, which looked broken. The terminal interface remains reachable for anyone who wants it.
@@ -103,6 +113,36 @@ Vetting (§25.2): Each server checked against §II.20.4 — licence confirmed, m
 These preferences are standing instructions for every DSH session on this repository. They do not waive any guide rule: no local cargo builds, no runtime-specific installs, credentials never committed, linear-history rebase merges only, and all changes verified through ci.sh before merge.
 
 
+## Crash-Report Library — Implementation Decisions
+
+### D-001: Panic Hook Backward Compatibility
+- **Decision:** Add `set_panic_hook()` as an alias for `install_panic_hook()` to satisfy the required API name while preserving existing callers.
+- **Constraint:** `apps/dust-trail/src/main.rs` uses `install_panic_hook`; both names work.
+
+### D-002: Ureq for HTTP Client
+- **Decision:** Use `ureq 3.x` for synchronous HTTP POST to GitHub Issues API (matches `crates/update-check` pattern).
+- **Rationale:** Already in `Cargo.lock`, synchronous API fits the panic-hook context, MIT OR Apache-2.0 license compatible.
+- **Reference:** https://docs.rs/ureq/3.5.2/ureq/
+
+### D-003: Serde Default for New Fields
+- **Decision:** Use `#[serde(default)]` on `user_notes` and `timestamp` fields for backward compatibility with older parked reports.
+- **Rationale:** Older reports without these fields should still load correctly; defaults: `None` and `0`.
+
+### D-004: Scrubbing Strategy
+- **Backtrace paths:** For Unix paths, if segment matches `crates`, `apps`, `src`, or `target`, keep that segment onward. Otherwise strip to basename. Windows paths handled via `C:\` detection.
+- **Sensitive text:** Pattern match for `token=`, `api_key=`, `secret=`, `password=`, `authorization:`, `bearer ` (case-insensitive) and replace values with `<redacted>`.
+
+### D-005: No Token Storage
+- **Decision:** Token must be passed to `submit_report()`; never stored in the crate or on disk.
+- **Constraint:** Per II.19.4 and II.29.3, no secrets in git or binaries.
+
+### D-006: Manual URL Encoding
+- **Decision:** Implement inline percent-encoding rather than adding a dependency.
+- **Rationale:** Minimal code, no external attack surface, matches the crate's lightweight philosophy.
+
+### D-007: Edition 2024
+- **Decision:** Bump `edition = "2024"` in `crates/crash-report/Cargo.toml` for Rust 1.85+ features.
+- **Constraint:** `rust-version = "1.85"` specified; CI uses it.
 
 ## Skill Adoption — poteto-mode (guide §19, §22)
 

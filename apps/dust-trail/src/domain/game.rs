@@ -9,7 +9,7 @@ use crate::domain::iso::{screen_depth, world_to_screen};
 use crate::domain::player::Player;
 use crate::domain::save::SaveData;
 use crate::domain::slots::SaveStore;
-use crate::domain::sound::SoundSettings;
+use std::collections::HashMap;
 #[cfg(feature = "sound")]
 use crate::domain::sound::{SoundEffect, SoundManager};
 use crate::domain::tile::TileType;
@@ -85,7 +85,7 @@ pub struct Game {
 
 #[cfg(feature = "sound")]
 fn default_sound_manager() -> SoundManager {
-    SoundManager::new().unwrap_or_default()
+    SoundManager::new().unwrap_or_else(|_| SoundManager::stub())
 }
 
 #[cfg(feature = "gui")]
@@ -118,7 +118,7 @@ impl Game {
             won: false,
             rng: rand::make_rng(),
             #[cfg(feature = "sound")]
-            sound_manager: SoundManager::new().unwrap_or_default(),
+            sound_manager: SoundManager::new().unwrap_or_else(|_| SoundManager::stub()),
             #[cfg(not(feature = "sound"))]
             sound_settings: SoundSettings::new_stub(),
             #[cfg(feature = "gui")]
@@ -141,7 +141,7 @@ impl Game {
             won: false,
             rng: StdRng::seed_from_u64(seed),
             #[cfg(feature = "sound")]
-            sound_manager: SoundManager::new().unwrap_or_default(),
+            sound_manager: SoundManager::new().unwrap_or_else(|_| SoundManager::stub()),
             #[cfg(not(feature = "sound"))]
             sound_settings: SoundSettings::new_stub(),
             #[cfg(feature = "gui")]
@@ -164,7 +164,7 @@ impl Game {
             won: false,
             rng: rand::make_rng(),
             #[cfg(feature = "sound")]
-            sound_manager: SoundManager::new().unwrap_or_default(),
+            sound_manager: SoundManager::new().unwrap_or_else(|_| SoundManager::stub()),
             #[cfg(not(feature = "sound"))]
             sound_settings: SoundSettings::new_stub(),
             #[cfg(feature = "gui")]
@@ -196,13 +196,34 @@ impl Game {
         // Build or reuse model registry
         let registry = Self::build_model_registry();
 
-        // Create rasteriser with fixed camera
+        // Create rasteriser with fixed camera and time-of-day light
         let camera = Camera::fixed_isometric();
-        let raster = Rasteriser::new(80, 50).with_light((0.0, 0.0, 1.0));
+        let light_dir = self.world.time_of_day.light_dir_normalized();
+        let raster = Rasteriser::new(80, 50).with_light(light_dir);
 
         // Clear frame depth buffer
         let mut frame = Frame::new(80, 50);
         frame.clear_depth();
+
+        // Sky gradient: compute a simple gradient based on time of day.
+        // Dark blue at top (zenith) → lighter blue at horizon during day,
+        // darker at night. The gradient y-coordinate goes from 0 (top) to h (bottom).
+        let sky_height = frame.height();
+        for y in 0..sky_height {
+            // Normalised position in the sky area (0 at top, 1 at bottom)
+            let _t = y as f32 / sky_height as f32;
+            // Use time_of_day to determine the colour shift.
+            let elevation = self.world.time_of_day.light_elevation_deg();
+            // Map elevation -90..90 to a blue shade factor 0.2..1.0
+            let blue_factor = ((elevation + 90.0) / 180.0).clamp(0.2, 1.0);
+            let ambient = self.world.time_of_day.ambient_fill();
+            let r = (0.1 + ambient * 0.1) as u8;
+            let g = (0.2 + blue_factor * 0.5) as u8;
+            let b = (0.5 + blue_factor * 0.5) as u8;
+            for x in 0..frame.width() {
+                frame.set_pixel(x, y, (r, g, b));
+            }
+        }
 
         // Render terrain tiles as flat sprites (back-to-front by screen depth)
         let mut tile_sprites: Vec<(Sprite, i32, i32)> = Vec::new();
@@ -319,6 +340,7 @@ impl Game {
             light_state,
             size: (80, 50),
             orientation: crate::render::Orientation::Isometric,
+            animation_frame: 0,
         };
 
         if let Some(sprite) = self.sprite_cache.get(&cache_key) {
@@ -326,7 +348,7 @@ impl Game {
         }
 
         // Cache miss: render and store
-        let sprite = raster.render(model, camera);
+        let sprite = raster.render(model, camera, None);
         self.sprite_cache.insert(cache_key, sprite.clone());
         sprite
     }
@@ -354,7 +376,8 @@ impl Game {
                     material: Material { albedo: 0.7, shade_side: true },
                 },
             ],
-            bounding_box: BoundingBox::default(),
+                animations: HashMap::new(),
+bounding_box: BoundingBox::default(),
             draw_key: DrawKey(10),
         };
         registry.register(EntityKind::Tree, tree).unwrap();
@@ -368,7 +391,8 @@ impl Game {
                 transform: Transform { translation: (0.0, 0.0, 0.0), rotation: (0.0, 0.0, 0.0), scale: (1.5, 1.5, 1.0) },
                 material: Material { albedo: 0.6, shade_side: true },
             }],
-            bounding_box: BoundingBox::default(),
+                animations: HashMap::new(),
+bounding_box: BoundingBox::default(),
             draw_key: DrawKey(5),
         };
         registry.register(EntityKind::Shrub, shrub).unwrap();
@@ -382,7 +406,8 @@ impl Game {
                 transform: Transform { translation: (0.0, 0.0, 0.0), rotation: (0.0, 0.0, 0.0), scale: (1.0, 1.0, 3.0) },
                 material: Material { albedo: 0.5, shade_side: true },
             }],
-            bounding_box: BoundingBox::default(),
+                animations: HashMap::new(),
+bounding_box: BoundingBox::default(),
             draw_key: DrawKey(5),
         };
         registry.register(EntityKind::Cactus, cactus).unwrap();
@@ -396,7 +421,8 @@ impl Game {
                 transform: Transform { translation: (0.0, 0.0, 0.0), rotation: (0.0, 0.0, 0.0), scale: (1.0, 1.0, 0.5) },
                 material: Material { albedo: 0.4, shade_side: true },
             }],
-            bounding_box: BoundingBox::default(),
+                animations: HashMap::new(),
+bounding_box: BoundingBox::default(),
             draw_key: DrawKey(2),
         };
         registry.register(EntityKind::Rock, rock).unwrap();
@@ -410,7 +436,8 @@ impl Game {
                 transform: Transform { translation: (0.0, 0.0, 0.0), rotation: (0.0, 0.0, 0.0), scale: (2.0, 2.0, 0.2) },
                 material: Material { albedo: 0.8, shade_side: false },
             }],
-            bounding_box: BoundingBox::default(),
+                animations: HashMap::new(),
+bounding_box: BoundingBox::default(),
             draw_key: DrawKey(1),
         };
         registry.register(EntityKind::Water, water).unwrap();
@@ -424,7 +451,8 @@ impl Game {
                 transform: Transform { translation: (0.0, 0.0, 0.0), rotation: (0.0, 0.0, 0.0), scale: (4.0, 3.0, 3.0) },
                 material: Material { albedo: 0.5, shade_side: true },
             }],
-            bounding_box: BoundingBox::default(),
+                animations: HashMap::new(),
+bounding_box: BoundingBox::default(),
             draw_key: DrawKey(15),
         };
         registry.register(EntityKind::Barn, barn).unwrap();
@@ -445,7 +473,8 @@ impl Game {
                     material: Material { albedo: 0.6, shade_side: true },
                 },
             ],
-            bounding_box: BoundingBox::default(),
+                animations: HashMap::new(),
+bounding_box: BoundingBox::default(),
             draw_key: DrawKey(20),
         };
         registry.register(EntityKind::Player, player).unwrap();
@@ -466,7 +495,8 @@ impl Game {
                     material: Material { albedo: 0.8, shade_side: true },
                 },
             ],
-            bounding_box: BoundingBox::default(),
+                animations: HashMap::new(),
+bounding_box: BoundingBox::default(),
             draw_key: DrawKey(20),
         };
         registry.register(EntityKind::Sheriff, sheriff).unwrap();
@@ -480,7 +510,8 @@ impl Game {
                 transform: Transform { translation: (0.0, 0.0, 0.0), rotation: (0.0, 0.0, 0.0), scale: (1.0, 0.8, 1.5) },
                 material: Material { albedo: 0.6, shade_side: true },
             }],
-            bounding_box: BoundingBox::default(),
+                animations: HashMap::new(),
+bounding_box: BoundingBox::default(),
             draw_key: DrawKey(20),
         };
         registry.register(EntityKind::Deputy, deputy).unwrap();
@@ -494,7 +525,8 @@ impl Game {
                 transform: Transform { translation: (0.0, 0.0, 0.0), rotation: (0.0, 0.0, 0.0), scale: (1.0, 0.8, 1.5) },
                 material: Material { albedo: 0.5, shade_side: true },
             }],
-            bounding_box: BoundingBox::default(),
+                animations: HashMap::new(),
+bounding_box: BoundingBox::default(),
             draw_key: DrawKey(20),
         };
         registry.register(EntityKind::Outlaw, outlaw).unwrap();
@@ -508,7 +540,8 @@ impl Game {
                 transform: Transform { translation: (0.0, 0.0, 0.0), rotation: (0.0, 0.0, 0.0), scale: (0.8, 0.8, 0.5) },
                 material: Material { albedo: 1.0, shade_side: true },
             }],
-            bounding_box: BoundingBox::default(),
+                animations: HashMap::new(),
+bounding_box: BoundingBox::default(),
             draw_key: DrawKey(5),
         };
         registry.register(EntityKind::Loot, loot).unwrap();
@@ -544,10 +577,322 @@ impl Game {
                     material: Material { albedo: 0.4, shade_side: true },
                 },
             ],
-            bounding_box: BoundingBox::default(),
+                animations: HashMap::new(),
+bounding_box: BoundingBox::default(),
             draw_key: DrawKey(15),
         };
         registry.register(EntityKind::Horse, horse).unwrap();
+
+        // House: Box building with roof
+        let house = ObjectModel {
+            key: "house",
+            name: "House".to_string(),
+            primitives: vec![
+                Primitive {
+                    kind: PrimitiveKind::Box,
+                    transform: Transform { translation: (0.0, 0.0, 0.0), rotation: (0.0, 0.0, 0.0), scale: (3.0, 3.0, 3.0) },
+                    material: Material { albedo: 0.7, shade_side: true },
+                },
+                Primitive {
+                    kind: PrimitiveKind::Ellipsoid,
+                    transform: Transform { translation: (0.0, 0.0, 1.5), rotation: (0.0, 0.0, 0.0), scale: (1.5, 1.5, 1.0) },
+                    material: Material { albedo: 0.5, shade_side: true },
+                },
+                Primitive {
+                    kind: PrimitiveKind::Cylinder,
+                    transform: Transform { translation: (0.0, 0.0, 3.0), rotation: (0.0, 0.0, 0.0), scale: (0.5, 0.5, 1.0) },
+                    material: Material { albedo: 0.4, shade_side: true },
+                },
+                Primitive {
+                    kind: PrimitiveKind::Box,
+                    transform: Transform { translation: (0.0, -1.0, 0.0), rotation: (0.0, 0.0, 0.0), scale: (1.0, 1.0, 1.0) },
+                    material: Material { albedo: 0.6, shade_side: true },
+                },
+                Primitive {
+                    kind: PrimitiveKind::Cylinder,
+                    transform: Transform { translation: (0.0, 0.0, 0.0), rotation: (0.0, 0.0, 0.0), scale: (0.3, 0.3, 1.5) },
+                    material: Material { albedo: 0.5, shade_side: true },
+                },
+            ],
+                animations: HashMap::new(),
+bounding_box: BoundingBox::default(),
+            draw_key: DrawKey(25),
+        };
+        registry.register(EntityKind::House, house).unwrap();
+
+        // Saloon: similar to house with distinctive features
+        let saloon = ObjectModel {
+            key: "saloon",
+            name: "Saloon".to_string(),
+            primitives: vec![
+                Primitive {
+                    kind: PrimitiveKind::Box,
+                    transform: Transform { translation: (0.0, 0.0, 0.0), rotation: (0.0, 0.0, 0.0), scale: (4.0, 3.0, 3.0) },
+                    material: Material { albedo: 0.8, shade_side: true },
+                },
+                Primitive {
+                    kind: PrimitiveKind::Ellipsoid,
+                    transform: Transform { translation: (0.0, 0.0, 1.5), rotation: (0.0, 0.0, 0.0), scale: (1.5, 1.5, 1.0) },
+                    material: Material { albedo: 0.5, shade_side: true },
+                },
+                Primitive {
+                    kind: PrimitiveKind::Cylinder,
+                    transform: Transform { translation: (0.0, 0.0, 3.0), rotation: (0.0, 0.0, 0.0), scale: (0.5, 0.5, 1.0) },
+                    material: Material { albedo: 0.4, shade_side: true },
+                },
+                Primitive {
+                    kind: PrimitiveKind::Box,
+                    transform: Transform { translation: (0.0, -1.0, 0.5), rotation: (0.0, 0.0, 0.0), scale: (1.0, 1.0, 1.0) },
+                    material: Material { albedo: 0.6, shade_side: true },
+                },
+                Primitive {
+                    kind: PrimitiveKind::Cylinder,
+                    transform: Transform { translation: (0.0, 0.0, 0.0), rotation: (0.0, 0.0, 0.0), scale: (0.3, 0.3, 1.5) },
+                    material: Material { albedo: 0.5, shade_side: true },
+                },
+            ],
+                animations: HashMap::new(),
+bounding_box: BoundingBox::default(),
+            draw_key: DrawKey(25),
+        };
+        registry.register(EntityKind::Saloon, saloon).unwrap();
+
+        // Sheriff office: distinctive building
+        let sheriff_office = ObjectModel {
+            key: "sheriff_office",
+            name: "Sheriff Office".to_string(),
+            primitives: vec![
+                Primitive {
+                    kind: PrimitiveKind::Box,
+                    transform: Transform { translation: (0.0, 0.0, 0.0), rotation: (0.0, 0.0, 0.0), scale: (3.0, 4.0, 3.0) },
+                    material: Material { albedo: 0.6, shade_side: true },
+                },
+                Primitive {
+                    kind: PrimitiveKind::Ellipsoid,
+                    transform: Transform { translation: (0.0, 0.0, 1.5), rotation: (0.0, 0.0, 0.0), scale: (1.2, 1.2, 1.0) },
+                    material: Material { albedo: 0.5, shade_side: true },
+                },
+                Primitive {
+                    kind: PrimitiveKind::Cylinder,
+                    transform: Transform { translation: (0.0, 0.0, 3.0), rotation: (0.0, 0.0, 0.0), scale: (0.4, 0.4, 1.0) },
+                    material: Material { albedo: 0.4, shade_side: true },
+                },
+                Primitive {
+                    kind: PrimitiveKind::Box,
+                    transform: Transform { translation: (0.0, -1.0, 0.0), rotation: (0.0, 0.0, 0.0), scale: (1.0, 1.0, 1.0) },
+                    material: Material { albedo: 0.6, shade_side: true },
+                },
+                Primitive {
+                    kind: PrimitiveKind::Cylinder,
+                    transform: Transform { translation: (0.0, 0.0, 0.0), rotation: (0.0, 0.0, 0.0), scale: (0.3, 0.3, 1.5) },
+                    material: Material { albedo: 0.5, shade_side: true },
+                },
+            ],
+                animations: HashMap::new(),
+bounding_box: BoundingBox::default(),
+            draw_key: DrawKey(25),
+        };
+        registry.register(EntityKind::SheriffOffice, sheriff_office).unwrap();
+
+        // Sign: post + board
+        let sign = ObjectModel {
+            key: "sign",
+            name: "Sign".to_string(),
+            primitives: vec![
+                Primitive {
+                    kind: PrimitiveKind::Cylinder,
+                    transform: Transform { translation: (0.0, 0.0, 0.0), rotation: (0.0, 0.0, 0.0), scale: (0.2, 0.2, 2.0) },
+                    material: Material { albedo: 0.5, shade_side: true },
+                },
+                Primitive {
+                    kind: PrimitiveKind::Box,
+                    transform: Transform { translation: (0.0, 0.5, 0.0), rotation: (0.0, 0.0, 0.0), scale: (1.0, 0.5, 0.2) },
+                    material: Material { albedo: 0.6, shade_side: true },
+                },
+                Primitive {
+                    kind: PrimitiveKind::Ellipsoid,
+                    transform: Transform { translation: (0.0, 1.0, 0.0), rotation: (0.0, 0.0, 0.0), scale: (0.3, 0.3, 0.3) },
+                    material: Material { albedo: 0.4, shade_side: true },
+                },
+                Primitive {
+                    kind: PrimitiveKind::Cylinder,
+                    transform: Transform { translation: (0.0, -0.5, 0.0), rotation: (0.0, 0.0, 0.0), scale: (0.2, 0.2, 1.0) },
+                    material: Material { albedo: 0.5, shade_side: true },
+                },
+                Primitive {
+                    kind: PrimitiveKind::Box,
+                    transform: Transform { translation: (0.0, 0.0, 0.5), rotation: (0.0, 0.0, 0.0), scale: (0.5, 0.2, 0.2) },
+                    material: Material { albedo: 0.5, shade_side: true },
+                },
+            ],
+                animations: HashMap::new(),
+bounding_box: BoundingBox::default(),
+            draw_key: DrawKey(5),
+        };
+        registry.register(EntityKind::Sign, sign).unwrap();
+
+        // Fence: posts + rails
+        let fence = ObjectModel {
+            key: "fence",
+            name: "Fence".to_string(),
+            primitives: vec![
+                Primitive {
+                    kind: PrimitiveKind::Cylinder,
+                    transform: Transform { translation: (-1.5, 0.0, 1.5), rotation: (0.0, 0.0, 0.0), scale: (0.1, 0.1, 2.0) },
+                    material: Material { albedo: 0.5, shade_side: true },
+                },
+                Primitive {
+                    kind: PrimitiveKind::Cylinder,
+                    transform: Transform { translation: (1.5, 0.0, 1.5), rotation: (0.0, 0.0, 0.0), scale: (0.1, 0.1, 2.0) },
+                    material: Material { albedo: 0.5, shade_side: true },
+                },
+                Primitive {
+                    kind: PrimitiveKind::Cylinder,
+                    transform: Transform { translation: (-1.5, 0.0, -1.5), rotation: (0.0, 0.0, 0.0), scale: (0.1, 0.1, 2.0) },
+                    material: Material { albedo: 0.5, shade_side: true },
+                },
+                Primitive {
+                    kind: PrimitiveKind::Cylinder,
+                    transform: Transform { translation: (1.5, 0.0, -1.5), rotation: (0.0, 0.0, 0.0), scale: (0.1, 0.1, 2.0) },
+                    material: Material { albedo: 0.5, shade_side: true },
+                },
+                Primitive {
+                    kind: PrimitiveKind::Box,
+                    transform: Transform { translation: (0.0, 0.0, 0.0), rotation: (0.0, 0.0, 0.0), scale: (0.5, 0.2, 0.2) },
+                    material: Material { albedo: 0.5, shade_side: true },
+                },
+                Primitive {
+                    kind: PrimitiveKind::Box,
+                    transform: Transform { translation: (0.0, 0.0, 2.0), rotation: (0.0, 0.0, 0.0), scale: (0.5, 0.2, 0.2) },
+                    material: Material { albedo: 0.5, shade_side: true },
+                },
+            ],
+                animations: HashMap::new(),
+bounding_box: BoundingBox::default(),
+            draw_key: DrawKey(5),
+        };
+        registry.register(EntityKind::Fence, fence).unwrap();
+
+        // Barrel: staves + hoops
+        let barrel = ObjectModel {
+            key: "barrel",
+            name: "Barrel".to_string(),
+            primitives: vec![
+                Primitive {
+                    kind: PrimitiveKind::Cylinder,
+                    transform: Transform { translation: (0.0, 0.0, 0.0), rotation: (0.0, 0.0, 0.0), scale: (0.8, 0.8, 1.5) },
+                    material: Material { albedo: 0.5, shade_side: true },
+                },
+                Primitive {
+                    kind: PrimitiveKind::Cylinder,
+                    transform: Transform { translation: (0.0, 0.0, 1.5), rotation: (0.0, 0.0, 0.0), scale: (0.7, 0.7, 0.3) },
+                    material: Material { albedo: 0.4, shade_side: true },
+                },
+                Primitive {
+                    kind: PrimitiveKind::Cylinder,
+                    transform: Transform { translation: (0.0, 0.0, -1.5), rotation: (0.0, 0.0, 0.0), scale: (0.7, 0.7, 0.3) },
+                    material: Material { albedo: 0.4, shade_side: true },
+                },
+                Primitive {
+                    kind: PrimitiveKind::Box,
+                    transform: Transform { translation: (0.0, 0.2, 0.0), rotation: (0.0, 0.0, 0.0), scale: (0.3, 0.1, 0.3) },
+                    material: Material { albedo: 0.4, shade_side: true },
+                },
+                Primitive {
+                    kind: PrimitiveKind::Box,
+                    transform: Transform { translation: (0.0, -0.2, 0.0), rotation: (0.0, 0.0, 0.0), scale: (0.3, 0.1, 0.3) },
+                    material: Material { albedo: 0.4, shade_side: true },
+                },
+                Primitive {
+                    kind: PrimitiveKind::Box,
+                    transform: Transform { translation: (0.0, 0.0, 0.0), rotation: (0.0, 0.0, 0.0), scale: (0.2, 0.3, 0.3) },
+                    material: Material { albedo: 0.4, shade_side: true },
+                },
+            ],
+                animations: HashMap::new(),
+bounding_box: BoundingBox::default(),
+            draw_key: DrawKey(5),
+        };
+        registry.register(EntityKind::Barrel, barrel).unwrap();
+
+        // Crate: 6-faced box
+        let crate_model = ObjectModel {
+            key: "crate",
+            name: "Crate".to_string(),
+            primitives: vec![
+                Primitive {
+                    kind: PrimitiveKind::Box,
+                    transform: Transform { translation: (0.5, 0.0, 0.5), rotation: (0.0, 0.0, 0.0), scale: (1.0, 1.0, 1.0) },
+                    material: Material { albedo: 0.6, shade_side: true },
+                },
+                Primitive {
+                    kind: PrimitiveKind::Box,
+                    transform: Transform { translation: (-0.5, 0.0, 0.5), rotation: (0.0, 0.0, 0.0), scale: (1.0, 1.0, 1.0) },
+                    material: Material { albedo: 0.6, shade_side: true },
+                },
+                Primitive {
+                    kind: PrimitiveKind::Box,
+                    transform: Transform { translation: (0.5, 0.0, -0.5), rotation: (0.0, 0.0, 0.0), scale: (1.0, 1.0, 1.0) },
+                    material: Material { albedo: 0.6, shade_side: true },
+                },
+                Primitive {
+                    kind: PrimitiveKind::Box,
+                    transform: Transform { translation: (-0.5, 0.0, -0.5), rotation: (0.0, 0.0, 0.0), scale: (1.0, 1.0, 1.0) },
+                    material: Material { albedo: 0.6, shade_side: true },
+                },
+                Primitive {
+                    kind: PrimitiveKind::Box,
+                    transform: Transform { translation: (0.5, 0.0, 0.5), rotation: (std::f32::consts::PI, 0.0, 0.0), scale: (1.0, 1.0, 1.0) },
+                    material: Material { albedo: 0.6, shade_side: true },
+                },
+                Primitive {
+                    kind: PrimitiveKind::Box,
+                    transform: Transform { translation: (-0.5, 0.0, 0.5), rotation: (std::f32::consts::PI, 0.0, 0.0), scale: (1.0, 1.0, 1.0) },
+                    material: Material { albedo: 0.6, shade_side: true },
+                },
+            ],
+                animations: HashMap::new(),
+bounding_box: BoundingBox::default(),
+            draw_key: DrawKey(5),
+        };
+        registry.register(EntityKind::Crate, crate_model).unwrap();
+
+        // Well: shaft + bucket + crank
+        let well = ObjectModel {
+            key: "well",
+            name: "Well".to_string(),
+            primitives: vec![
+                Primitive {
+                    kind: PrimitiveKind::Cylinder,
+                    transform: Transform { translation: (0.0, 0.0, 0.0), rotation: (0.0, 0.0, 0.0), scale: (0.3, 0.3, 3.0) },
+                    material: Material { albedo: 0.5, shade_side: true },
+                },
+                Primitive {
+                    kind: PrimitiveKind::Box,
+                    transform: Transform { translation: (0.0, -0.5, 0.0), rotation: (0.0, 0.0, 0.0), scale: (0.5, 0.5, 0.5) },
+                    material: Material { albedo: 0.5, shade_side: true },
+                },
+                Primitive {
+                    kind: PrimitiveKind::Cylinder,
+                    transform: Transform { translation: (0.0, 0.0, 0.0), rotation: (0.0, 0.0, 0.0), scale: (0.2, 0.2, 0.5) },
+                    material: Material { albedo: 0.4, shade_side: true },
+                },
+                Primitive {
+                    kind: PrimitiveKind::Box,
+                    transform: Transform { translation: (0.0, 0.0, 0.0), rotation: (0.0, 0.0, 0.0), scale: (0.3, 0.3, 0.3) },
+                    material: Material { albedo: 0.4, shade_side: true },
+                },
+                Primitive {
+                    kind: PrimitiveKind::Cylinder,
+                    transform: Transform { translation: (0.0, 0.0, 0.0), rotation: (0.0, 0.0, 0.0), scale: (0.2, 0.2, 1.0) },
+                    material: Material { albedo: 0.4, shade_side: true },
+                },
+            ],
+                animations: HashMap::new(),
+bounding_box: BoundingBox::default(),
+            draw_key: DrawKey(5),
+        };
+        registry.register(EntityKind::Well, well).unwrap();
 
         registry
     }
@@ -1028,7 +1373,7 @@ impl Game {
         Ok(saved_as)
     }
 
-    /// TUI-compatible save method (takes a path).
+    /// GUI-compatible save method (takes a path).
     pub fn save(&self, path: &Path) -> Result<(), String> {
         let store = SaveStore::new(path);
         store
@@ -1036,25 +1381,20 @@ impl Game {
             .map(|_| ())
     }
 
-    /// TUI-compatible load method.
+    /// GUI-compatible load method.
     pub fn load(path: &Path) -> Result<Self, String> {
         let store = SaveStore::new(path);
-        let game = Self::from_save_data(store.load_data("default")?);
+        let mut game = Self::from_save_data(store.load_data("default")?);
+        #[cfg(feature = "gui")]
+        game.mark_cache_dirty();
         #[cfg(feature = "sound")]
-        {
-            let mut game = game;
-            game.sound_manager.play(SoundEffect::Load);
-            return Ok(game);
-        }
+        game.sound_manager.play(SoundEffect::Load);
         Ok(game)
     }
 
     /// Load the game from the named slot of the slot document at `path`.
     pub fn load_named_from(slot: &str, path: &Path) -> Result<Self, String> {
         let store = SaveStore::new(path);
-        // `mut` is consumed only by the gui/sound-gated calls below; a bare
-        // TUI build never mutates the loaded game, so the lint is expected there.
-        #[allow(unused_mut)]
         let mut game = Self::from_save_data(store.load_data(slot)?);
         #[cfg(feature = "gui")]
         game.mark_cache_dirty();
@@ -1077,7 +1417,7 @@ impl Game {
             won: false,
             rng: rand::make_rng(),
             #[cfg(feature = "sound")]
-            sound_manager: SoundManager::new().unwrap_or_default(),
+            sound_manager: SoundManager::new().unwrap_or_else(|_| SoundManager::stub()),
             #[cfg(not(feature = "sound"))]
             sound_settings: SoundSettings::new(),
             #[cfg(feature = "gui")]

@@ -20,6 +20,10 @@ pub struct SaveData {
     pub player: crate::domain::player::Player,
     /// Turn counter at the moment of saving.
     pub turn: u64,
+    /// Time-of-day at the moment of saving (turns since midnight).
+    /// Optional with default 0 for v2.0.x saves that predate this field.
+    #[serde(default = "default_time_of_day")]
+    pub time_of_day: u64,
     /// Sound settings for persistence.
     #[cfg(feature = "sound")]
     #[serde(default)]
@@ -48,6 +52,7 @@ impl SaveData {
             world: game.world.clone(),
             player: game.player.clone(),
             turn: game.turn,
+            time_of_day: u64::from(game.world.time_of_day.turn_count()),
             sound_settings,
         }
     }
@@ -77,9 +82,21 @@ impl SaveData {
                 npc.health = npc.health.max(50);
             }
         }
-        // v2.x saves are current; no migration needed.
+        // v2.0.x saves lack `time_of_day`; add default (noon = turn 120).
+        if self.version.starts_with("2.")
+            && !self.version.starts_with("2.1.")
+        {
+            self.time_of_day = 120; // noon
+        }
+        // v2.1.0+ saves are current; no migration needed.
         // Unknown future versions rely on #[serde(default)] for safe defaults.
     }
+}
+
+// Default for the optional `time_of_day` field in SaveData.
+// Used when deserializing v2.0.x saves that predate this field.
+fn default_time_of_day() -> u64 {
+    0
 }
 
 #[cfg(test)]

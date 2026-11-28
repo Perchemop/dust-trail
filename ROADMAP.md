@@ -17,6 +17,8 @@ verification), per guide §6.2.
 | v1.3.0 — UI Polish & Item System | 2026-11 | 100% | Released |
 | v1.4.0 — Item System | 2026-11 | 100% | Released |
 | v1.5.0 — Smarter AI & Inventory UI | 2026-11 | 100% | Released |
+| v2.0.0 — GUI-only 3D ASCII (minimal models) | 2026-11 | 100% | In progress (T-020) |
+| v2.1.0 — Full 3D content + day/night + signed installers + debug camera | 2027-Q1 | 0% | Planned |
 
 ## v0.1.0 (complete — superseded by v0.2.0)
 * Playable ASCII Western adventure (top-down TUI + GUI)
@@ -76,14 +78,13 @@ verification), per guide §6.2.
 * Multiple named save slots — Game::save_named_to(slot, path) with arbitrary slot names
 * Game::list_saves() returns all available save slots
 * GUI slot selection UI — selectable slot list in save/load dialogs
-* TUI slot selection — keyboard-navigable slot list (1-9 keys, Esc to cancel)
 * Save slot naming — user can name each save slot when saving
 * CI green: format, clippy, tests, multi-OS release builds
 
 ## v1.2.0 (complete — 2026-11-18)
 * Player health (HP) — default 100, damaged by NPC attacks, death = game over
 * NPC health (HP) — sheriff 50 HP, deputy 40 HP, outlaw 50 HP, removed from world at 0 HP
-* Player attack action (F key in TUI/GUI to attack adjacent NPCs)
+* Player attack action (F key in GUI to attack adjacent NPCs)
 * Combat feedback messages in game log
 * Death states: player death = game over, NPC death = removed from world
 * Combat sound effects (hit, enemy death)
@@ -91,7 +92,7 @@ verification), per guide §6.2.
 
 ## v1.3.0 (complete — 2026-11-18)
 * GUI status bar: health bar (HP), wanted level indicator, mount status
-* Item usage: mount/dismount toggle (M key in TUI/GUI)
+* Item usage: mount/dismount toggle (M key in GUI)
 * Game over screen with restart/quit options
 * Save format version migration (handles pre-1.2.0 saves)
 * CI green: format, clippy, tests, multi-OS release builds
@@ -99,13 +100,34 @@ verification), per guide §6.2.
 ## v1.4.0 (complete — 2026-11-18)
 * Item system: inventory, use_item (consume loot for score, toggle horse mount)
 * GUI toolbar inventory count
-* TUI: 'u' key uses first item from inventory
 * CI green: format, clippy, tests, multi-OS release builds
 
 ## v1.5.0 (complete — 2026-11-18)
 * Smarter outlaw AI: flanking behavior, group coordination with deputies
 * Inventory UI panel in GUI with item tooltips on hover
 * CI green: format, clippy, tests, multi-OS release builds
+
+## v2.0.0 (complete — 2026-11-25)
+* GUI-only 3D isometric ASCII adventure
+* Procedural 3D primitive rasteriser (cones, ellipsoids, boxes, cylinders, capsules)
+* Fixed isometric camera; depth-aware compositing with occlusion
+* SpriteCache with LRU eviction; minimal model set (tree, player, NPCs, props)
+* TUI removed; crossterm dependency removed
+* Save/load v1.x migration compatible
+* Headless workflow test: move/combat/loot/save roundtrip
+* CI green: format, clippy, tests, multi-OS release builds
+
+## v2.1.0 (planned — 2027-Q1)
+* Full 3D content set: 21 entity kinds as detailed 5+ primitive models with animations
+* Walk-cycle animations (4-frame) for player, NPCs, horse; Idle animations for all entities
+* Day/night cycle: turn-based time progression, directional light modulation, ambient fill at night
+* Sky gradient background; toolbar sun/moon glyph + hour display
+* Signed installers: Windows MSI (signtool), macOS DMG (codesign + notarization), Linux .deb/.AppImage (dpkg-sig/minisign)
+* CycloneDX SBOM generation and release attachment
+* Minisign signature verification in update-check crate
+* Debug camera: Ctrl+Shift+C toggle, mouse orbit, scroll zoom, isometric/perspective toggle
+* Debug camera state persisted in GUI settings
+* CI green: format, clippy, tests, multi-OS release builds with signing/notarization/SBOM
 
 ## Out of scope
 * Multiplayer / networking
