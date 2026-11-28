@@ -13,7 +13,6 @@ use std::collections::HashMap;
 #[cfg(feature = "sound")]
 use crate::domain::sound::{SoundEffect, SoundManager};
 use crate::domain::tile::TileType;
-use crate::domain::time::TimeOfDay;
 use crate::domain::world::{
     default_world, spawn_deputies_for_wanted, ItemKind, Npc, NpcKind, Pos, WantedLevel, World,
 };
@@ -212,7 +211,7 @@ impl Game {
         let sky_height = frame.height();
         for y in 0..sky_height {
             // Normalised position in the sky area (0 at top, 1 at bottom)
-            let t = y as f32 / sky_height as f32;
+            let _t = y as f32 / sky_height as f32;
             // Use time_of_day to determine the colour shift.
             let elevation = self.world.time_of_day.light_elevation_deg();
             // Map elevation -90..90 to a blue shade factor 0.2..1.0

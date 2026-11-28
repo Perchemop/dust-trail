@@ -95,8 +95,8 @@ impl DebugCamera {
                     consumed = true;
                 }
 
-                // Scroll: adjust distance.
-                let scroll = input.raw_scroll_delta;
+                // Scroll: adjust distance (egui 0.37: smooth_scroll_delta for platform scroll).
+                let scroll = input.smooth_scroll_delta;
                 if scroll != egui::Vec2::ZERO {
                     let amount = scroll.x.abs().max(scroll.y.abs());
                     self.distance -= amount * 0.5;

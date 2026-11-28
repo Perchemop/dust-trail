@@ -1,7 +1,7 @@
 //! ObjectModel and ModelRegistry: maps game entity kinds to 3D models.
 
 use crate::render::animation::{Animation, AnimKey};
-use crate::render::primitive::Transform;
+use crate::render::primitive::{Primitive, Transform};
 use std::collections::HashMap;
 
 /// Stable identifier for a model (e.g., "tree_oak", "player").

@@ -2,7 +2,7 @@
 //! Clean-room: original timing and trig; no copied engine code.
 //! Deterministic: same turn_count → same outputs, fully headless.
 
-use std::f32::consts::{PI, TAU};
+use std::f32::consts::TAU;
 
 /// Time-of-day tracked in turns since midnight.
 ///

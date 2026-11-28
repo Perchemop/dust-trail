@@ -6,7 +6,6 @@ use crate::render::primitive::{Primitive, PrimitiveKind, Transform};
 use crate::render::animation::AnimFrame;
 use crate::render::sprite::Sprite;
 use crate::render::glyph::luminance_to_glyph;
-use std::collections::HashMap;
 use crate::domain::color::Rgb;
 
 /// Software rasteriser for 3D primitive models.
